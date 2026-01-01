@@ -64,13 +64,16 @@ def decode(numbers):
 def show(n):
     return f'"{ALPHABET[n]}"'
 
-# The text as numbers.
+# The text as numbers, cut in two: the model learns from the first nine tenths and is tested on the last tenth.
 ids = encode(text)
+cut = len(ids) - len(ids) // 10
+train = ids[:cut]
+test = ids[cut:]
 
-# pairs[a][b]: how many times character b came right after character a.
+# pairs[a][b]: how many times character b came right after character a, in the part to learn from.
 pairs = [[0] * V for _ in range(V)]
-for i in range(len(ids) - 1):
-    pairs[ids[i]][ids[i + 1]] += 1
+for i in range(len(train) - 1):
+    pairs[train[i]][train[i + 1]] += 1
 SMOOTH = 0.1  # a pair never seen still gets a small count, so it is unlikely, not impossible
 
 # Random numbers from a seed: the same seed gives the same numbers, on every computer and in both languages.
@@ -165,6 +168,21 @@ def forward(x):
     logits = [times(row, model["out"]) for row in z]
     return {"x": x, "z": z, "logits": logits, "p": [softmax(row) for row in logits]}
 
+# The model's loss: the mean of -log(the chance it gave the character that came next).
+def loss_of(f, y):
+    total = 0.0
+    for t in range(len(y)):
+        total -= log(f["p"][t][y[t]])
+    return total / len(y)
+
+# The model's loss over a whole part of the text, window by window.
+def surprise(part):
+    total = 0.0
+    for s in range(0, len(part) - 1, T):
+        x = part[s : min(s + T, len(part) - 1)]
+        total += loss_of(forward(x), part[s + 1 : s + 1 + len(x)]) * len(x)
+    return total / (len(part) - 1)
+
 # Go on from the start, one character at a time, each picked at random by how often it came next.
 LENGTH = 60
 
@@ -194,7 +212,7 @@ def run(words):
     name, rest = words[0], words[1:]
     arg = " ".join(rest)
     if name == "text":
-        return f"lm read {len(raw)} characters and kept {len(text)}"
+        return f"lm read {len(raw)} characters and kept {len(text)}: {len(train)} to learn from, {len(test)} to test on"
     if name == "encode":
         if not arg:
             return "usage: encode <text>"
@@ -233,7 +251,10 @@ def run(words):
             return f'not in the alphabet: "{missing[0] if missing else arg}"'
         return write(encode(start))
     if name == "loss":
-        return f"counts: {fmt(counts_loss(ids))}, a blind guess {fmt(log(V))}"
+        return "\n".join([
+            f"counts: train {fmt(counts_loss(train))}, test {fmt(counts_loss(test))}, a blind guess {fmt(log(V))}",
+            f"model: train {fmt(surprise(train))}, test {fmt(surprise(test))}",
+        ])
     if name == "shapes":
         total = 0
         for m in model.values():
