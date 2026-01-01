@@ -24,6 +24,7 @@ HELP = [
     "gradcheck             nudge a number of each table and see the loss move",
     "train <steps>         learn from the text, one short piece at each step",
     "attend <text>         how much each character looks at the ones before it",
+    "temp <number>         how bold write is: below 1 safer, above 1 wilder",
     "help                  this list",
     "exit                  stop lm",
 ]
@@ -283,11 +284,12 @@ def gradcheck():
 
 # Go on from the start, one character at a time: from the counts until the model has learned, then from the model.
 LENGTH = 60
+temperature = 1.0
 
 def write(start):
     out = list(start)
     while len(out) < len(start) + LENGTH:
-        weights = [count + SMOOTH for count in pairs[out[-1]]] if steps == 0 else forward(out[-T:])["p"][-1]
+        weights = [count + SMOOTH for count in pairs[out[-1]]] if steps == 0 else softmax([l / temperature for l in forward(out[-T:])["logits"][-1]])
         out.append(pick(weights))
     return decode(out)
 
@@ -307,7 +309,7 @@ def shape(m):
 
 # Run one command, its name and then its words, and give back the answer.
 def run(words):
-    global state
+    global state, temperature
     name, rest = words[0], words[1:]
     arg = " ".join(rest)
     if name == "text":
@@ -389,6 +391,11 @@ def run(words):
             return "usage: attend <text>, with characters of the alphabet"
         f = forward(encode(start)[-T:])
         return "\n".join(show(f["x"][t]) + " " + " ".join(fmt(w, 2) for w in row) for t, row in enumerate(f["a"]))
+    if name == "temp":
+        if not is_decimal(arg) or not 0.01 <= float(arg) <= 10:
+            return "usage: temp <number>, from 0.01 to 10, such as temp 0.5"
+        temperature = float(arg)
+        return f"temp {fmt(temperature, 2)}"
     if name == "help":
         return "\n".join(HELP)
     return f"unknown command: {name}. Type help for the list."
