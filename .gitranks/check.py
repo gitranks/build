@@ -187,6 +187,15 @@ def answer_in_json(port):
 
 
 session("answer-in-json", answer_in_json)
+
+
+def a_task_by_id(port):
+    call(port, "a-task-by-id", "POST", "/api/tasks", compact({"title": pick(titles)}))
+    call(port, "a-task-by-id", "GET", "/api/tasks/1")
+    call(port, "a-task-by-id", "GET", "/api/tasks/" + pick(["2", "42", "abc"]))
+
+
+session("a-task-by-id", a_task_by_id)
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the

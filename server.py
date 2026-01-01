@@ -2,6 +2,7 @@
 # While it runs, open http://localhost:8080 in your browser. Start it with: python3 server.py (python on Windows)
 import html
 import os
+import re
 import socket
 import sys
 import threading
@@ -120,6 +121,15 @@ def crash(request):
     raise RuntimeError("this route always fails")
 
 
+# The id in a path such as /api/tasks/7, and the answer when no task has it: 404, in JSON like every API answer.
+def id_of(request):
+    return request["target"].partition("?")[0].split("/")[3]
+
+
+def missing(request):
+    return json({"error": f"no task with id {id_of(request)}"}, 404)
+
+
 def list_tasks(request):
     return json(list(tasks.values()))
 
@@ -135,6 +145,11 @@ def add_task(request):
     return {**json(task, 201), "headers": {"Location": f"/api/tasks/{last_id}"}}
 
 
+def get_task(request):
+    task = tasks.get(id_of(request))
+    return json(task) if task else missing(request)
+
+
 ROUTES = {
     "GET /": home,
     "GET /hello": hello,
@@ -146,6 +161,7 @@ ROUTES = {
     "GET /crash": crash,
     "GET /api/tasks": list_tasks,
     "POST /api/tasks": add_task,
+    "GET /api/tasks/:id": get_task,
 }
 
 
@@ -161,7 +177,8 @@ def file(pathname):
 
 # Find the route for a request. A path with no route gets 404 Not Found.
 def handle(request):
-    pathname = request["target"].partition("?")[0]
+    # A path such as /api/tasks/7 goes to the routes of /api/tasks/:id, which read the 7 from the target.
+    pathname = re.sub(r"^/api/tasks/[^/]+$", "/api/tasks/:id", request["target"].partition("?")[0])
     route = ROUTES.get(f"{request['method']} {pathname}")
     if route:
         return route(request)
