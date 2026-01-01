@@ -144,6 +144,49 @@ await session("change-and-delete", async (port) => {
   await call(port, "change-and-delete", "DELETE", "/api/tasks/1");
   await call(port, "change-and-delete", pick(["GET", "DELETE"]), "/api/tasks/1");
 });
+
+// Run your tests with Node's own runner, as you do, and print what each one gave, by its name. At the end the
+// runner is stopped with everything it started, each server too, even when a test never ends.
+async function tests(about) {
+  if (stopped) return;
+  if (left() < 3000) {
+    stopped = true;
+    return said.push(["always", "the check ran out of time before the tests could run"]);
+  }
+  if (!fs.existsSync("server.test.ts")) return said.push([about, "the tests: none yet"]);
+  runs += 1;
+  const out = join(folder, `out-${runs}.txt`);
+  const files = [fs.openSync(out, "w"), fs.openSync(join(folder, `err-${runs}.txt`), "w")];
+  const runner = spawn(process.execPath, ["--test", "--test-reporter=tap", "server.test.ts"], { stdio: ["ignore", ...files], detached: true, windowsHide: true });
+  for (const file of files) fs.closeSync(file);
+  let code;
+  runner.on("exit", (status) => (code = status ?? "killed"));
+  runner.on("error", () => {});
+  const until = Date.now() + Math.min(10000, left());
+  while (code === undefined && Date.now() < until) await sleep(20);
+  // On Windows only a runner still running has a tree to stop; a runner that never stops its servers never ends.
+  try {
+    if (process.platform !== "win32") process.kill(-runner.pid, "SIGKILL");
+    else if (code === undefined) spawnSync("taskkill", ["/pid", String(runner.pid), "/t", "/f"], { stdio: "ignore" });
+  } catch {}
+  if (code === undefined) {
+    stopped = true;
+    return said.push(["always", "the tests did not end in time, so the check stopped there"]);
+  }
+  const results = [];
+  for (const line of fs.readFileSync(out, "utf8").split("\n")) {
+    const found = line.match(/^(not )?ok \d+ - (.*?)(?: # (SKIP|TODO)\b.*)?$/);
+    if (!found) continue;
+    const name = found[2].endsWith(".test.ts") ? found[2].replace(/^.*[\\/]/, "") : found[2]; // a file that did not load
+    results.push([name, found[1] ? "FAIL" : found[3] ? "skipped" : "ok"]);
+  }
+  const count = (what) => results.filter(([, result]) => result === what).length;
+  const failed = count("FAIL") ? `, ${count("FAIL")} failed` : "";
+  said.push([about, results.length ? `the tests: ${results.length} ran, ${count("ok")} passed${failed}` : "the tests: none ran"]);
+  for (const [name, result] of results.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) said.push([about, `${result}: ${name}`]);
+}
+
+await tests("a-first-test");
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
