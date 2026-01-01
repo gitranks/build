@@ -4,7 +4,7 @@ import { createInterface } from "node:readline";
 
 // A mistake in the program mini runs, such as 1 / 0: mini says what it is and goes on. It is not a crash of mini.
 class MiniError extends Error {}
-type Value = number;
+type Value = number | boolean;
 type Token = { kind: string; text: string };
 type Node = { kind: string; [field: string]: any };
 
@@ -22,6 +22,13 @@ function number(text: string): number {
 
 // Work out one operator on two values.
 function operate(op: string, a: Value, b: Value): Value {
+  if (op === "==") return a === b;
+  if (op === "!=") return a !== b;
+  if (typeof a !== "number" || typeof b !== "number") throw new MiniError(`${op} needs numbers, not ${show(a)} and ${show(b)}`);
+  if (op === "<") return a < b;
+  if (op === "<=") return a <= b;
+  if (op === ">") return a > b;
+  if (op === ">=") return a >= b;
   if (op === "+") return checked(a + b);
   if (op === "-") return checked(a - b);
   if (op === "*") return checked(a * b);
@@ -32,17 +39,23 @@ function operate(op: string, a: Value, b: Value): Value {
   return rest !== 0 && (rest < 0) !== (b < 0) ? rest + b : rest;
 }
 
+// How mini writes a value: true and false in small letters.
+function show(value: Value): string {
+  return String(value);
+}
+
 const SYMBOLS = [ // the symbols mini knows
+  "==", "!=", "<=", ">=", "<", ">",
   "+", "-", "*", "/",
   "%",
   "(", ")",
   "=",
 ];
-const WORDS = ["let"]; // mini's own words: they can not name a variable
+const WORDS = ["let", "true", "false"]; // mini's own words: they can not name a variable
 
 // The tokenizer cuts the source into pieces: a run of spaces, a number, a name and more, or any other one
 // character. It turns each piece into a token, the words of mini, and leaves the spaces out.
-const PIECES = /[ \t\r]+|[0-9]+|[A-Za-z_][A-Za-z_0-9]*|[\s\S]/gu;
+const PIECES = /[ \t\r]+|[0-9]+|[A-Za-z_][A-Za-z_0-9]*|[=!<>]=|[\s\S]/gu;
 function tokenize(source: string): Token[] {
   const tokens: Token[] = [];
   const add = (kind: string, text: string) => tokens.push({ kind, text });
@@ -88,12 +101,14 @@ function parse(tokens: Token[]): Node {
     while (ops.includes(peek().kind)) left = { kind: "binary", op: advance().kind, left, right: operand() };
     return left;
   }
-  const expression = (): Node => binary(["+", "-"], factor);
+  const expression = (): Node => binary(["==", "!=", "<", "<=", ">", ">="], term);
+  const term = (): Node => binary(["+", "-"], factor);
   const factor = (): Node => binary(["*", "/", "%"], unary);
   const unary = (): Node => (accept("-") ? { kind: "negate", value: unary() } : primary());
   function primary(): Node {
     const token = advance();
     if (token.kind === "number") return { kind: "value", value: number(token.text) };
+    if (token.kind === "true" || token.kind === "false") return { kind: "value", value: token.kind === "true" };
     if (token.kind === "name") return { kind: "name", name: token.text };
     if (token.kind === "(") {
       const node = expression();
@@ -151,7 +166,7 @@ function attempt(line: string): void {
   try {
     const node = parse(tokenize(line));
     const value = execute(node, top);
-    if (node.kind === "expr") console.log(String(value));
+    if (node.kind === "expr") console.log(show(value as Value));
   } catch (error) {
     report(error);
   }

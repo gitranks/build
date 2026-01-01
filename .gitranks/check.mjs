@@ -61,6 +61,7 @@ session("exact-whole-numbers", [`-${x} / ${y}`, `-${x} % ${y}`, `${x} % -${y}`, 
 const name = pick(["x", "count", "total_2"]);
 session("let-and-names", [`let ${name} = ${a} * 2`, `${name} + 1`, pick(["y", "size", "Count"]), "let = 5", `let ${pick(["7", "+"])} = 1`]);
 session("change-a-variable", [`let ${name} = ${a}`, `${name} = ${name} + ${b}`, `${name}`, `${pick(["y", "size"])} = 1`]);
+session("true-and-false", [`${a} < ${b}`, `${a} + 1 == ${a + 1}`, `${b} <= ${b}`, `${a} >= ${a + 1}`, "true != false", "1 == true", "true + 1", "1 < 2 < 3"]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
