@@ -128,11 +128,18 @@ input.on("line", (line) => {
   try {
     msg = JSON.parse(line);
   } catch {
-    log("that line is not JSON");
-    return;
+    return send({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "Parse error: that line is not JSON" } });
+  }
+  if (typeof msg !== "object" || msg === null || msg.jsonrpc !== "2.0" || typeof msg.method !== "string") {
+    return send({ jsonrpc: "2.0", id: null, error: { code: -32600, message: "Invalid Request: not a JSON-RPC 2.0 request" } });
   }
   log(`got ${msg.method}`);
   if (!("id" in msg)) return; // a notification: it gets no answer
-  send({ jsonrpc: "2.0", id: msg.id, ...handle(msg) });
+  try {
+    send({ jsonrpc: "2.0", id: msg.id, ...handle(msg) });
+  } catch (err) {
+    log(`a bug: ${err}`);
+    send({ jsonrpc: "2.0", id: msg.id, error: { code: -32603, message: "Internal error" } });
+  }
 });
 input.on("close", () => log("standard input closed, stopping"));
