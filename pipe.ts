@@ -17,6 +17,14 @@ const HELP = [
 // A clean row: its time in seconds since 1970 in UTC, its host and metric, and its value in hundredths.
 type Row = { time: number; host: string; metric: string; value: number };
 
+// A window: the rows of one metric on one host in one minute. Their count, sum, smallest and largest value.
+type Window = { count: number; sum: number; min: number; max: number };
+
+// The store: each window by its key, which is the metric, the host and the minute's first second.
+const store = {
+  windows: {} as Record<string, Window>,
+};
+
 let rows: Row[] = []; // the rows the last run kept
 let bad: string[] = []; // the lines it dropped, and why
 let seen = new Set<string>(); // the time, host and metric of each row it kept
@@ -88,6 +96,16 @@ function clean(fields: string[]): Row | string {
 const when = (time: number) => new Date(time * 1000).toISOString().slice(0, 19).replace("T", " ");
 const number = (value: number) => `${Math.floor(value / 100)}.${String(value % 100).padStart(2, "0")}`.replace(/\.?0+$/, "");
 
+// Add a row to the window of its minute. The minute's first second is the row's time, rounded down to 60.
+function add(row: Row): void {
+  const key = `${row.metric} ${row.host} ${row.time - (row.time % 60)}`;
+  const w = (store.windows[key] ??= { count: 0, sum: 0, min: row.value, max: row.value });
+  w.count += 1;
+  w.sum += row.value;
+  w.min = Math.min(w.min, row.value);
+  w.max = Math.max(w.max, row.value);
+}
+
 // Read one file's lines and keep their rows.
 function load(name: string): string {
   const all = lines(name);
@@ -99,6 +117,7 @@ function load(name: string): string {
     if (typeof row === "string") bad.push(`${name} line ${i + 1}: ${row}: ${trim(all[i])}`);
     else {
       rows.push(row);
+      add(row);
     }
   }
   return `${name}: lines ${all.length}, kept ${rows.length - kept}, dropped ${bad.length - dropped}`;
@@ -109,8 +128,9 @@ function run(): string {
   rows = [];
   bad = [];
   seen = new Set();
+  store.windows = {}; // each run counts every file again
   for (const name of names) console.log(load(name));
-  return `run: files ${names.length}, kept ${rows.length}, dropped ${bad.length}`;
+  return `run: files ${names.length}, kept ${rows.length}, dropped ${bad.length}, windows ${Object.keys(store.windows).length}`;
 }
 
 // The prompt pipe> shows only when you type at a terminal, not when another program sends the commands.
