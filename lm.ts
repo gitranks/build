@@ -8,6 +8,7 @@ const HELP = [
   "text                  what lm read, and what it kept",
   "encode <text>         turn text into numbers, one for each character",
   "decode <numbers>      turn numbers back into text",
+  "counts <character>    the characters that came after this one, and how often",
   "help                  this list",
   "exit                  stop lm",
 ];
@@ -47,6 +48,14 @@ function encode(part: string): number[] {
 function decode(numbers: number[]): string {
   return numbers.map((n) => ALPHABET[n]).join("");
 }
+const show = (id: number): string => `"${ALPHABET[id]}"`;
+
+// The text as numbers.
+const ids = encode(text);
+
+// pairs[a][b]: how many times character b came right after character a.
+const pairs = Array.from({ length: V }, () => new Array<number>(V).fill(0));
+for (let i = 0; i + 1 < ids.length; i++) pairs[ids[i]][ids[i + 1]] += 1;
 
 // A whole number, such as 42.
 const isNumber = (word: string): boolean => /^[0-9]{1,9}$/.test(word);
@@ -70,6 +79,17 @@ function run(words: string[]): string {
   if (name === "decode") {
     if (!rest.length || !rest.every((w) => isNumber(w) && Number(w) < V)) return `usage: decode <numbers>, each from 0 to ${V - 1}`;
     return `"${decode(rest.map(Number))}"`;
+  }
+  if (name === "counts") {
+    const a = ALPHABET.indexOf(arg);
+    if ([...arg].length !== 1 || a < 0) return `usage: counts <character>, one of "${ALPHABET}"`;
+    const order = pairs[a].map((count, b) => [count, b]).filter(([count]) => count > 0);
+    order.sort((x, y) => y[0] - x[0]);
+    let total = 0;
+    for (const [count] of order) total += count;
+    if (!total) return `nothing came after "${arg}"`;
+    const top = order.slice(0, 5).map(([count, b]) => `${show(b)} ${count}`).join(", ");
+    return `after "${arg}": ${top}${order.length > 5 ? ` and ${order.length - 5} more` : ""}, ${total} in all`;
   }
   if (name === "help") return HELP.join("\n");
   return `unknown command: ${name}. Type help for the list.`;
