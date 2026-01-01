@@ -20,7 +20,7 @@ HELP = [
     "crash <flushes>               run, but stop after that many flushes, as a crash would",
     "rows                          show the rows the last run kept, 10 at most",
     "bad                           show the lines the last run dropped and why, 10 at most",
-    "query <metric> [host]         a metric's numbers, minute by minute",
+    "query <metric> [host] [<n>m]  a metric's numbers, minute by minute, or n minutes at a time",
     "help                          this list",
     "exit                          stop pipe",
 ]
@@ -158,13 +158,21 @@ def average(w):
     return (2 * w["sum"] + w["count"]) // (2 * w["count"])
 
 
-# A metric's windows, on one host or on every host, in order of time and then of host.
-def query(metric, host=None):
-    found = []
+# A metric's windows, on one host or on every host, in order of time and then of host. A window of n minutes
+# starts at a multiple of n minutes and folds its minutes into one: counts and sums add up.
+def query(metric, host, minutes):
+    by = {}
     for key, w in store["windows"].items():
-        m, h, start = key.split(" ")
-        if m == metric and (not host or h == host):
-            found.append((int(start), h, w))
+        m, h, utc = key.split(" ")
+        if m != metric or (host and h != host):
+            continue
+        start = int(utc) - int(utc) % (minutes * 60)
+        into = by.get((start, h))
+        if not into:
+            by[(start, h)] = (start, h, dict(w))
+        else:
+            into[2].update(count=into[2]["count"] + w["count"], sum=into[2]["sum"] + w["sum"], min=min(into[2]["min"], w["min"]), max=max(into[2]["max"], w["max"]))
+    found = list(by.values())
     found.sort(key=lambda f: (f[0], f[1]))
     shown = [f"{when(start)[:16]} {h} count {w['count']} avg {number(average(w))} min {number(w['min'])} max {number(w['max'])}" for start, h, w in found]
     return some(shown, f"(no rows of {metric})")
@@ -242,7 +250,11 @@ def command(words):
     if name == "bad":
         return some(bad, "(no bad lines)")
     if name == "query":
-        return query(*words[1:3]) if len(words) > 1 else "usage: query <metric> [host]"
+        size = next((word for word in words if re.fullmatch(r"[1-9][0-9]{0,3}m", word)), None)  # 5m: five minutes at a time
+        metric, host = ([word for word in words[1:] if word != size] + [None, None])[:2]
+        if not metric:
+            return "usage: query <metric> [host] [<n>m]"
+        return query(metric, host, int(size[:-1]) if size else 1)
     if name == "help":
         return "\n".join(HELP)
     return f"unknown command: {name}. Type help for the list."
