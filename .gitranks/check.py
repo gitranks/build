@@ -73,6 +73,7 @@ def session(groups):
 
 
 groups = [("what-you-will-build", [])]
+groups.append(("read-commands", ["help", "", pick(["fly", "hello", "learn"]) + " away", "exit", "help"]))
 session(groups)
 shutil.rmtree(folder, ignore_errors=True)
 
