@@ -175,6 +175,11 @@ session("count-each-row-once", once, ["files", "run", f"query {metric}"])
 spread = [("10:00:05", host, "10"), ("10:00:35", host, "70"), ("10:03:05", host, "20"), ("10:04:59", host, "30"), ("10:05:00", host, "40"), ("10:14:05", host, "50"), ("10:07:05", other, "60")]
 wide = box("wide", {"a.csv": csv([row(at(t), h, metric, x) for t, h, x in spread])})
 session("bigger-windows", wide, ["run", f"query {metric} " + pick(["5m", "10m", "15m"]), f"query {metric} {host} 60m", f"query {metric} 0m"])
+hot = box("hot", {"a.csv": csv([row(at(t), h, metric, x) for t, h, x in [("10:00:05", host, "70"), ("10:00:35", host, "95"), ("10:01:05", host, "60"), ("10:00:10", other, "99")]])})
+session("alert-on-a-limit", hot, [f"alert {metric}", f"alert {metric} " + pick(["90", "75.5", "80"]), "run"])
+with open(os.path.join(hot, "inbox", "b.csv"), "w", encoding="utf-8", newline="") as out:
+    out.write(csv([row(at(t), h, metric, x) for t, h, x in [("10:01:35", host, "99.5"), ("10:02:05", other, "100")]]))
+session("alert-on-a-limit", hot, ["run", f"alert {metric} 50"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the

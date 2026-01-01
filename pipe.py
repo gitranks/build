@@ -21,6 +21,7 @@ HELP = [
     "rows                          show the rows the last run kept, 10 at most",
     "bad                           show the lines the last run dropped and why, 10 at most",
     "query <metric> [host] [<n>m]  a metric's numbers, minute by minute, or n minutes at a time",
+    "alert <metric> <limit>        say ALERT for each minute whose average is above the limit",
     "help                          this list",
     "exit                          stop pipe",
 ]
@@ -37,6 +38,8 @@ store = {
     "windows": {},
     "files": {},  # how many lines of each file are loaded
     "seen": [],  # the rows this run kept so far: after a crash, the next run still finds their duplicates
+    "alerts": {},  # each metric's limit, in hundredths
+    "fired": [],  # the windows that have had their ALERT
 }
 
 # The store is kept in store.json, so it is still there when pipe starts again.
@@ -178,6 +181,19 @@ def query(metric, host, minutes):
     return some(shown, f"(no rows of {metric})")
 
 
+# Say ALERT once for each window whose average is above its metric's limit.
+def alarms():
+    said = []
+    for key, w in store["windows"].items():
+        metric, host, start = key.split(" ")
+        limit = store["alerts"].get(metric)
+        if limit is None or average(w) <= limit or key in store["fired"]:
+            continue
+        store["fired"].append(key)
+        said.append(f"ALERT {metric} on {host} at {when(int(start))[:16]}: average {number(average(w))}, above {number(limit)}")
+    return said
+
+
 # Flush the buffer: add its rows to their windows and save the store.
 # The same write saves how many lines of the file are done, so a run after a crash starts after them.
 def flush(name, done):
@@ -229,6 +245,8 @@ def run(crash):
     for name in names:
         print(load(name))
     store["seen"] = []  # the run is whole: its rows' keys are no longer needed
+    for line in alarms():
+        print(line)
     save()
     return f"run: files {len(names)}, kept {len(rows)}, dropped {len(bad)}, windows {len(store['windows'])}, flushes {flushes}"
 
@@ -255,6 +273,14 @@ def command(words):
         if not metric:
             return "usage: query <metric> [host] [<n>m]"
         return query(metric, host, int(size[:-1]) if size else 1)
+    if name == "alert":
+        limit = hundredths(words[2]) if len(words) == 3 else None
+        if limit is None:
+            return "usage: alert <metric> <limit>"
+        store["alerts"][arg] = limit
+        said = [f"OK: ALERT when a minute's average of {arg} is above {number(limit)}", *alarms()]
+        save()
+        return "\n".join(said)
     if name == "help":
         return "\n".join(HELP)
     return f"unknown command: {name}. Type help for the list."
