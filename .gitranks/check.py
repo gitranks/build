@@ -1,5 +1,6 @@
 # The quiet check of a step: it starts your server, sends it messages made from the seed and
 # prints what came back. It decides nothing: GitRanks compares the print with what it expects.
+import json
 import subprocess
 import sys
 import tempfile
@@ -9,6 +10,22 @@ for ch in sys.argv[2] if len(sys.argv) > 2 else "1":
     n = (n * 31 + ord(ch)) % 2147483647
 seed = str(n)
 lines = []
+
+
+def pick(options):
+    global n
+    n = (n * 48271) % 2147483647 or 1
+    return options[n % len(options)]
+
+
+def call(id, method, params=None):
+    message = {"jsonrpc": "2.0", "id": id, "method": method}
+    if params is not None:
+        message["params"] = params
+    return json.dumps(message, separators=(",", ":"))
+
+
+lines += [call(1, pick(["hello", "say/hi", "what/now", "roll/please"])), "this line is not JSON"]
 
 
 def show(name, file, args, sent):
@@ -28,6 +45,9 @@ def show(name, file, args, sent):
     for line in stderr.splitlines():
         if line.startswith("my-server: "):
             print(f"{name} logged: {line[11:].strip()}")
+    crash = [line for line in stderr.splitlines() if line[:1].isalpha() and "Error" in line.split(":")[0]]
+    if crash:
+        print(f"{name} crashed: {crash[-1].strip()}")
     if code is None:
         print(f"{name} did not stop within 5 seconds")
     elif code != 0:
