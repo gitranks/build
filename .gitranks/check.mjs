@@ -56,6 +56,8 @@ session("do-arithmetic", [`${a} + ${b} - 1`, pick(["7 / 2", "17 / 5", "29 / 4"])
 session("cut-into-tokens", [`${a}+${b}`, `${a}*${b}-${b}`, `${a} ${pick(["@", "?", "&"])} ${b}`, `${a} ${b}`]);
 session("build-a-tree", ["2 + 3 * 4", `${a} - ${b} * 2 - 1`, `${a} / ${b} * ${b}`, `* ${a}`, `${a} -`]);
 session("brackets-and-minus", [`(${a} + ${b}) * 2`, `-${a} + ${b}`, `-(${a} - ${b}) * 2`, `(${a} + 1`, `${a} ${b}`]);
+const [x, y] = pick([[7, 2], [9, 4], [11, 3], [13, 5]]);
+session("exact-whole-numbers", [`-${x} / ${y}`, `-${x} % ${y}`, `${x} % -${y}`, pick(["99999999 * 99999999", "9007199254740991 + 1"]), "12345678901234567890"]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

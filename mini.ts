@@ -8,22 +8,33 @@ type Value = number;
 type Token = { kind: string; text: string };
 type Node = { kind: string; [field: string]: any };
 
+// Every number is whole and between -LIMIT and LIMIT, so mini gives the same answers in every language.
+const LIMIT = 9007199254740991; // 2 ** 53 - 1: the largest whole number a JavaScript number holds exactly
+function checked(n: number): number {
+  if (Math.abs(n) > LIMIT) throw new MiniError(`number too big: mini's numbers stop at ${LIMIT}`);
+  return n;
+}
+
 // A number, from its digits.
 function number(text: string): number {
-  return Number(text);
+  return checked(text.length > 16 ? Infinity : Number(text));
 }
 
 // Work out one operator on two values.
 function operate(op: string, a: Value, b: Value): Value {
-  if (op === "+") return a + b;
-  if (op === "-") return a - b;
-  if (op === "*") return a * b;
+  if (op === "+") return checked(a + b);
+  if (op === "-") return checked(a - b);
+  if (op === "*") return checked(a * b);
   if (b === 0) throw new MiniError("division by zero");
-  return Math.floor(a / b); // a whole number, rounded down: 7 / 2 is 3
+  if (op === "/") return Math.floor(a / b); // a whole number, rounded down: 7 / 2 is 3, and -7 / 2 is -4
+  // The remainder has the sign of b, so a is always (a / b) * b + a % b.
+  const rest = a % b;
+  return rest !== 0 && (rest < 0) !== (b < 0) ? rest + b : rest;
 }
 
 const SYMBOLS = [ // the symbols mini knows
   "+", "-", "*", "/",
+  "%",
   "(", ")",
 ];
 
@@ -62,7 +73,7 @@ function parse(tokens: Token[]): Node {
     return left;
   }
   const expression = (): Node => binary(["+", "-"], factor);
-  const factor = (): Node => binary(["*", "/"], unary);
+  const factor = (): Node => binary(["*", "/", "%"], unary);
   const unary = (): Node => (accept("-") ? { kind: "negate", value: unary() } : primary());
   function primary(): Node {
     const token = advance();
