@@ -216,6 +216,11 @@ made = pick(["plans/next.txt", "docs/ideas.md", "todo/today.txt"])
 makes = [call("edit_file", {"path": made, "old_text": "", "new_text": "run a command\n"}), call("list_files"), heard]
 makes += [call("edit_file", {"path": made, "old_text": "", "new_text": "again\n"}), heard]
 session("make-a-file", [f"make {made}", "make it again"], makes)
+a, b = pick([(6, 7), (12, 12), (9, 8)])
+runs = [call("run_command", {"command": command(f"print({a} * {b})")}), heard]
+runs += [call("run_command", {"command": command("import os; os.remove('notes.txt')")}), heard]
+session("run-a-command", [f"what is {a} times {b}?", "yes", "delete my notes", pick(["no", "nope", "not now"])], runs)
+said.append(("run-a-command", "notes.txt is still there: " + ("yes" if os.path.exists(os.path.join(folder, "notes.txt")) else "no")))
 server.shutdown()
 shutil.rmtree(top, ignore_errors=True)
 

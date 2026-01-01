@@ -2,6 +2,7 @@
 # use tools on the files of this folder. Start it: python3 agent.py on macOS and Linux, py agent.py on Windows.
 import json
 import os
+import subprocess
 import sys
 import urllib.error
 import urllib.request
@@ -57,6 +58,7 @@ TOOLS = [
         "old_text": text("the text to change"),
         "new_text": text("the text to put in its place"),
     }),
+    tool("run_command", "Run a shell command in the folder. The person is asked first.", {"command": text("the command")}),
 ]
 
 
@@ -119,6 +121,8 @@ def use(call):
         return read(args.get("path"))
     if name == "edit_file":
         return edit(args.get("path"), args.get("old_text"), args.get("new_text"))
+    if name == "run_command":
+        return run(args.get("command"))
     return f"error: there is no tool named {name}"
 
 
@@ -183,6 +187,19 @@ def edit(given, old, now):
     with open(file, "w", encoding="utf-8", newline="") as f:
         f.write(was.replace(old, now, 1))
     return f"changed {given}"
+
+
+# Run a command in the folder, but only once you say yes: a command can do anything you can.
+def run(command):
+    if not isinstance(command, str) or not command.strip():
+        return "error: give a command"
+    # Control characters are shown as codes, so none of them can hide a part of the command on the screen.
+    shown = "".join(f"\\x{ord(c):02x}" if ord(c) < 32 or 127 <= ord(c) < 160 else c for c in command)
+    print(f"agent: run this command? {shown} (yes or no)")
+    if (line("yes or no> ") or "").strip().lower() not in ("y", "yes"):
+        return "The person said no, so the command did not run. Ask them what to do instead."
+    done = subprocess.run(command, shell=True, cwd=ROOT, stdin=subprocess.DEVNULL, capture_output=True)
+    return f"exit code {done.returncode}\n" + (done.stdout + done.stderr).decode("utf-8", "replace")
 
 
 # Read your lines one at a time. The prompt shows only when you type at a terminal, not when a program sends them.
