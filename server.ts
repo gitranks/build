@@ -35,6 +35,11 @@ const ROLL_DICE = {
     },
     additionalProperties: false,
   },
+  outputSchema: {
+    type: "object",
+    properties: { rolls: { type: "array", items: { type: "integer" } }, total: { type: "integer" } },
+    required: ["rolls", "total"],
+  },
 };
 const PICK_ONE = {
   name: "pick_one",
@@ -47,12 +52,13 @@ const PICK_ONE = {
     required: ["choices"],
     additionalProperties: false,
   },
+  outputSchema: { type: "object", properties: { choice: { type: "string" } }, required: ["choice"] },
 };
 const TOOLS = [ROLL_DICE, PICK_ONE];
 
-// A tool's result is a list of content. Ours is one piece of text.
-function text(words: string): object {
-  return { content: [{ type: "text", text: words }] };
+// The result as data the agent can read field by field, and as JSON text for agents that can not.
+function data(value: object): object {
+  return { content: [{ type: "text", text: JSON.stringify(value) }], structuredContent: value };
 }
 
 // A tool's own error goes back as a result marked isError, so the agent can read it and try again.
@@ -71,7 +77,7 @@ function rollDice(args: any): object {
   }
   const rolls = Array.from({ length: count }, () => randomBelow(sides) + 1);
   const total = rolls.reduce((sum, roll) => sum + roll, 0);
-  return text(count === 1 ? `You rolled ${total}.` : `You rolled ${rolls.join(", ")}: ${total} in total.`);
+  return data({ rolls, total });
 }
 
 function pickOne(args: any): object {
@@ -79,7 +85,7 @@ function pickOne(args: any): object {
   if (!Array.isArray(choices) || choices.length < 2 || choices.length > 20 || !choices.every((c) => typeof c === "string")) {
     return toolError("choices must be a list of 2 to 20 pieces of text.");
   }
-  return text(`I picked: ${choices[randomBelow(choices.length)]}`);
+  return data({ choice: choices[randomBelow(choices.length)] });
 }
 
 const RUN = new Map<string, (args: any) => object>([["roll_dice", rollDice], ["pick_one", pickOne]]);
