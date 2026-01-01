@@ -60,6 +60,7 @@ const [x, y] = pick([[7, 2], [9, 4], [11, 3], [13, 5]]);
 session("exact-whole-numbers", [`-${x} / ${y}`, `-${x} % ${y}`, `${x} % -${y}`, pick(["99999999 * 99999999", "9007199254740991 + 1"]), "12345678901234567890"]);
 const name = pick(["x", "count", "total_2"]);
 session("let-and-names", [`let ${name} = ${a} * 2`, `${name} + 1`, pick(["y", "size", "Count"]), "let = 5", `let ${pick(["7", "+"])} = 1`]);
+session("change-a-variable", [`let ${name} = ${a}`, `${name} = ${name} + ${b}`, `${name}`, `${pick(["y", "size"])} = 1`]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

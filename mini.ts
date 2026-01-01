@@ -76,6 +76,11 @@ function parse(tokens: Token[]): Node {
       expect("=");
       return { kind: "let", name, value: expression() };
     }
+    if (peek().kind === "name" && tokens[1].kind === "=") {
+      const name = advance().text;
+      advance();
+      return { kind: "set", name, value: expression() };
+    }
     return { kind: "expr", value: expression() };
   }
   function binary(ops: string[], operand: () => Node): Node {
@@ -106,15 +111,28 @@ function parse(tokens: Token[]): Node {
 type Scope = Map<string, Value>;
 const top: Scope = new Map();
 
+// The scope that holds a name. A scope is the variables a statement can see.
+function find(scope: Scope, name: string): Scope {
+  if (scope.has(name)) return scope;
+  throw new MiniError(`${name} is not defined`);
+}
+
 // Work out the value of a node of the tree.
-function evaluate(node: Node): Value {
+function evaluate(node: Node, scope: Scope): Value {
   if (node.kind === "value") return node.value;
-  if (node.kind === "name") {
-    if (!top.has(node.name)) throw new MiniError(`${node.name} is not defined`);
-    return top.get(node.name) as Value;
+  if (node.kind === "name") return find(scope, node.name).get(node.name) as Value;
+  if (node.kind === "negate") return operate("-", 0, evaluate(node.value, scope));
+  return operate(node.op, evaluate(node.left, scope), evaluate(node.right, scope));
+}
+
+// Carry out one statement in a scope. The value of a statement that is only an expression is given back.
+function execute(node: Node, scope: Scope): Value | undefined {
+  if (node.kind === "let") scope.set(node.name, evaluate(node.value, scope));
+  else if (node.kind === "set") {
+    const value = evaluate(node.value, scope);
+    find(scope, node.name).set(node.name, value);
   }
-  if (node.kind === "negate") return operate("-", 0, evaluate(node.value));
-  return operate(node.op, evaluate(node.left), evaluate(node.right));
+  else return evaluate(node.value, scope);
 }
 
 // Say what went wrong. A mistake in the program is not a crash of mini: anything else is.
@@ -132,8 +150,8 @@ function ask(): void {
 function attempt(line: string): void {
   try {
     const node = parse(tokenize(line));
-    if (node.kind === "let") top.set(node.name, evaluate(node.value));
-    else console.log(String(evaluate(node.value)));
+    const value = execute(node, top);
+    if (node.kind === "expr") console.log(String(value));
   } catch (error) {
     report(error);
   }
