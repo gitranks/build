@@ -106,7 +106,8 @@ ROUTES = {
 # A file from the public folder, such as /style.css. Its type comes from the end of its name.
 def file(pathname):
     name = os.path.normpath(os.path.join(PUBLIC, urllib.parse.unquote(pathname).lstrip("/")))
-    if not os.path.isfile(name):
+    # A path such as /../server.py leads out of the folder: every file outside it stays private.
+    if not name.startswith(PUBLIC + os.sep) or not os.path.isfile(name):
         return text(f"no page at {pathname}", 404)
     with open(name, "rb") as found:
         return {"status": 200, "type": TYPES.get(os.path.splitext(name)[1], "application/octet-stream"), "body": found.read()}

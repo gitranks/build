@@ -316,6 +316,15 @@ def serve_files(port):
 
 
 session("serve-files", serve_files)
+
+
+def stay_in_the_folder(port):
+    ask(port, "stay-in-the-folder", [get(pick(["/../README.md", "/..%2fREADME.md", "/%2e%2e/README.md"]))], brief=True)
+    ask(port, "stay-in-the-folder", [get(pick(["/100%", "/%FF.html", "/50%25%"]))], brief=True)
+    ask(port, "stay-in-the-folder", [get(pick(["/about.html", "/style.css"]))], brief=True)
+
+
+session("stay-in-the-folder", stay_in_the_folder)
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
