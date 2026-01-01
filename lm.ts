@@ -6,6 +6,8 @@ import { createInterface } from "node:readline";
 // The commands lm knows, as help shows them.
 const HELP = [
   "text                  what lm read, and what it kept",
+  "encode <text>         turn text into numbers, one for each character",
+  "decode <numbers>      turn numbers back into text",
   "help                  this list",
   "exit                  stop lm",
 ];
@@ -36,6 +38,19 @@ if (text.length < 100 || new Set(text).size < 2) {
   process.exit(1);
 }
 
+// The alphabet: each character of the text once, in order. A character's number is its place in the alphabet.
+const ALPHABET = [...new Set(text)].sort().join("");
+const V = ALPHABET.length;
+function encode(part: string): number[] {
+  return [...part].map((ch) => ALPHABET.indexOf(ch));
+}
+function decode(numbers: number[]): string {
+  return numbers.map((n) => ALPHABET[n]).join("");
+}
+
+// A whole number, such as 42.
+const isNumber = (word: string): boolean => /^[0-9]{1,9}$/.test(word);
+
 // The prompt lm> shows only when you type at a terminal, not when another program sends the commands.
 function ask(): void {
   if (process.stdin.isTTY) process.stdout.write("lm> ");
@@ -43,8 +58,19 @@ function ask(): void {
 
 // Run one command, its name and then its words, and give back the answer.
 function run(words: string[]): string {
-  const [name] = words;
+  const [name, ...rest] = words;
+  const arg = rest.join(" ");
   if (name === "text") return `lm read ${[...raw].length} characters and kept ${text.length}`;
+  if (name === "encode") {
+    if (!arg) return "usage: encode <text>";
+    const missing = [...arg].find((ch) => !ALPHABET.includes(ch));
+    if (missing) return `not in the alphabet: "${missing}". The alphabet is "${ALPHABET}"`;
+    return encode(arg).join(" ");
+  }
+  if (name === "decode") {
+    if (!rest.length || !rest.every((w) => isNumber(w) && Number(w) < V)) return `usage: decode <numbers>, each from 0 to ${V - 1}`;
+    return `"${decode(rest.map(Number))}"`;
+  }
   if (name === "help") return HELP.join("\n");
   return `unknown command: ${name}. Type help for the list.`;
 }
