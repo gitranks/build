@@ -298,6 +298,15 @@ def read_a_body(port):
 
 
 session("read-a-body", read_a_body)
+
+
+def show_notes_safely(port):
+    sly = pick(["%3Cb%3Ebold%3C%2Fb%3E", "%3Cscript%3Ealert(1)%3C%2Fscript%3E", "Tom+%26+%22Jerry%22"])
+    ask(port, "show-notes-safely", [post("/notes", f"note={sly}")], label=f"POST /notes with the body note={sly}", brief=True)
+    ask(port, "show-notes-safely", [get("/notes")], show=lambda line, i: line.startswith("<p>"))
+
+
+session("show-notes-safely", show_notes_safely)
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the

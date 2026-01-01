@@ -1,5 +1,6 @@
 # web: a web server, written from nothing on a plain socket, with no library.
 # While it runs, open http://localhost:8080 in your browser. Start it with: python3 server.py (python on Windows)
+import html
 import socket
 import sys
 import urllib.parse
@@ -64,7 +65,8 @@ def old(request):
 
 
 def notes_page(request):
-    shown = [f"<p>{note}</p>" for note in notes]
+    # html.escape makes a note safe to put in a page: <b>hi</b> is shown as it was typed, never read as HTML.
+    shown = [f"<p>{html.escape(note)}</p>" for note in notes]
     form = '<form method="post" action="/notes"><input name="note" autofocus> <button>Add a note</button></form>'
     return page("Notes", *shown, form)
 
