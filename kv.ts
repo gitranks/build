@@ -1,5 +1,6 @@
 // kv: a key-value database, written from nothing, with no library.
 // You type a command, such as set name Ada, and it answers. Start it with: node kv.ts
+import * as fs from "node:fs";
 import { createInterface } from "node:readline";
 
 // The commands kv knows, as help shows them.
@@ -12,8 +13,18 @@ const HELP = [
   "exit                  stop kv",
 ];
 
+// The log: a file where every change is written down, one line of JSON each. --file picks another file.
+const at = process.argv.indexOf("--file");
+const FILE = at > 0 && process.argv[at + 1] ? process.argv[at + 1] : "data.log";
+
 // What you set, kept in memory while kv runs.
 const data = new Map<string, string>();
+
+// Write records at the end of the log, one line each.
+function write(batch: string[][]): void {
+  const lines = batch.map((record) => JSON.stringify(record) + "\n");
+  fs.appendFileSync(FILE, lines.join(""));
+}
 
 // The prompt kv> shows only when you type at a terminal, not when another program sends the commands.
 function ask(): void {
@@ -26,6 +37,7 @@ function run(words: string[]): string {
   const value = rest.join(" ");
   if (name === "set") {
     if (!key || !value) return "usage: set <key> <value>";
+    write([["set", key, value]]);
     data.set(key, value);
     return "OK";
   }
@@ -36,6 +48,7 @@ function run(words: string[]): string {
   if (name === "del") {
     if (!key) return "usage: del <key>";
     if (!data.has(key)) return "(not found)";
+    write([["del", key]]);
     data.delete(key);
     return "deleted";
   }

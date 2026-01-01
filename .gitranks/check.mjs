@@ -39,6 +39,14 @@ function session(about, commands) {
   } else if (run.status !== 0) said.push([run.status === 3 ? about : "always", `kv stopped with code ${run.status}`]);
 }
 
+// The lines kv wrote in its log from this byte on.
+function logFrom(about, start) {
+  const text = fs.existsSync(FILE) ? fs.readFileSync(FILE).subarray(start).toString("utf8") : "";
+  const lines = text.split("\n");
+  for (const line of lines.slice(0, -1)) said.push([about, `data.log: ${line}`]);
+  if (lines.at(-1)) said.push([about, `data.log ends with a line cut short: ${lines.at(-1)}`]);
+}
+
 session("what-you-will-build", []);
 session("read-commands", ["help", "", pick(["fly", "hello", "remember"]) + " away", "exit", "help"]);
 const key = pick(["name", "color", "city"]);
@@ -48,6 +56,10 @@ const gone = pick(["pet", "car", "game"]);
 session("delete-a-key", [`set ${gone} ${pick(["cat", "red bike", "chess"])}`, `del ${gone}`, `get ${gone}`, `del ${gone}`, "del"]);
 session("list-the-keys", ["keys"]);
 session("list-the-keys", [`set ${pick(["mid", "zeta", "both"])} 1`, `set ${pick(["alpha", "end", "box"])} 2`, "keys"]);
+const before = size();
+const word = pick(["sky", "tea", "song"]);
+session("write-it-down", [`set ${word} ${pick(["grey", "green", "loud"])}`, `set ${word} ${pick(["blue", "black", "soft"])}`, `del ${word}`]);
+logFrom("write-it-down", before);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
