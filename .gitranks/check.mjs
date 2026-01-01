@@ -1,7 +1,7 @@
 // The quiet check of a step: it starts the server a few times, each time on a free port the system picks, sends it
 // requests made from the seed on a plain socket, as a browser would, and prints what came back. It decides nothing:
 // GitRanks compares the print with what it expects. The port differs on every run, so it is printed as <port>.
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import * as fs from "node:fs";
 import * as net from "node:net";
@@ -15,7 +15,6 @@ const pick = (list) => list[(n = (n * 48271) % 2147483647 || 1) % list.length];
 const said = []; // each line to print, with the step it is about, or "always"
 const folder = fs.mkdtempSync(join(tmpdir(), "web-check-"));
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const cut = (line) => (line.length > 100 ? line.slice(0, 100) + "..." : line);
 
 // All the sessions together get 20 seconds at most, and a server that never says it listens ends the check there:
 // the next sessions would wait for it too.
@@ -97,180 +96,31 @@ async function wait(link, test) {
   }
 }
 
-// What came back, split into answers: each is a head up to a blank line, then as many bytes of body as its
-// Content-Length says. A head with no blank line yet is kept as it is.
-function answersIn(bytes) {
-  const answers = [];
-  while (bytes.length) {
-    const end = bytes.indexOf("\r\n\r\n");
-    if (end < 0) {
-      answers.push({ head: null, body: bytes });
-      break;
-    }
-    const head = bytes.subarray(0, end).toString("latin1");
-    const size = head.match(/\r\ncontent-length: *([0-9]+)/i)?.[1];
-    const stop = size === undefined ? bytes.length : Math.min(bytes.length, end + 4 + Number(size));
-    answers.push({ head, size: size === undefined ? null : Number(size), body: bytes.subarray(end + 4, stop) });
-    bytes = bytes.subarray(stop);
-  }
-  return answers;
-}
-const whole = (answers) => answers.filter((a) => a.head !== null && a.size !== null && a.body.length >= a.size).length;
-
-// Print one answer: its status line and headers on one line, then the lines of its body that `show` keeps.
-function tell(about, answer, show) {
-  if (!answer) return said.push([about, "got: nothing, the connection closed"]);
-  if (answer.head === null) return said.push([about, `got: no blank line after the head: ${cut(JSON.stringify(answer.body.toString("latin1")))}`]);
-  said.push([about, `got: ${answer.head.split("\r\n").join(" | ")}`]);
-  if (answer.size !== null && answer.body.length < answer.size) {
-    said.push([about, `body: ${answer.body.length} bytes came, but Content-Length says ${answer.size}`]);
-  }
-  const lines = answer.body.toString("utf8").split("\n");
-  lines.forEach((line, i) => (line.trim() && show(line, i) ? said.push([about, `body: ${cut(line.trimEnd())}`]) : 0));
-}
-
-// Send a request on a connection of its own, in one piece or a few, and print what came back. The request asks the
-// server to close the connection after its answer, so the check reads until it closes.
-async function ask(port, about, pieces, { label, show = (line, i) => i < 3, brief = false } = {}) {
-  const request = pieces.join("");
-  const sent = label ?? request.split("\r\n")[0];
+// Send one request on a connection of its own, with its body when it has one, and print it and its answer on one
+// line: the status, each header but the length and the connection, and the body.
+async function call(port, about, method, target, body = "") {
+  const sent = `${method} ${target}${body ? ` ${body}` : ""}`;
   const link = await connect(port);
-  if (!link.open) return said.push([about, `sent: ${sent}`], [about, "got: nothing, the server is not listening"]);
-  for (const [i, piece] of pieces.entries()) {
-    if (i) await sleep(150);
-    link.socket.write(piece);
-  }
+  if (!link.open) return said.push([about, `${sent} -> nothing, the server is not listening`]);
+  link.socket.write(`${method} ${target} HTTP/1.1\r\nHost: localhost\r\nContent-Length: ${Buffer.byteLength(body)}\r\nConnection: close\r\n\r\n${body}`);
   await wait(link, () => false);
   link.socket.destroy();
-  const [answer, ...more] = answersIn(link.got);
-  if (brief) {
-    const heard = answer && answer.head !== null;
-    const status = heard ? answer.head.split("\r\n")[0] : "nothing";
-    const body = heard ? answer.body.toString("utf8").split("\n")[0] : "";
-    said.push([about, `sent: ${sent} -> got: ${status}${body ? ` | body: ${cut(body)}` : ""}`]);
-  } else {
-    said.push([about, `sent: ${sent}`]);
-    tell(about, answer, show);
-  }
-  if (more.length) said.push([about, `then ${link.got.length - (answer.head.length + 4 + answer.body.length)} bytes more than Content-Length says`]);
+  const end = link.got.indexOf("\r\n\r\n");
+  if (end < 0) return said.push([about, `${sent} -> ${link.got.length ? "an answer with no blank line after its head" : "nothing, the connection closed"}`]);
+  const [first, ...headers] = link.got.subarray(0, end).toString("latin1").split("\r\n");
+  const shown = headers.filter((line) => !/^(content-length|connection):/i.test(line));
+  const answer = link.got.subarray(end + 4).toString("utf8").replace(/\s*\n\s*/g, " ").trim();
+  const words = [`${sent} -> ${first.replace(/^HTTP\/1\.1 /, "")}`, ...shown, answer.length > 200 ? answer.slice(0, 200) + "..." : answer];
+  said.push([about, words.filter(Boolean).join(" | ")]);
   if (!link.closed) said.push([about, "the server did not close the connection within 3 seconds"]);
 }
+const titles = ["Buy milk", "Call Grace", "Water the plants"];
 
-// A request with no body, as a browser sends one when you open a page.
-const get = (target, method = "GET") => `${method} ${target} HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n`;
-// A form's request: a body of name=value, with its length in Content-Length.
-const post = (target, body) =>
-  `POST ${target} HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/x-www-form-urlencoded\r\n` +
-  `Content-Length: ${Buffer.byteLength(body)}\r\nConnection: close\r\n\r\n${body}`;
-
-await session("what-you-will-build", null);
-await session("listen-on-a-port", (port) => ask(port, "listen-on-a-port", [get("/")]));
-await session("read-the-request", async (port) => {
-  const [line, ...rest] = get(pick(["/", "/hello", "/cats"])).split("\r\n");
-  await ask(port, "read-the-request", [line + "\r\n", rest.join("\r\n")], { label: `${line}, in two pieces` });
-});
-await session("answer-by-hand", (port) => ask(port, "answer-by-hand", [get(pick(["/", "/index.html", "/dogs"]))]));
-await session("read-the-request-line", async (port) => {
-  await ask(port, "read-the-request-line", [get(pick(["/hello?name=Ada", "/cats/1", "/a/b/c"]))]);
-  await ask(port, "read-the-request-line", [get(pick(["/notes", "/x?y=z", "/"]), pick(["DELETE", "PUT", "POST"]))]);
-});
-await session("read-the-headers", async (port) => {
-  const extra = `User-Agent: ${pick(["web-check/1", "curious-browser", "a teapot"])}\r\nX-Color:   ${pick(["blue", "green", "red"])}  \r\nACCEPT: text/plain\r\nX-Time: 12:30\r\n`;
-  await ask(port, "read-the-headers", [get("/" + pick(["page", "headers", "hello"])).replace("\r\n\r\n", `\r\n${extra}\r\n`)], {
-    show: (line, i) => i < 7,
-  });
-});
-await session("not-found", async (port) => {
-  await ask(port, "not-found", [get("/")], { show: (line, i) => i < 1 });
-  await ask(port, "not-found", [get(pick(["/cats", "/nothing/here", "/hello"]))]);
-});
-await session("routes", async (port) => {
-  await ask(port, "routes", [get("/")]);
-  await ask(port, "routes", [get(`/hello?name=${pick(["Ada", "Grace+Hopper", "Zo%C3%AB"])}`)]);
-  await ask(port, "routes", [get("/hello")]);
-});
-await session("moved-and-not-allowed", async (port) => {
-  await ask(port, "moved-and-not-allowed", [get(pick(["/hello", "/", "/headers"]), pick(["POST", "PUT", "DELETE"]))]);
-  await ask(port, "moved-and-not-allowed", [get("/old")]);
-});
-await session("send-html", async (port) => {
-  await ask(port, "send-html", [get("/")], { show: (line) => /<title>|<p>/.test(line) });
-});
-const note = pick(["Buy+milk%21", "Call+Grace", "Caf%C3%A9+at+3"]);
-await session("read-a-body", async (port) => {
-  const [head, body] = post("/notes", `note=${note}`).split("\r\n\r\n");
-  await ask(port, "read-a-body", [head + "\r\n\r\n", body], { label: `POST /notes with the body note=${note}, in two pieces` });
-  await ask(port, "read-a-body", [get("/notes")], { show: (line) => line.startsWith("<p>") });
-});
-await session("show-notes-safely", async (port) => {
-  const sly = pick(["%3Cb%3Ebold%3C%2Fb%3E", "%3Cscript%3Ealert(1)%3C%2Fscript%3E", "Tom+%26+%22Jerry%22"]);
-  await ask(port, "show-notes-safely", [post("/notes", `note=${sly}`)], { label: `POST /notes with the body note=${sly}`, brief: true });
-  await ask(port, "show-notes-safely", [get("/notes")], { show: (line) => line.startsWith("<p>") });
-});
-await session("serve-files", async (port) => {
-  await ask(port, "serve-files", [get("/style.css")], { show: (line, i) => i < 1 });
-  await ask(port, "serve-files", [get("/about.html")], { show: (line) => line.startsWith("<h1>") });
-  await ask(port, "serve-files", [get(pick(["/logo.png", "/missing.html", "/style.css.old"]))]);
-});
-await session("stay-in-the-folder", async (port) => {
-  await ask(port, "stay-in-the-folder", [get(pick(["/../README.md", "/..%2fREADME.md", "/%2e%2e/README.md"]))], { brief: true });
-  await ask(port, "stay-in-the-folder", [get(pick(["/100%", "/%FF.html", "/50%25%"]))], { brief: true });
-  await ask(port, "stay-in-the-folder", [get(pick(["/about.html", "/style.css"]))], { brief: true });
-});
-await session("many-at-once", async (port) => {
-  const name = pick(["Ada", "Alan", "Grace"]);
-  said.push(["many-at-once", `sent: GET /slow, then GET /hello?name=${name} on a second connection 0.2 seconds later`]);
-  const slow = await connect(port);
-  slow.socket.write(get("/slow"));
-  await sleep(200);
-  const quick = await connect(port);
-  quick.socket.write(get(`/hello?name=${name}`));
-  const order = [];
-  const until = Date.now() + Math.min(4000, left());
-  while (order.length < 2 && Date.now() < until) {
-    for (const [target, link] of [["/slow", slow], [`/hello?name=${name}`, quick]]) {
-      if (!order.includes(target) && (link.closed || whole(answersIn(link.got)))) order.push(target);
-    }
-    await sleep(20);
-  }
-  for (const [i, target] of order.entries()) {
-    const answer = answersIn((target === "/slow" ? slow : quick).got)[0];
-    const body = answer && answer.head !== null ? answer.body.toString("utf8").split("\n")[0] : "nothing";
-    said.push(["many-at-once", `${i ? "then" : "first"} came the answer to ${target}: ${cut(body)}`]);
-  }
-  if (order.length < 2) said.push(["many-at-once", "one answer did not come within 4 seconds"]);
-  slow.socket.destroy();
-  quick.socket.destroy();
-});
-await session("keep-alive", async (port) => {
-  const names = [pick(["Ada", "Alan"]), pick(["Grace", "Linus"])];
-  const open = (target) => get(target).replace("Connection: close\r\n", "");
-  said.push(["keep-alive", `sent: GET /hello?name=${names[0]} and GET /hello?name=${names[1]} at once, on one connection`]);
-  const link = await connect(port);
-  link.socket.write(open(`/hello?name=${names[0]}`) + open(`/hello?name=${names[1]}`));
-  await wait(link, () => whole(answersIn(link.got)) >= 2);
-  said.push(["keep-alive", "sent: GET /hello on the same connection, with Connection: close"]);
-  link.socket.write(get("/hello"));
-  await wait(link, () => false);
-  for (const answer of answersIn(link.got)) tell("keep-alive", answer, (line, i) => i < 1);
-  said.push(["keep-alive", link.closed ? "then the server closed the connection" : "the server did not close the connection within 3 seconds"]);
-  link.socket.destroy();
-});
-await session("a-bad-request", async (port) => {
-  const brief = { brief: true };
-  const line = pick(["HELLO", "GET /hello", "GET /hello HTTP/1.1 please"]);
-  await ask(port, "a-bad-request", [`${line}\r\nHost: localhost\r\n\r\n`], brief);
-  const header = pick(["Name Ada", "no colon here", ": blue"]);
-  await ask(port, "a-bad-request", [get("/hello").replace("Host: localhost", `Host: localhost\r\n${header}`)], { ...brief, label: `GET /hello with the header line "${header}"` });
-  const size = pick(["ten", "-5", "1e3"]);
-  await ask(port, "a-bad-request", [get("/notes", "POST").replace("Host: localhost", `Host: localhost\r\nContent-Length: ${size}`)], { ...brief, label: `POST /notes with Content-Length: ${size}` });
-  const big = pick(["5000000", "1000001", "99999999"]);
-  await ask(port, "a-bad-request", [get("/notes", "POST").replace("Host: localhost", `Host: localhost\r\nContent-Length: ${big}`)], { ...brief, label: `POST /notes with Content-Length: ${big}` });
-  await ask(port, "a-bad-request", [get(`/hello?name=${pick(["again", "still+here"])}`)], brief);
-});
-await session("an-error-in-a-route", async (port) => {
-  await ask(port, "an-error-in-a-route", [get("/crash")]);
-  await ask(port, "an-error-in-a-route", [get(`/hello?name=${pick(["after", "still+here"])}`)]);
+await session("answer-in-json", async (port) => {
+  await call(port, "answer-in-json", "GET", "/api/tasks");
+  await call(port, "answer-in-json", "POST", "/api/tasks", JSON.stringify({ title: pick(titles) }));
+  await call(port, "answer-in-json", "POST", "/api/tasks", JSON.stringify({ title: pick(["Read a book", "Fix the bike"]), done: true }));
+  await call(port, "answer-in-json", "GET", "/api/tasks");
 });
 try {
   fs.rmSync(folder, { recursive: true, force: true });

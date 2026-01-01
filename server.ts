@@ -20,6 +20,7 @@ const TYPES: Record<string, string> = {
 // The words that go with each status code on an answer's first line.
 const REASONS: Record<number, string> = {
   200: "OK",
+  201: "Created",
   301: "Moved Permanently",
   303: "See Other",
   400: "Bad Request",
@@ -42,6 +43,8 @@ type Answer = { status: number; type: string; body: string | Buffer; headers?: R
 
 // An answer of plain text.
 const text = (body: string, status = 200): Answer => ({ status, type: "text/plain; charset=utf-8", body });
+// An answer in JSON, for a program to read: a value written as text, such as {"id":1,"title":"Buy milk","done":false}.
+const json = (value: unknown, status = 200): Answer => ({ status, type: "application/json", body: JSON.stringify(value) });
 
 // An HTML page: the browser draws it, and follows its links.
 function page(title: string, ...lines: string[]): Answer {
@@ -62,6 +65,11 @@ function escape(note: string): string {
 
 // The notes people send from the form on /notes, kept in memory while the server runs.
 const notes: string[] = [];
+
+// The tasks of the API at /api/tasks, kept in memory by their id while the server runs, and the last id given.
+type Task = { id: number; title: string; done: boolean };
+const tasks = new Map<string, Task>();
+let lastId = 0;
 
 // The routes: a method and a path, each with the function that answers it.
 const ROUTES: Record<string, (request: Request) => Answer | Promise<Answer>> = {
@@ -104,6 +112,15 @@ const ROUTES: Record<string, (request: Request) => Answer | Promise<Answer>> = {
   },
   "GET /crash": () => {
     throw new Error("this route always fails");
+  },
+  "GET /api/tasks": () => json([...tasks.values()]),
+  "POST /api/tasks": (request) => {
+    // The body is JSON, such as {"title":"Buy milk"}: JSON.parse turns it into an object.
+    const given = JSON.parse(request.body.toString("utf8"));
+    const task: Task = { id: ++lastId, title: "", done: false, ...given };
+    tasks.set(String(task.id), task);
+    // 201 Created, and Location says where the new task lives.
+    return { ...json(task, 201), headers: { Location: `/api/tasks/${task.id}` } };
   },
 };
 
