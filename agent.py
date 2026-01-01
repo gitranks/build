@@ -45,8 +45,13 @@ def tool(name, description, properties=None, required=None):
     return {"type": "function", "function": {"name": name, "description": description, "parameters": parameters}}
 
 
+def text(description):
+    return {"type": "string", "description": description}
+
+
 TOOLS = [
     tool("list_files", "List every file in the folder."),
+    tool("read_file", "Read a file.", {"path": text("the file's path")}),
 ]
 
 
@@ -97,8 +102,16 @@ def turn(text):
 def use(call):
     name, given = call["function"]["name"], call["function"]["arguments"]
     print(f"tool: {name} {given}")
+    try:
+        args = json.loads(given or "{}")
+        if not isinstance(args, dict):
+            raise ValueError
+    except ValueError:
+        return "error: the arguments are not JSON"
     if name == "list_files":
         return list_files()
+    if name == "read_file":
+        return read(args.get("path"))
     return f"error: there is no tool named {name}"
 
 
@@ -109,6 +122,15 @@ def list_files():
         folders[:] = [name for name in folders if name not in (".git", "node_modules", "__pycache__", ".venv")]
         found += [os.path.relpath(os.path.join(folder, name), ROOT).replace(os.sep, "/") for name in files]
     return "\n".join(sorted(found)) or "(the folder is empty)"
+
+
+# Read a file of the folder.
+def read(given):
+    file = os.path.abspath(os.path.join(ROOT, str(given)))
+    if not os.path.isfile(file):
+        return f"error: there is no file {given}"
+    with open(file, encoding="utf-8", errors="replace", newline="") as f:
+        return f.read()
 
 
 # Read your lines one at a time. The prompt shows only when you type at a terminal, not when a program sends them.
