@@ -56,6 +56,8 @@ groups.push(["clean-the-text", ["text"]]);
 const word = pick(["cat", "dog", "fox", "hen"]);
 groups.push(["characters-to-numbers", [`encode ${word}`, `decode ${pick(["3 1 4", "2 7 1 8", "5 0 9"])}`, `encode ${pick(["Cat", "dog!", "x-ray"])}`, `decode ${pick(["1 two", "-1", "x"])}`, "decode 99"]]);
 groups.push(["count-the-pairs", [`counts ${pick(["t", "a", "o"])}`, `counts ${pick(["q", "z", "?"])}`, "counts"]]);
+const start = pick(["the", "a d", "my f", "old"]);
+groups.push(["write-the-likeliest", [`write ${start}`, `write ${pick(["sa", "ri", "mo"])}`, "write Zebra"]]);
 groups.push(["read-commands", ["help", "", pick(["fly", "hello", "learn"]) + " away", "exit", "help"]]);
 session(groups);
 try {

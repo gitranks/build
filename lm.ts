@@ -9,6 +9,7 @@ const HELP = [
   "encode <text>         turn text into numbers, one for each character",
   "decode <numbers>      turn numbers back into text",
   "counts <character>    the characters that came after this one, and how often",
+  "write <start>         go on from the start, one character at a time",
   "help                  this list",
   "exit                  stop lm",
 ];
@@ -57,6 +58,17 @@ const ids = encode(text);
 const pairs = Array.from({ length: V }, () => new Array<number>(V).fill(0));
 for (let i = 0; i + 1 < ids.length; i++) pairs[ids[i]][ids[i + 1]] += 1;
 
+// Go on from the start, one character at a time: each time, the character that came next most often.
+const LENGTH = 60;
+function write(start: number[]): string {
+  const out = [...start];
+  while (out.length < start.length + LENGTH) {
+    const row = pairs[out[out.length - 1]];
+    out.push(row.indexOf(Math.max(...row)));
+  }
+  return decode(out);
+}
+
 // A whole number, such as 42.
 const isNumber = (word: string): boolean => /^[0-9]{1,9}$/.test(word);
 
@@ -90,6 +102,13 @@ function run(words: string[]): string {
     if (!total) return `nothing came after "${arg}"`;
     const top = order.slice(0, 5).map(([count, b]) => `${show(b)} ${count}`).join(", ");
     return `after "${arg}": ${top}${order.length > 5 ? ` and ${order.length - 5} more` : ""}, ${total} in all`;
+  }
+  if (name === "write") {
+    if (!arg) return "usage: write <start>";
+    const start = clean(arg);
+    const missing = [...start].find((ch) => !ALPHABET.includes(ch));
+    if (!start || missing) return `not in the alphabet: "${missing ?? arg}"`;
+    return write(encode(start));
   }
   if (name === "help") return HELP.join("\n");
   return `unknown command: ${name}. Type help for the list.`;
