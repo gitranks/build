@@ -6,6 +6,20 @@ import * as net from "node:net";
 const at = process.argv.indexOf("--port");
 const PORT = at > 0 ? Number(process.argv[at + 1]) : 8080;
 
+// A request, as the browser sent it. Its first line is three words, such as: GET /hello HTTP/1.1
+type Request = {
+  method: string;
+  target: string;
+  version: string;
+};
+
+// Read a request's head: its first line, then one header a line.
+function parse(head: string): Request {
+  const [first, ...lines] = head.split("\r\n");
+  const [method, target, version] = first.split(" ");
+  return { method, target, version };
+}
+
 // Write an answer: the status line, one header a line, a blank line, then the body.
 function send(socket: net.Socket, body: string): void {
   const bytes = Buffer.from(body);
@@ -26,10 +40,10 @@ function serve(socket: net.Socket): void {
     bytes = Buffer.concat([bytes, piece]);
     const end = bytes.indexOf("\r\n\r\n");
     if (end < 0) return; // the head is not all here yet
-    // Print the head as it came, one line at a time.
-    for (const line of bytes.subarray(0, end).toString("latin1").split("\r\n")) console.log(`web: > ${line}`);
+    const request = parse(bytes.subarray(0, end).toString("latin1"));
     bytes = bytes.subarray(end + 4);
-    send(socket, "Hello from your web server!");
+    console.log(`web: ${request.method} ${request.target}`);
+    send(socket, `You asked for ${request.target} with ${request.method}.`);
   });
 }
 

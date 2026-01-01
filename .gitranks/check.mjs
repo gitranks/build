@@ -170,6 +170,10 @@ await session("read-the-request", async (port) => {
   await ask(port, "read-the-request", [line + "\r\n", rest.join("\r\n")], { label: `${line}, in two pieces` });
 });
 await session("answer-by-hand", (port) => ask(port, "answer-by-hand", [get(pick(["/", "/index.html", "/dogs"]))]));
+await session("read-the-request-line", async (port) => {
+  await ask(port, "read-the-request-line", [get(pick(["/hello?name=Ada", "/cats/1", "/a/b/c"]))]);
+  await ask(port, "read-the-request-line", [get(pick(["/notes", "/x?y=z", "/"]), pick(["DELETE", "PUT", "POST"]))]);
+});
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
