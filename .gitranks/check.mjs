@@ -70,6 +70,11 @@ session("jump-to-the-value", [`get ${greeting}`, "get key2", `set ${greeting}2 $
 const counter = pick(["visits", "score", "level"]);
 session("count-the-waste", [`set ${counter} 1`, `set ${counter} 2`, `set ${counter} 3`, "stats"]);
 session("compact-the-log", ["compact", "stats", `get ${counter}`]);
+const saved = pick(["plan", "note", "todo"]);
+const cut = size();
+session("survive-a-crash", [`set ${saved} ${pick(["ship it", "buy milk", "call home"])}`, `crash ${saved}2 ${pick(["lost", "gone"])}`]);
+logFrom("survive-a-crash", cut);
+session("survive-a-crash", [`get ${saved}`, `get ${saved}2`, `set ${saved}2 back`, `get ${saved}2`]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

@@ -12,6 +12,7 @@ const HELP = [
   "fill <count>          set key1, key2 and on, up to the count",
   "stats                 count the keys, the records and the bytes",
   "compact               keep only the latest record of each key",
+  "crash <key> <value>   set, but stop halfway, as a power cut would",
   "help                  this list",
   "exit                  stop kv",
 ];
@@ -28,7 +29,11 @@ let records = 0; // every record in the log, the old ones too
 // Write records at the end of the log, one line each.
 function write(batch: string[][]): void {
   const lines = batch.map((record) => JSON.stringify(record) + "\n");
-  fs.appendFileSync(FILE, lines.join(""));
+  // Wait until the disk has the lines, so OK means saved.
+  const fd = fs.openSync(FILE, "a");
+  fs.writeSync(fd, lines.join(""));
+  fs.fsyncSync(fd);
+  fs.closeSync(fd);
   batch.forEach((record, i) => note(record, Buffer.byteLength(lines[i])));
 }
 
@@ -37,7 +42,13 @@ function load(): void {
   if (!fs.existsSync(FILE)) return;
   const log = fs.readFileSync(FILE);
   while (end < log.length) {
-    const stop = log.indexOf("\n", end) + 1 || log.length;
+    const stop = log.indexOf("\n", end) + 1;
+    if (stop === 0) {
+      // A record with no line end was cut short by a crash. It was never saved, so it goes.
+      fs.truncateSync(FILE, end);
+      console.log("kv: dropped a record cut short at the end of the log");
+      break;
+    }
     note(JSON.parse(log.toString("utf8", end, stop)), stop - end);
   }
 }
@@ -114,6 +125,12 @@ function run(words: string[]): string {
     return `keys ${index.size}, records ${records}, old records ${records - index.size}, bytes ${end}`;
   }
   if (name === "compact") return records ? compact() : "the log is empty";
+  if (name === "crash") {
+    if (!key || !value) return "usage: crash <key> <value>";
+    const line = JSON.stringify(["set", key, value]) + "\n";
+    fs.appendFileSync(FILE, line.slice(0, Math.floor(line.length / 2)));
+    process.exit(3);
+  }
   if (name === "help") return HELP.join("\n");
   return `unknown command: ${name}. Type help for the list.`;
 }
