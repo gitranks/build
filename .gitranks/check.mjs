@@ -66,6 +66,7 @@ groups.push(["scores-to-chances", [`softmax ${pick(["1 2 3", "2 1 0.5", "0 0 0 0
 groups.push(["a-first-guess", [`next ${start}`, `next ${pick(["at", "o", "the m"])}`, "next zebra"]]);
 groups.push(["test-on-new-text", ["text", "loss"]]);
 groups.push(["the-gradient", ["gradcheck"]]);
+groups.push(["learn-from-mistakes", [`train ${pick(["60", "80", "100"])}`, "loss", `seed ${seed}`, `write ${start}`, "train 0"]]);
 groups.push(["read-commands", ["help", "", pick(["fly", "hello", "learn"]) + " away", "exit", "help"]]);
 session(groups);
 try {

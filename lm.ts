@@ -16,6 +16,7 @@ const HELP = [
   "softmax <numbers>     turn scores into chances that add up to 1",
   "next <text>           the model's guess for the character after the text",
   "gradcheck             nudge a number of each table and see the loss move",
+  "train <steps>         learn from the text, one short piece at each step",
   "help                  this list",
   "exit                  stop lm",
 ];
@@ -134,6 +135,7 @@ const model: Record<string, Matrix> = {
   emb: matrix(V, D, 0.5), // a row of numbers for each character
   out: matrix(D, V, 0.5), // from those numbers to a score for each character
 };
+let steps = 0; // how many training steps the model has taken
 
 // A row of numbers times a table: one number for each column of the table.
 function times(row: number[], m: Matrix): number[] {
@@ -194,6 +196,17 @@ function backward(f: Pass, y: number[]): Record<string, Matrix> {
   return g;
 }
 
+// One step of training: a random window of the text, then each number moves a little against its gradient.
+function trainStep(rate = 0.1): number {
+  const s = Math.floor(random() * (train.length - T));
+  const [x, y] = [train.slice(s, s + T), train.slice(s + 1, s + T + 1)];
+  const f = forward(x);
+  const g = backward(f, y);
+  for (const name in model) model[name].forEach((row, i) => row.forEach((w, j) => (row[j] = w - rate * g[name][i][j])));
+  steps += 1;
+  return lossOf(f, y);
+}
+
 // Nudge one number of each table up and down a little, and see how fast the loss moves: the gradient, measured.
 // It is the number in row 0, column 1; in emb, row 0 is the first character of the alphabet, most often the space.
 function gradcheck(): string {
@@ -214,12 +227,13 @@ function gradcheck(): string {
   return lines.join("\n");
 }
 
-// Go on from the start, one character at a time, each picked at random by how often it came next.
+// Go on from the start, one character at a time: from the counts until the model has learned, then from the model.
 const LENGTH = 60;
 function write(start: number[]): string {
   const out = [...start];
   while (out.length < start.length + LENGTH) {
-    out.push(pick(pairs[out[out.length - 1]].map((count) => count + SMOOTH)));
+    const counts = pairs[out[out.length - 1]].map((count) => count + SMOOTH);
+    out.push(pick(steps === 0 ? counts : (forward(out.slice(-T)).p.at(-1) as number[])));
   }
   return decode(out);
 }
@@ -280,7 +294,7 @@ function run(words: string[]): string {
   if (name === "loss") {
     return [
       `counts: train ${fmt(countsLoss(train))}, test ${fmt(countsLoss(test))}, a blind guess ${fmt(log(V))}`,
-      `model: train ${fmt(surprise(train))}, test ${fmt(surprise(test))}`,
+      `model: train ${fmt(surprise(train))}, test ${fmt(surprise(test))}, after ${steps} steps`,
     ].join("\n");
   }
   if (name === "shapes") {
@@ -301,6 +315,18 @@ function run(words: string[]): string {
     return `after "${start}": ` + order.slice(0, 5).map(([c, b]) => `${show(b)} ${fmt(c)}`).join(", ");
   }
   if (name === "gradcheck") return gradcheck();
+  if (name === "train") {
+    if (!isNumber(arg) || Number(arg) < 1 || Number(arg) > 100000) return "usage: train <steps>, from 1 to 100000";
+    const lines: string[] = [];
+    for (let left = Number(arg); left > 0; ) {
+      const chunk = Math.min(left, Math.ceil(Number(arg) / 5));
+      let sum = 0;
+      for (let i = 0; i < chunk; i++) sum += trainStep();
+      left -= chunk;
+      lines.push(`step ${steps}: loss ${fmt(sum / chunk)}`);
+    }
+    return lines.join("\n");
+  }
   if (name === "help") return HELP.join("\n");
   return `unknown command: ${name}. Type help for the list.`;
 }
