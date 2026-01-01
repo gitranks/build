@@ -196,6 +196,21 @@ def a_task_by_id(port):
 
 
 session("a-task-by-id", a_task_by_id)
+
+
+def check_the_fields(port):
+    bodies = [
+        pick(['{"title":""}', '{"title":42}', '{"done":true}', '{"title":"   "}']),
+        pick(['{"title":"Buy milk","done":"yes"}', '{"title":"Buy milk","done":1}', '{"title":"Buy milk","done":null}']),
+        pick(["title=Buy+milk", '{"title":"Buy milk"', ""]),
+        pick(['["Buy milk"]', '"Buy milk"', "null"]),
+        compact({"title": f"  {pick(titles)}  "}),
+    ]
+    for body in bodies:
+        call(port, "check-the-fields", "POST", "/api/tasks", body)
+
+
+session("check-the-fields", check_the_fields)
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the

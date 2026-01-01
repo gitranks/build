@@ -130,14 +130,38 @@ def missing(request):
     return json({"error": f"no task with id {id_of(request)}"}, 404)
 
 
+# The fields a request's body gives a task, checked. A new task needs a title; a change may give either field.
+# Anything wrong gets 400 Bad Request instead, with an error that names the field.
+def fields(request, needs_title):
+    try:
+        body = loads(request["body"])
+    except ValueError:
+        return json({"error": "the body is not JSON"}, 400)
+    if not isinstance(body, dict):
+        return json({"error": "the body is not a JSON object"}, 400)
+    given = {}
+    if needs_title or "title" in body:
+        title = body["title"].strip() if isinstance(body.get("title"), str) else ""
+        # 1 to 100 characters once trimmed, and text UTF-8 can write: half of an emoji sent alone is refused too.
+        if not title or len(title) > 100 or any("\ud800" <= ch <= "\udfff" for ch in title):
+            return json({"error": "title must be text of 1 to 100 characters", "field": "title"}, 400)
+        given["title"] = title
+    if "done" in body:
+        if not isinstance(body["done"], bool):
+            return json({"error": "done must be true or false", "field": "done"}, 400)
+        given["done"] = body["done"]
+    return given
+
+
 def list_tasks(request):
     return json(list(tasks.values()))
 
 
 def add_task(request):
     global last_id
-    # The body is JSON, such as {"title":"Buy milk"}: loads turns it into a dict.
-    given = loads(request["body"])
+    given = fields(request, True)
+    if "status" in given:
+        return given
     last_id += 1
     task = {"id": last_id, "title": "", "done": False, **given}
     tasks[str(last_id)] = task
