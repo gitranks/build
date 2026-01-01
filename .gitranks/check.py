@@ -183,6 +183,13 @@ def first(ask):
 
 who = pick(["who are you?", "what do you do?", "where do you work?"])
 session("a-system-prompt", [who, "/reset", who], [first, first])
+
+
+def offered(ask):
+    return "I can use: " + (", ".join(str(t.get("function", {}).get("name")) for t in ask.get("tools") or []) or "no tools")
+
+
+session("offer-a-tool", ["which tools do you have?", "what files are here?"], [offered, call("list_files")])
 server.shutdown()
 shutil.rmtree(top, ignore_errors=True)
 
