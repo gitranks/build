@@ -7,4 +7,20 @@ sys.stdin.reconfigure(encoding="utf-8")
 sys.stdout.reconfigure(encoding="utf-8", newline="\n")
 
 
-print("mini: started. It does nothing yet.")
+# The prompt: read a line, run it, say the answer, and again, until exit or the end of the input.
+def repl():
+    if sys.stdin.isatty():
+        print("mini: type a line, then Enter. exit stops mini.")
+    while True:
+        try:
+            # The prompt mini> shows only when you type at a terminal, not when another program sends the lines.
+            line = input("mini> " if sys.stdin.isatty() else "")
+        except EOFError:  # the input has ended
+            break
+        if line.strip() == "exit":
+            break
+        if line.strip():
+            print(line.strip())
+
+
+repl()

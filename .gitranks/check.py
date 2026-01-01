@@ -76,6 +76,7 @@ def session(about, lines, file=False):
 
 
 session("what-you-will-build", [])
+session("read-lines", [pick(["hello", "good morning", "hi there"]), "", "   " + pick(["mini", "one  two", "x"]) + "  ", "exit", "after exit"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
