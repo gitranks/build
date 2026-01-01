@@ -11,6 +11,10 @@ sys.stdout.reconfigure(encoding="utf-8", newline="\n")
 
 # The versions of MCP this server speaks, newest first.
 VERSIONS = ["2025-11-25", "2025-06-18"]
+INSTRUCTIONS = (
+    "my-server rolls dice and picks one of a few options at random. Use roll_dice for any dice roll "
+    "and pick_one when the person cannot decide. Say the result in plain words."
+)
 
 
 # Logs go to standard error. Standard output is kept for messages alone.
@@ -122,7 +126,8 @@ def handle(msg: dict) -> dict:
             "result": {
                 "protocolVersion": asked if asked in VERSIONS else VERSIONS[0],
                 "capabilities": {"tools": {}},
-                "serverInfo": {"name": "my-server", "version": "0.1.0"},
+                "serverInfo": {"name": "my-server", "version": "1.0.0"},
+                "instructions": INSTRUCTIONS,
             }
         }
     if msg["method"] == "ping":

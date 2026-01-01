@@ -87,7 +87,7 @@ show("prompt", "prompt.py", [], [pick(["tools/list", "ping", "hello/again"])])
 # What this step adds is printed whole: the answers it is about (by id, None for id null), the logs or the prompt.
 # Every other line goes into one line with a fingerprint (a hash), so the print stays short. With --all, every line
 # is printed, after a first line that says this print is only to look at.
-focus = {4, 5, 8, 10}
+focus = {2}
 every = sys.argv[3:4] == ["--all"]
 other = [text for key, text in said if not (every or key in focus or key == "always")]
 if every:
