@@ -4,7 +4,7 @@ import { createInterface } from "node:readline";
 
 // A mistake in the program mini runs, such as 1 / 0: mini says what it is and goes on. It is not a crash of mini.
 class MiniError extends Error {}
-type Value = number | boolean | string;
+type Value = number | boolean | string | Node | null; // a function's value is its own node of the tree
 type Token = { kind: string; text: string };
 type Node = { kind: string; [field: string]: any };
 
@@ -42,6 +42,8 @@ function operate(op: string, a: Value, b: Value): Value {
 
 // How mini writes a value: true and false in small letters.
 function show(value: Value): string {
+  if (value === null) return "none";
+  if (typeof value === "object") return `<fn ${value.name}>`;
   return String(value);
 }
 
@@ -59,7 +61,7 @@ const SYMBOLS = [ // the symbols mini knows
   ";",
   "{", "}",
 ];
-const WORDS = ["let", "true", "false", "print", "if", "else", "while"]; // mini's own words: they can not name a variable
+const WORDS = ["let", "true", "false", "print", "if", "else", "while", "fn"]; // mini's own words: not names of variables
 
 // The tokenizer cuts the source into pieces: a run of spaces, a number, a name and more, or any other one
 // character. It turns each piece into a token, the words of mini, and leaves the spaces out.
@@ -105,7 +107,7 @@ function parse(tokens: Token[]): Node[] {
       if (peek().kind === "end") throw new MiniError("a { has no } to close it");
       const node = statement();
       list.push(node);
-      const ok = [";", end, "end"].includes(peek().kind) || ["if", "while"].includes(node.kind); // these end in }
+      const ok = [";", end, "end"].includes(peek().kind) || ["if", "while", "fn"].includes(node.kind); // these end in }
       if (!ok) throw new MiniError(`expected ; but found ${peek().text}`);
     }
   }
@@ -132,6 +134,12 @@ function parse(tokens: Token[]): Node[] {
       return { kind: "if", test, then, otherwise };
     }
     if (accept("while")) return { kind: "while", test: expression(), body: block() };
+    if (accept("fn")) {
+      const name = expect("name").text;
+      expect("(");
+      expect(")");
+      return { kind: "fn", name, body: block() };
+    }
     return { kind: "expr", value: expression() };
   }
   function binary(ops: string[], operand: () => Node): Node {
@@ -142,7 +150,16 @@ function parse(tokens: Token[]): Node[] {
   const expression = (): Node => binary(["==", "!=", "<", "<=", ">", ">="], term);
   const term = (): Node => binary(["+", "-"], factor);
   const factor = (): Node => binary(["*", "/", "%"], unary);
-  const unary = (): Node => (accept("-") ? { kind: "negate", value: unary() } : primary());
+  const unary = (): Node => (accept("-") ? { kind: "negate", value: unary() } : call());
+  // A value, then any number of calls of it: f() or f(1, 2).
+  function call(): Node {
+    let node = primary();
+    while (accept("(")) {
+      expect(")");
+      node = { kind: "call", callee: node };
+    }
+    return node;
+  }
   function primary(): Node {
     const token = advance();
     if (token.kind === "number") return { kind: "value", value: number(token.text) };
@@ -174,6 +191,12 @@ function evaluate(node: Node, scope: Scope): Value {
   if (node.kind === "value") return node.value;
   if (node.kind === "name") return find(scope, node.name).get(node.name) as Value;
   if (node.kind === "negate") return operate("-", 0, evaluate(node.value, scope));
+  if (node.kind === "call") {
+    const fn = evaluate(node.callee, scope);
+    if (typeof fn !== "object" || fn === null) throw new MiniError(`${quote(fn)} is not a function`);
+    run(fn.body, top);
+    return null;
+  }
   return operate(node.op, evaluate(node.left, scope), evaluate(node.right, scope));
 }
 
@@ -187,6 +210,7 @@ function execute(node: Node, scope: Scope): Value | undefined {
   else if (node.kind === "print") console.log(show(evaluate(node.value, scope)));
   else if (node.kind === "if") run(truth(evaluate(node.test, scope), "if") ? node.then : node.otherwise, scope);
   else if (node.kind === "while") while (truth(evaluate(node.test, scope), "while")) run(node.body, scope);
+  else if (node.kind === "fn") scope.set(node.name, node);
   else return evaluate(node.value, scope);
 }
 
@@ -217,7 +241,7 @@ function attempt(line: string): void {
   try {
     for (const node of parse(tokenize(line))) {
       const value = execute(node, top);
-      if (node.kind === "expr") console.log(show(value as Value));
+      if (node.kind === "expr" && value !== null) console.log(show(value as Value));
     }
   } catch (error) {
     report(error);

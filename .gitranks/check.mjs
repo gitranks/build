@@ -71,6 +71,8 @@ session("if-and-while", [
   "if true { print 1",
 ]);
 session("text-values", [`"${pick(["hello", "mini", "Ada"])}"`, `"n = " + ${a}`, `"ab" == "a" + "b"`, '"a" * 2', `"${pick(["no end", "half"])}`, `let s = ""; let i = 0; while i < ${b} { s = s + "*"; i = i + 1 } s`]);
+const fn = pick(["hello", "greet", "say_hi"]);
+session("functions", [`fn ${fn}() { print "hi from ${fn}" }`, `${fn}()`, fn, `${a}()`, `${fn}(); ${fn}()`]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
