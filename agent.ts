@@ -34,8 +34,10 @@ let messages: Message[] = [{ role: "system", content: SYSTEM }];
 function tool(name: string, description: string, properties: object = {}, required = Object.keys(properties)) {
   return { type: "function", function: { name, description, parameters: { type: "object", properties, required } } };
 }
+const text = (description: string) => ({ type: "string", description });
 const TOOLS = [
   tool("list_files", "List every file in the folder."),
+  tool("read_file", "Read a file.", { path: text("the file's path") }),
 ];
 
 // Send the model the conversation, and give back its answer.
@@ -77,7 +79,15 @@ async function turn(text: string): Promise<void> {
 async function use(call: Call): Promise<string> {
   const { name, arguments: given } = call.function;
   console.log(`tool: ${name} ${given}`);
+  let args;
+  try {
+    args = JSON.parse(given || "{}");
+    if (!args || typeof args !== "object" || Array.isArray(args)) throw new Error("not an object");
+  } catch {
+    return "error: the arguments are not JSON";
+  }
   if (name === "list_files") return list();
+  if (name === "read_file") return read(args.path);
   return `error: there is no tool named ${name}`;
 }
 
@@ -88,6 +98,14 @@ function list(): string {
   const paths = files.filter((file) => fs.statSync(path.join(ROOT, file)).isFile()).map((file) => file.split(path.sep).join("/"));
   return paths.sort().join("\n") || "(the folder is empty)";
 }
+
+// Read a file of the folder.
+function read(given: unknown): string {
+  const file = path.resolve(ROOT, String(given));
+  if (!isFile(file)) return `error: there is no file ${given}`;
+  return fs.readFileSync(file, "utf8");
+}
+const isFile = (file: string) => fs.existsSync(file) && fs.statSync(file).isFile();
 
 // Read your lines one at a time. The prompt shows only when you type at a terminal, not when a program sends them.
 const lines = createInterface({ input: process.stdin })[Symbol.asyncIterator]();

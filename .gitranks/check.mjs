@@ -143,6 +143,9 @@ fs.mkdirSync(join(folder, "src"));
 fs.writeFileSync(join(folder, "src", pick(["hello.js", "main.py", "app.ts"])), "print('hello')\n");
 const other = pick(["delete_all", "search_web", "open_browser"]);
 await session("the-agent-loop", ["what files are here?", "use another tool"], [call("list_files"), heard, call(other), heard]);
+const missing = pick(["todo.txt", "plan.md", "list.txt"]);
+const reads = [call("read_file", { path: "notes.txt" }), heard, call("read_file", { path: missing }), heard, () => [["read_file", '{"path": notes.txt}']], heard];
+await session("read-a-file", ["what is in my notes?", `read ${missing}`, "read it in a broken way"], reads);
 server.close();
 try {
   fs.rmSync(top, { recursive: true, force: true });
