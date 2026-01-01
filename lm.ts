@@ -138,6 +138,7 @@ const model: Record<string, Matrix> = {
   wv: matrix(D, D, 0.25), // what a character passes on to the ones after it
   wq: matrix(D, D, 0.25), // what a character looks for
   wk: matrix(D, D, 0.25), // what a character offers to the ones that look
+  pos: matrix(T, D, 0.5), // a row of numbers for each place in the window
 };
 let steps = 0; // how many training steps the model has taken
 
@@ -165,7 +166,7 @@ const SCALE = 1 / Math.sqrt(D);
 
 // Run the model over a window of characters: after each one, a score for every character that may come next.
 function forward(x: number[]) {
-  const h = x.map((id) => model.emb[id]);
+  const h = x.map((id, t) => model.emb[id].map((e, i) => e + model.pos[t][i]));
   const v = h.map((row) => times(row, model.wv));
   const q = h.map((row) => times(row, model.wq));
   const k = h.map((row) => times(row, model.wk));
@@ -230,7 +231,12 @@ function backward(f: Pass, y: number[]): Record<string, Matrix> {
       for (let i = 0; i < D; i++) dh[t][i] += dot(model[name][i], d[t]);
     }
   }
-  for (let t = 0; t < n; t++) for (let i = 0; i < D; i++) g.emb[f.x[t]][i] += dh[t][i];
+  for (let t = 0; t < n; t++) {
+    for (let i = 0; i < D; i++) {
+      g.emb[f.x[t]][i] += dh[t][i];
+      g.pos[t][i] += dh[t][i];
+    }
+  }
   return g;
 }
 
