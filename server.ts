@@ -27,9 +27,28 @@ type Answer = { status: number; type: string; body: string | Buffer; headers?: R
 // An answer of plain text.
 const text = (body: string, status = 200): Answer => ({ status, type: "text/plain; charset=utf-8", body });
 
+// An HTML page: the browser draws it, and follows its links.
+function page(title: string, ...lines: string[]): Answer {
+  const top = [
+    "<!doctype html>",
+    `<title>${title}</title>`,
+    `<h1>${title}</h1>`,
+  ];
+  return { status: 200, type: "text/html; charset=utf-8", body: [...top, ...lines, ""].join("\n") };
+}
+
 // The routes: a method and a path, each with the function that answers it.
 const ROUTES: Record<string, (request: Request) => Answer> = {
-  "GET /": () => text("Hello from web. Try /hello?name=Ada and /headers."),
+  "GET /": () =>
+    page(
+      "Hello from web",
+      "<p>Every byte of this page came from your own server → no library, just a socket.</p>",
+      "<ul>",
+      '  <li><a href="/hello?name=Ada">/hello?name=Ada</a> says hello</li>',
+      '  <li><a href="/headers">/headers</a> lists what your browser sent</li>',
+      '  <li><a href="/old">/old</a> has moved to /hello</li>',
+      "</ul>",
+    ),
   "GET /hello": (request) => {
     const name = new URLSearchParams(request.target.split("?")[1]).get("name");
     return text(`Hello, ${name || "stranger"}!`);

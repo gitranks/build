@@ -193,6 +193,9 @@ await session("moved-and-not-allowed", async (port) => {
   await ask(port, "moved-and-not-allowed", [get(pick(["/hello", "/", "/headers"]), pick(["POST", "PUT", "DELETE"]))]);
   await ask(port, "moved-and-not-allowed", [get("/old")]);
 });
+await session("send-html", async (port) => {
+  await ask(port, "send-html", [get("/")], { show: (line) => /<title>|<p>/.test(line) });
+});
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
