@@ -46,6 +46,14 @@ def roll_dice(
     return f"You rolled {total}." if count == 1 else f"You rolled {', '.join(map(str, rolls))}: {total} in total."
 
 
+@mcp.tool()
+def pick_one(
+    choices: Annotated[list[str], Field(min_length=2, max_length=20, description="The options to pick from.")],
+) -> str:
+    """Pick one of the choices at random. Use it when the person cannot decide between a few options."""
+    return f"I picked: {choices[random_below(len(choices))]}"
+
+
 # Started as a program, not imported: serve on standard input and output until the agent closes them.
 if __name__ == "__main__":
     log("started")
