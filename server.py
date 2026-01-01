@@ -11,6 +11,18 @@ at = sys.argv.index("--port") if "--port" in sys.argv else 0
 PORT = int(sys.argv[at + 1]) if 0 < at < len(sys.argv) - 1 else 8080
 
 
+# Write an answer: the status line, one header a line, a blank line, then the body.
+def send(conn, body):
+    data = body.encode()
+    head = [
+        "HTTP/1.1 200 OK",
+        "Content-Type: text/plain; charset=utf-8",
+        f"Content-Length: {len(data)}",
+        "Connection: close",
+    ]
+    conn.sendall(("\r\n".join(head) + "\r\n\r\n").encode() + data)
+
+
 # Add the next piece of the request's bytes. An empty piece: the browser closed the connection.
 def more(conn, data):
     piece = conn.recv(65536)
@@ -28,6 +40,7 @@ def serve(conn):
     # Print the head as it came, one line at a time.
     for line in data[:end].decode("latin-1").split("\r\n"):
         print(f"web: > {line}")
+    send(conn, "Hello from your web server!")
 
 
 # One connection, closed at the end. A browser may hang up at any time: that ends its connection, never the server.
