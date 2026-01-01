@@ -49,12 +49,14 @@ SYMBOLS = [  # the symbols mini knows
     "+", "-", "*", "/",
     "%",
     "(", ")",
+    "=",
 ]
+WORDS = ["let"]  # mini's own words: they can not name a variable
 
 
 # The tokenizer cuts the source into pieces: a run of spaces, a number, a name and more, or any other one
 # character. It turns each piece into a token, the words of mini, and leaves the spaces out.
-PIECES = r"[ \t\r]+|[0-9]+|[\s\S]"
+PIECES = r"[ \t\r]+|[0-9]+|[A-Za-z_][A-Za-z_0-9]*|[\s\S]"
 
 
 def tokenize(source):
@@ -66,6 +68,8 @@ def tokenize(source):
     for piece in re.findall(PIECES, source):
         if re.match("[0-9]", piece):
             add("number", piece)
+        elif re.match("[A-Za-z_]", piece):
+            add(piece if piece in WORDS else "name", piece)
         elif piece in SYMBOLS:
             add(piece, piece)
         elif piece[0] not in " \t\r":
@@ -87,6 +91,12 @@ def parse(tokens):
         if tokens[0].kind != kind:
             raise MiniError(f"expected {kind} but found {tokens[0].text}")
         return tokens.pop(0)
+    def statement():
+        if accept("let"):
+            name = expect("name").text
+            expect("=")
+            return Node(kind="let", name=name, value=expression())
+        return Node(kind="expr", value=expression())
     def binary(ops, operand):
         left = operand()
         while tokens[0].kind in ops:
@@ -102,21 +112,31 @@ def parse(tokens):
         token = tokens.pop(0)
         if token.kind == "number":
             return Node(kind="value", value=number(token.text))
+        if token.kind == "name":
+            return Node(kind="name", name=token.text)
         if token.kind == "(":
             node = expression()
             expect(")")
             return node
         raise MiniError(f"expected a value but found {token.text}")
-    tree = expression()
+    tree = statement()
     if tokens[0].kind != "end":
         raise MiniError(f"expected an operator but found {tokens[0].text}")
     return tree
+
+
+# The variables, by name. top is the program's own scope: its variables, at the top level, outside any function.
+top = {}
 
 
 # Work out the value of a node of the tree.
 def evaluate(node):
     if node.kind == "value":
         return node.value
+    if node.kind == "name":
+        if node.name not in top:
+            raise MiniError(f"{node.name} is not defined")
+        return top[node.name]
     if node.kind == "negate":
         return operate("-", 0, evaluate(node.value))
     return operate(node.op, evaluate(node.left), evaluate(node.right))
@@ -132,7 +152,11 @@ def report(error):
 # Run a line that was typed, and say what went wrong if anything did: a mistake does not stop mini.
 def attempt(line):
     try:
-        print(evaluate(parse(tokenize(line))))
+        node = parse(tokenize(line))
+        if node.kind == "let":
+            top[node.name] = evaluate(node.value)
+        else:
+            print(evaluate(node.value))
     except Exception as error:
         report(error)
 
