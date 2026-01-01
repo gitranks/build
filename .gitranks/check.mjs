@@ -143,7 +143,7 @@ await talk("sdk/server.ts", ["--seed", seed], asks);
 // What this step adds is printed whole: the answers it is about (by id), the logs or the prompt. Every other
 // line goes into one line with a fingerprint (a hash), so the print stays short. With --all, every line is printed,
 // after a first line that says this print is only to look at.
-const focus = [4, 11, 12];
+const focus = [4, 6, 9, 11];
 const every = process.argv[4] === "--all";
 const shown = ([key]) => every || key === "always" || focus.includes(key);
 if (every) console.log("all lines, printed with --all: never send this print, send the one without --all");
