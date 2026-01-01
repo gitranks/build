@@ -77,6 +77,9 @@ def session(about, lines, file=False):
 
 session("what-you-will-build", [])
 session("read-lines", [pick(["hello", "good morning", "hi there"]), "", "   " + pick(["mini", "one  two", "x"]) + "  ", "exit", "after exit"])
+a = pick([12, 30, 45, 7])
+b = pick([3, 4, 5])
+session("whole-numbers", [f"{a}", " 00" + str(b), pick(["twelve", "4x", "1.5", "-3"]), f"{a} {b}"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
