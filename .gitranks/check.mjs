@@ -55,6 +55,22 @@ function session(about, dir, commands) {
   } else if (run.status !== 0) said.push([run.status === 3 ? about : "always", `pipe stopped with code ${run.status}`]);
 }
 
+// Run the build's own tests with the runner that comes with Node, and keep how many passed and which failed.
+function tests(about) {
+  if (stopped) return;
+  const timeout = Math.min(15000, deadline - Date.now());
+  if (timeout < 500) return said.push(["always", "the check ran out of time: the tests took too long"]);
+  said.push([about, "ran the tests"]);
+  const run = spawnSync(process.execPath, ["--test-reporter=tap", "pipe.test.ts"], { encoding: "utf8", timeout, maxBuffer: 64 * 1024 * 1024, env: ENV });
+  // A test that was skipped did not pass: it counts as failed.
+  const results = (run.stdout ?? "").split("\n").map((line) => /^(not )?ok \d+ - (.*?)( # (?:SKIP|TODO)\b.*)?$/i.exec(line)).filter(Boolean);
+  const failed = results.filter((result) => result[1] || result[3]).map((result) => result[2]);
+  if (run.status === null || run.error?.code === "ETIMEDOUT") said.push(["always", "the tests did not end within 15 seconds"]);
+  else if (!results.length) said.push([about, "no test ran: is pipe.test.ts there?"]);
+  else said.push([about, `tests: ${results.length - failed.length} passed, ${failed.length} failed`]);
+  for (const name of failed.slice(0, 5)) said.push([about, `failed: ${name}`]);
+}
+
 session("what-you-will-build", box("start", {}), []);
 session("read-commands", box("commands", {}), ["help", "", pick(["fly", "hello", "remember"]) + " away", "exit", "help"]);
 session("list-the-inbox", box("no-inbox", null), ["files"]);
@@ -126,6 +142,7 @@ const hot = box("hot", { "a.csv": csv([["10:00:05", host, "70"], ["10:00:35", ho
 session("alert-on-a-limit", hot, [`alert ${metric}`, `alert ${metric} ${pick(["90", "75.5", "80"])}`, "run"]);
 fs.writeFileSync(join(hot, "inbox", "b.csv"), csv([["10:01:35", host, "99.5"], ["10:02:05", other, "100"]].map(([time, h, x]) => row(at(time), h, metric, x))));
 session("alert-on-a-limit", hot, ["run", `alert ${metric} 50`]);
+tests("test-the-cleaning");
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
