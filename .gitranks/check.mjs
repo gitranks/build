@@ -85,6 +85,8 @@ const times = [
   "2028-02-29T10:00:00Z",
 ];
 session("check-the-times", box("times", { "a.csv": csv(times.map((time) => row(time, host, metric, v()))) }), ["run", "bad"]);
+const values = [pick(["007", "0042.0"]), pick(["42.5", "0.05", "3.10"]), pick(["100.00", "999999999.99", "0"])];
+session("clean-the-values", box("clean", { "a.csv": csv(values.map((x, i) => row(at(`10:00:0${i + 5}`), host, metric, x))) }), ["run", "rows"]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

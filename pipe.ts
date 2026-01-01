@@ -14,7 +14,10 @@ const HELP = [
   "exit                          stop pipe",
 ];
 
-let rows: string[][] = []; // the rows the last run kept
+// A clean row: its time in seconds since 1970 in UTC, its host and metric, and its value in hundredths.
+type Row = { time: number; host: string; metric: string; value: number };
+
+let rows: Row[] = []; // the rows the last run kept
 let bad: string[] = []; // the lines it dropped, and why
 
 // The names of the CSV files in the inbox folder, in order.
@@ -63,13 +66,18 @@ function hundredths(text: string): number | null {
   return Number(whole) * 100 + Number(part.padEnd(2, "0"));
 }
 
-// Why a line's fields can not be trusted, or null when they look right: a time, a host, a metric and a value.
-function problem(fields: string[]): string | null {
+// Check a line's fields and clean them: a clean row, or why the line is dropped.
+function clean(fields: string[]): Row | string {
   if (fields.length !== 4) return "not 4 fields";
-  if (seconds(fields[0]) === null) return "bad time";
-  if (hundredths(fields[3]) === null) return "bad value";
-  return null;
+  const [time, host, metric, value] = [seconds(fields[0]), fields[1], fields[2], hundredths(fields[3])];
+  if (time === null) return "bad time";
+  if (value === null) return "bad value";
+  return { time, host, metric, value };
 }
+
+// A time as 2026-11-27 10:00:05, and a value in hundredths as 42.5.
+const when = (time: number) => new Date(time * 1000).toISOString().slice(0, 19).replace("T", " ");
+const number = (value: number) => `${Math.floor(value / 100)}.${String(value % 100).padStart(2, "0")}`.replace(/\.?0+$/, "");
 
 // Read one file's lines and keep their rows.
 function load(name: string): string {
@@ -78,9 +86,11 @@ function load(name: string): string {
   for (let i = 0; i < all.length; i++) {
     const fields = split(all[i]);
     if (!fields) continue;
-    const why = problem(fields);
-    if (why) bad.push(`${name} line ${i + 1}: ${why}: ${trim(all[i])}`);
-    else rows.push(fields);
+    const row = clean(fields);
+    if (typeof row === "string") bad.push(`${name} line ${i + 1}: ${row}: ${trim(all[i])}`);
+    else {
+      rows.push(row);
+    }
   }
   return `${name}: lines ${all.length}, kept ${rows.length - kept}, dropped ${bad.length - dropped}`;
 }
@@ -107,7 +117,7 @@ function command(words: string[]): string {
     return names.map((name) => `${name}: lines ${lines(name).length}`).join("\n");
   }
   if (name === "run") return run();
-  if (name === "rows") return some(rows.map((fields) => fields.join(" | ")), "(no rows)");
+  if (name === "rows") return some(rows.map((r) => `${when(r.time)} ${r.host} ${r.metric} ${number(r.value)}`), "(no rows)");
   if (name === "bad") return some(bad, "(no bad lines)");
   if (name === "help") return HELP.join("\n");
   return `unknown command: ${name}. Type help for the list.`;
