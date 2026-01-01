@@ -96,6 +96,10 @@ def parse(tokens):
             name = expect("name").text
             expect("=")
             return Node(kind="let", name=name, value=expression())
+        if tokens[0].kind == "name" and tokens[1].kind == "=":
+            name = tokens.pop(0).text
+            tokens.pop(0)
+            return Node(kind="set", name=name, value=expression())
         return Node(kind="expr", value=expression())
     def binary(ops, operand):
         left = operand()
@@ -129,17 +133,33 @@ def parse(tokens):
 top = {}
 
 
+# The scope that holds a name. A scope is the variables a statement can see.
+def find(scope, name):
+    if name in scope:
+        return scope
+    raise MiniError(f"{name} is not defined")
+
+
 # Work out the value of a node of the tree.
-def evaluate(node):
+def evaluate(node, scope):
     if node.kind == "value":
         return node.value
     if node.kind == "name":
-        if node.name not in top:
-            raise MiniError(f"{node.name} is not defined")
-        return top[node.name]
+        return find(scope, node.name)[node.name]
     if node.kind == "negate":
-        return operate("-", 0, evaluate(node.value))
-    return operate(node.op, evaluate(node.left), evaluate(node.right))
+        return operate("-", 0, evaluate(node.value, scope))
+    return operate(node.op, evaluate(node.left, scope), evaluate(node.right, scope))
+
+
+# Carry out one statement in a scope. The value of a statement that is only an expression is given back.
+def execute(node, scope):
+    if node.kind == "let":
+        scope[node.name] = evaluate(node.value, scope)
+    elif node.kind == "set":
+        value = evaluate(node.value, scope)
+        find(scope, node.name)[node.name] = value
+    else:
+        return evaluate(node.value, scope)
 
 
 # Say what went wrong. A mistake in the program is not a crash of mini: anything else is.
@@ -153,10 +173,9 @@ def report(error):
 def attempt(line):
     try:
         node = parse(tokenize(line))
-        if node.kind == "let":
-            top[node.name] = evaluate(node.value)
-        else:
-            print(evaluate(node.value))
+        value = execute(node, top)
+        if node.kind == "expr":
+            print(value)
     except Exception as error:
         report(error)
 
