@@ -12,6 +12,7 @@ const HELP = [
   "write <start>         go on from the start, one character at a time",
   "seed <number>         start the random numbers again from this number",
   "loss                  how surprised lm is by the text: lower is better",
+  "shapes                the size of each table of numbers in the model",
   "help                  this list",
   "exit                  stop lm",
 ];
@@ -106,6 +107,19 @@ function countsLoss(part: number[]): number {
   return sum / (part.length - 1);
 }
 
+// The model's sizes: each character becomes D numbers, and the model looks back over T characters at most.
+const D = 16;
+const T = 8;
+type Matrix = number[][];
+// A table of numbers, rows by columns, each a small random number to start from.
+function matrix(rows: number, cols: number, size: number): Matrix {
+  return Array.from({ length: rows }, () => Array.from({ length: cols }, () => (random() * 2 - 1) * size));
+}
+const model: Record<string, Matrix> = {
+  emb: matrix(V, D, 0.5), // a row of numbers for each character
+  out: matrix(D, V, 0.5), // from those numbers to a score for each character
+};
+
 // Go on from the start, one character at a time, each picked at random by how often it came next.
 const LENGTH = 60;
 function write(start: number[]): string {
@@ -118,6 +132,11 @@ function write(start: number[]): string {
 
 // A whole number, such as 42.
 const isNumber = (word: string): boolean => /^[0-9]{1,9}$/.test(word);
+// A table's rows by columns, or "broken" when it is not a table whose rows all have the same length.
+const shape = (m: unknown): string =>
+  Array.isArray(m) && m.length && m.every((row) => Array.isArray(row) && row.length === m[0].length)
+    ? `${m.length} × ${m[0].length}`
+    : "broken";
 
 // The prompt lm> shows only when you type at a terminal, not when another program sends the commands.
 function ask(): void {
@@ -163,6 +182,11 @@ function run(words: string[]): string {
     return write(encode(start));
   }
   if (name === "loss") return `counts: ${fmt(countsLoss(ids))}, a blind guess ${fmt(log(V))}`;
+  if (name === "shapes") {
+    let all = 0;
+    for (const m of Object.values(model)) all += m.length * m[0].length;
+    return Object.entries(model).map(([key, m]) => `${key} ${shape(m)}`).join(", ") + `: ${all} numbers`;
+  }
   if (name === "help") return HELP.join("\n");
   return `unknown command: ${name}. Type help for the list.`;
 }

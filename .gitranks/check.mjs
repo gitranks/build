@@ -61,6 +61,7 @@ groups.push(["write-the-likeliest", [`write ${start}`, `write ${pick(["sa", "ri"
 const seed = pick(["7", "42", "1000"]);
 groups.push(["pick-at-random", [`seed ${seed}`, `write ${start}`, `write ${start}`, `seed ${seed}`, `write ${start}`, "seed x"]]);
 groups.push(["measure-the-loss", ["loss"]]);
+groups.push(["numbers-for-characters", ["shapes"]]);
 groups.push(["read-commands", ["help", "", pick(["fly", "hello", "learn"]) + " away", "exit", "help"]]);
 session(groups);
 try {
