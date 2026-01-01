@@ -13,6 +13,7 @@ HELP = [
     "text                  what lm read, and what it kept",
     "encode <text>         turn text into numbers, one for each character",
     "decode <numbers>      turn numbers back into text",
+    "counts <character>    the characters that came after this one, and how often",
     "help                  this list",
     "exit                  stop lm",
 ]
@@ -53,6 +54,17 @@ def encode(part):
 def decode(numbers):
     return "".join(ALPHABET[n] for n in numbers)
 
+def show(n):
+    return f'"{ALPHABET[n]}"'
+
+# The text as numbers.
+ids = encode(text)
+
+# pairs[a][b]: how many times character b came right after character a.
+pairs = [[0] * V for _ in range(V)]
+for i in range(len(ids) - 1):
+    pairs[ids[i]][ids[i + 1]] += 1
+
 # A whole number, such as 42.
 def is_number(word):
     return re.fullmatch(r"[0-9]{1,9}", word) is not None
@@ -74,6 +86,19 @@ def run(words):
         if not rest or not all(is_number(w) and int(w) < V for w in rest):
             return f"usage: decode <numbers>, each from 0 to {V - 1}"
         return f'"{decode(int(w) for w in rest)}"'
+    if name == "counts":
+        a = ALPHABET.find(arg)
+        if len(arg) != 1 or a < 0:
+            return f'usage: counts <character>, one of "{ALPHABET}"'
+        order = [[count, b] for b, count in enumerate(pairs[a]) if count > 0]
+        order.sort(key=lambda each: -each[0])
+        total = 0
+        for count, _ in order:
+            total += count
+        if not total:
+            return f'nothing came after "{arg}"'
+        top = ", ".join(f"{show(b)} {count}" for count, b in order[:5])
+        return f'after "{arg}": {top}' + (f" and {len(order) - 5} more" if len(order) > 5 else "") + f", {total} in all"
     if name == "help":
         return "\n".join(HELP)
     return f"unknown command: {name}. Type help for the list."

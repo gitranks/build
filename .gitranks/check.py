@@ -83,6 +83,7 @@ groups = [("what-you-will-build", [])]
 groups.append(("clean-the-text", ["text"]))
 word = pick(["cat", "dog", "fox", "hen"])
 groups.append(("characters-to-numbers", [f"encode {word}", "decode " + pick(["3 1 4", "2 7 1 8", "5 0 9"]), "encode " + pick(["Cat", "dog!", "x-ray"]), "decode " + pick(["1 two", "-1", "x"]), "decode 99"]))
+groups.append(("count-the-pairs", ["counts " + pick(["t", "a", "o"]), "counts " + pick(["q", "z", "?"]), "counts"]))
 groups.append(("read-commands", ["help", "", pick(["fly", "hello", "learn"]) + " away", "exit", "help"]))
 session(groups)
 shutil.rmtree(folder, ignore_errors=True)
