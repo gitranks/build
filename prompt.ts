@@ -12,7 +12,9 @@ typed.on("line", (line) => {
   const [method, ...rest] = line.trim().split(" ");
   if (!method) return;
   const params = rest.length ? JSON.parse(rest.join(" ")) : undefined;
-  send(JSON.stringify({ jsonrpc: "2.0", id: ++id, method, params }));
+  // A notification has no id, so the server sends nothing back.
+  const note = method.startsWith("notifications/");
+  send(JSON.stringify(note ? { jsonrpc: "2.0", method, params } : { jsonrpc: "2.0", id: ++id, method, params }));
 });
 typed.on("close", () => server.stdin.end());
 

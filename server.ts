@@ -6,6 +6,9 @@ import { createInterface } from "node:readline";
 type Message = { jsonrpc?: unknown; id?: unknown; method?: unknown; params?: any };
 type Answer = { result: object } | { error: { code: number; message: string } };
 
+// The versions of MCP this server speaks, newest first.
+const VERSIONS = ["2025-11-25", "2025-06-18"];
+
 // Logs go to standard error. Standard output is kept for messages alone.
 function log(text: string): void {
   console.error(`my-server: ${text}`);
@@ -17,6 +20,19 @@ function fail(code: number, message: string): Answer {
 
 // Every request gets exactly one answer.
 function handle(msg: Message): Answer {
+  const params = msg.params ?? {};
+  if (typeof params !== "object" || Array.isArray(params)) return fail(-32602, "params must be an object");
+  if (msg.method === "initialize") {
+    // Answer the version the agent asked for if we speak it, else the newest we speak.
+    const asked = params.protocolVersion;
+    return {
+      result: {
+        protocolVersion: VERSIONS.includes(asked) ? asked : VERSIONS[0],
+        capabilities: {},
+        serverInfo: { name: "my-server", version: "0.1.0" },
+      },
+    };
+  }
   return fail(-32601, `Method not found: ${msg.method}`);
 }
 
