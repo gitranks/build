@@ -29,8 +29,10 @@ REASONS = {
     200: "OK",
     301: "Moved Permanently",
     303: "See Other",
+    400: "Bad Request",
     404: "Not Found",
     405: "Method Not Allowed",
+    413: "Content Too Large",
 }
 
 
@@ -138,14 +140,25 @@ def handle(request):
 
 
 # Read a request's head: its first line, then one header a line.
+# A request it can not read gets back the answer to send instead: 400 Bad Request, or 413 for a body too big.
 def parse(head):
     first, *lines = head.split("\r\n")
-    method, target, version = first.split(" ")
+    words = first.split(" ")
+    if len(words) != 3 or not words[1] or not words[2].startswith("HTTP/"):
+        return text("bad request: the first line is not METHOD TARGET VERSION", 400)
+    method, target, version = words
     # A header line is a name, a colon and a value. A name has no case: Host and host are the same.
     headers = {}
     for line in lines:
         name, colon, value = line.partition(":")
+        if not colon or not name:
+            return text(f"bad request: a header line has no name and colon: {line}", 400)
         headers[name.strip().lower()] = value.strip()
+    size = headers.get("content-length", "0")
+    if not (size.isascii() and size.isdigit()):
+        return text("bad request: Content-Length is not a whole number", 400)
+    if int(size) > 1000000:
+        return text("bad request: the body is over 1 MB", 413)
     return {"method": method, "target": target, "version": version, "headers": headers, "body": b""}
 
 
@@ -187,6 +200,11 @@ def serve(conn):
             data = more(conn, data)
         end = data.index(b"\r\n\r\n")
         request = parse(data[:end].decode("latin-1"))
+        if "status" in request:
+            # What comes after a request it can not read can not be read either: answer, then close.
+            print(f"web: {request['body']}")
+            send(conn, request, False)
+            return
         size = int(request["headers"].get("content-length", "0"))
         while len(data) < end + 4 + size:
             data = more(conn, data)

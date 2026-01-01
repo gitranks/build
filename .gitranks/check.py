@@ -375,6 +375,21 @@ def keep_alive(port):
 
 
 session("keep-alive", keep_alive)
+
+
+def a_bad_request(port):
+    line = pick(["HELLO", "GET /hello", "GET /hello HTTP/1.1 please"])
+    ask(port, "a-bad-request", [f"{line}\r\nHost: localhost\r\n\r\n"], brief=True)
+    header = pick(["Name Ada", "no colon here", ": blue"])
+    ask(port, "a-bad-request", [get("/hello").replace("Host: localhost", f"Host: localhost\r\n{header}")], label=f'GET /hello with the header line "{header}"', brief=True)
+    size = pick(["ten", "-5", "1e3"])
+    ask(port, "a-bad-request", [get("/notes", "POST").replace("Host: localhost", f"Host: localhost\r\nContent-Length: {size}")], label=f"POST /notes with Content-Length: {size}", brief=True)
+    big = pick(["5000000", "1000001", "99999999"])
+    ask(port, "a-bad-request", [get("/notes", "POST").replace("Host: localhost", f"Host: localhost\r\nContent-Length: {big}")], label=f"POST /notes with Content-Length: {big}", brief=True)
+    ask(port, "a-bad-request", [get("/hello?name=" + pick(["again", "still+here"]))], brief=True)
+
+
+session("a-bad-request", a_bad_request)
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
