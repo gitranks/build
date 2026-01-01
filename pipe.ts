@@ -27,6 +27,7 @@ type Window = { count: number; sum: number; min: number; max: number };
 const store = {
   windows: {} as Record<string, Window>,
   files: {} as Record<string, number>, // how many lines of each file are loaded
+  seen: [] as string[], // the rows this run kept so far: after a crash, the next run still finds their duplicates
 };
 
 // The store is kept in store.json, so it is still there when pipe starts again.
@@ -140,9 +141,12 @@ function query(metric: string, host?: string): string {
 }
 
 // Flush the buffer: add its rows to their windows and save the store.
-function flush(): void {
+// The same write saves how many lines of the file are done, so a run after a crash starts after them.
+function flush(name: string, done: number): void {
   for (const row of buffer) add(row);
   buffer = [];
+  store.files[name] = done;
+  store.seen = [...seen];
   save();
   flushes += 1;
   if (flushes === crashAt) process.exit(3);
@@ -162,12 +166,10 @@ function load(name: string): string {
     else {
       rows.push(row);
       buffer.push(row);
-      if (buffer.length === BATCH) flush();
+      if (buffer.length === BATCH) flush(name, i + 1);
     }
   }
-  flush();
-  store.files[name] = all.length;
-  save();
+  flush(name, all.length);
   return `${name}: lines ${from + 1} to ${all.length}, kept ${rows.length - kept}, dropped ${bad.length - dropped}`;
 }
 
@@ -175,10 +177,12 @@ function run(crash: number): string {
   const names = inbox();
   rows = [];
   bad = [];
-  seen = new Set();
+  seen = new Set(store.seen); // empty, unless the last run crashed
   flushes = 0;
   crashAt = crash;
   for (const name of names) console.log(load(name));
+  store.seen = []; // the run is whole: its rows' keys are no longer needed
+  save();
   return `run: files ${names.length}, kept ${rows.length}, dropped ${bad.length}, windows ${Object.keys(store.windows).length}, flushes ${flushes}`;
 }
 

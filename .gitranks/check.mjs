@@ -115,6 +115,10 @@ const six = csv(["05", "15", "25", "35", "45", "55"].map((s) => row(at(`10:00:${
 const crashed = box("crash", { "a.csv": six });
 session("crash-in-the-middle", crashed, [pick(["crash 0", "crash x", "crash"]), "crash 1"]);
 session("crash-in-the-middle", crashed, ["run", `query ${metric}`]);
+const commented = csv(["05", "15", "25"].map((s) => row(at(`10:00:${s}`), host, metric, s))) + "# a comment line\n" + csv(["35", "05", "45", "55"].map((s) => row(at(`10:00:${s}`), host, metric, s === "05" ? "99" : s)));
+const once = box("once", { "a.csv": commented, "b.csv": csv([row(at("10:01:05"), other, metric, "7")]) });
+session("count-each-row-once", once, [`crash ${pick(["1", "2", "3"])}`]);
+session("count-each-row-once", once, ["files", "run", `query ${metric}`]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
