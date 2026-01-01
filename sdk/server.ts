@@ -25,10 +25,18 @@ function createServer(): McpServer {
   server.registerTool(
     "roll_dice",
     {
-      description: "Roll a die and say the number. Use it whenever the person asks for a dice roll.",
-      inputSchema: z.object({ sides: z.int().default(6) }),
+      description: "Roll one or more dice and say each number and the total. Use it whenever the person asks for a dice roll.",
+      inputSchema: z.object({
+        sides: z.int().min(2).max(100).default(6).describe("How many sides each die has. 6 if not given."),
+        count: z.int().min(1).max(10).default(1).describe("How many dice to roll. 1 if not given."),
+      }),
     },
-    async ({ sides }) => ({ content: [{ type: "text", text: `You rolled ${randomBelow(sides) + 1}.` }] }),
+    async ({ sides, count }) => {
+      const rolls = Array.from({ length: count }, () => randomBelow(sides) + 1);
+      const total = rolls.reduce((sum, roll) => sum + roll, 0);
+      const text = count === 1 ? `You rolled ${total}.` : `You rolled ${rolls.join(", ")}: ${total} in total.`;
+      return { content: [{ type: "text", text }] };
+    },
   );
   return server;
 }
