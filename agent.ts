@@ -99,9 +99,23 @@ function list(): string {
   return paths.sort().join("\n") || "(the folder is empty)";
 }
 
+// The full path of a path the model gave, or null when it is outside the folder. A model makes mistakes, and a file
+// it reads may hold words that steer it, so the tools never reach past the folder, where git shows all they changed.
+// Nor into .git: git runs commands its settings there name, and that would get past the question before a command.
+function inside(given: unknown): string | null {
+  const full = typeof given === "string" && given ? path.resolve(ROOT, given) : "";
+  const first = full.slice(ROOT.length + 1).split(path.sep)[0].toLowerCase();
+  return full.startsWith(ROOT + path.sep) && first !== ".git" ? full : null;
+}
+function outside(given: unknown): string {
+  if (typeof given !== "string" || !given) return "error: give the file's path";
+  return `error: ${given} is outside the folder or in its .git, and the tools work only in the folder`;
+}
+
 // Read a file of the folder.
 function read(given: unknown): string {
-  const file = path.resolve(ROOT, String(given));
+  const file = inside(given);
+  if (!file) return outside(given);
   if (!isFile(file)) return `error: there is no file ${given}`;
   return fs.readFileSync(file, "utf8");
 }

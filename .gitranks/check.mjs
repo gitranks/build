@@ -146,6 +146,11 @@ await session("the-agent-loop", ["what files are here?", "use another tool"], [c
 const missing = pick(["todo.txt", "plan.md", "list.txt"]);
 const reads = [call("read_file", { path: "notes.txt" }), heard, call("read_file", { path: missing }), heard, () => [["read_file", '{"path": notes.txt}']], heard];
 await session("read-a-file", ["what is in my notes?", `read ${missing}`, "read it in a broken way"], reads);
+// A file next to the folder, outside it.
+fs.writeFileSync(join(top, "secret.txt"), `the secret is ${pick(["owl", "kite", "moon"])}\n`);
+const away = pick(["/secret.txt", "src/../../secret.txt"]);
+const inGit = [call("read_file", { path: away }), heard, call("read_file", { path: pick([".git/config", ".GIT/hooks/pre-commit"]) }), heard];
+await session("stay-in-the-folder", ["read the secret", "read it another way", "read git's settings"], [call("read_file", { path: "../secret.txt" }), heard, ...inGit]);
 server.close();
 try {
   fs.rmSync(top, { recursive: true, force: true });
