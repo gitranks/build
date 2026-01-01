@@ -91,6 +91,13 @@ session("let-and-names", [f"let {name} = {a} * 2", f"{name} + 1", pick(["y", "si
 session("change-a-variable", [f"let {name} = {a}", f"{name} = {name} + {b}", f"{name}", f"{pick(['y', 'size'])} = 1"])
 session("true-and-false", [f"{a} < {b}", f"{a} + 1 == {a + 1}", f"{b} <= {b}", f"{a} >= {a + 1}", "true != false", "1 == true", "true + 1", "1 < 2 < 3"])
 session("many-statements", [f"let x = {a}; print x; x = x * {b}; print x", "print 1 2", ";;", "print"])
+top = pick([3, 4, 5])
+session("if-and-while", [
+    f"let n = {a}; if n % 2 == 0 {{ print 0 }} else {{ print 1 }} print n",
+    f"let i = 0; while i < {top} {{ i = i + 1; if i == 2 {{ print 20 }} else if i > 2 {{ print i * 100 }} }}",
+    "if 1 { print 1 }",
+    "if true { print 1",
+])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the

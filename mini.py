@@ -73,8 +73,9 @@ SYMBOLS = [  # the symbols mini knows
     "(", ")",
     "=",
     ";",
+    "{", "}",
 ]
-WORDS = ["let", "true", "false", "print"]  # mini's own words: they can not name a variable
+WORDS = ["let", "true", "false", "print", "if", "else", "while"]  # mini's own words: they can not name a variable
 
 
 # The tokenizer cuts the source into pieces: a run of spaces, a number, a name and more, or any other one
@@ -122,10 +123,15 @@ def parse(tokens):
                 pass
             if accept(end):
                 return found
+            if tokens[0].kind == "end":
+                raise MiniError("a { has no } to close it")
             node = statement()
             found.append(node)
-            if tokens[0].kind not in [";", end]:
+            if tokens[0].kind not in [";", end, "end"] and node.kind not in ["if", "while"]:  # these end in }
                 raise MiniError(f"expected ; but found {tokens[0].text}")
+    def block():
+        expect("{")
+        return statements("}")
     def statement():
         if accept("let"):
             name = expect("name").text
@@ -137,6 +143,12 @@ def parse(tokens):
             return Node(kind="set", name=name, value=expression())
         if accept("print"):
             return Node(kind="print", value=expression())
+        if accept("if"):
+            test, then = expression(), block()
+            otherwise = [] if not accept("else") else [statement()] if tokens[0].kind == "if" else block()
+            return Node(kind="if", test=test, then=then, otherwise=otherwise)
+        if accept("while"):
+            return Node(kind="while", test=expression(), body=block())
         return Node(kind="expr", value=expression())
     def binary(ops, operand):
         left = operand()
@@ -198,8 +210,24 @@ def execute(node, scope):
         find(scope, node.name)[node.name] = value
     elif node.kind == "print":
         print(show(evaluate(node.value, scope)))
+    elif node.kind == "if":
+        run(node.then if truth(evaluate(node.test, scope), "if") else node.otherwise, scope)
+    elif node.kind == "while":
+        while truth(evaluate(node.test, scope), "while"):
+            run(node.body, scope)
     else:
         return evaluate(node.value, scope)
+
+
+def run(found, scope):  # the statements of a block, one after another
+    for node in found:
+        execute(node, scope)
+
+
+def truth(value, word):  # the answer to an if or a while must be true or false
+    if type(value) is not bool:
+        raise MiniError(f"{word} needs true or false, not {show(value)}")
+    return value
 
 
 # Say what went wrong. A mistake in the program is not a crash of mini: anything else is.
