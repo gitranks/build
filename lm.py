@@ -22,6 +22,7 @@ HELP = [
     "softmax <numbers>     turn scores into chances that add up to 1",
     "next <text>           the model's guess for the character after the text",
     "gradcheck             nudge a number of each table and see the loss move",
+    "train <steps>         learn from the text, one short piece at each step",
     "help                  this list",
     "exit                  stop lm",
 ]
@@ -145,6 +146,7 @@ model = {
     "emb": matrix(V, D, 0.5),  # a row of numbers for each character
     "out": matrix(D, V, 0.5),  # from those numbers to a score for each character
 }
+steps = 0  # how many training steps the model has taken
 
 # A row of numbers times a table: one number for each column of the table.
 def times(row, m):
@@ -206,6 +208,19 @@ def backward(f, y):
             g["emb"][f["x"][t]][i] += dz[t][i]
     return g
 
+# One step of training: a random window of the text, then each number moves a little against its gradient.
+def train_step(rate=0.1):
+    global steps
+    s = math.floor(random() * (len(train) - T))
+    x, y = train[s : s + T], train[s + 1 : s + T + 1]
+    f = forward(x)
+    g = backward(f, y)
+    for name, m in model.items():
+        for i, row in enumerate(m):
+            m[i] = [w - rate * g[name][i][j] for j, w in enumerate(row)]
+    steps += 1
+    return loss_of(f, y)
+
 # Nudge one number of each table up and down a little, and see how fast the loss moves: the gradient, measured.
 # It is the number in row 0, column 1; in emb, row 0 is the first character of the alphabet, most often the space.
 def gradcheck():
@@ -223,13 +238,14 @@ def gradcheck():
         lines.append(f"{name}: {fmt(g[name][0][1], 6)} by the formula, {fmt((up - down) / 0.00002, 6)} by a nudge")
     return "\n".join(lines)
 
-# Go on from the start, one character at a time, each picked at random by how often it came next.
+# Go on from the start, one character at a time: from the counts until the model has learned, then from the model.
 LENGTH = 60
 
 def write(start):
     out = list(start)
     while len(out) < len(start) + LENGTH:
-        out.append(pick([count + SMOOTH for count in pairs[out[-1]]]))
+        weights = [count + SMOOTH for count in pairs[out[-1]]] if steps == 0 else forward(out[-T:])["p"][-1]
+        out.append(pick(weights))
     return decode(out)
 
 # A whole number, such as 42.
@@ -293,7 +309,7 @@ def run(words):
     if name == "loss":
         return "\n".join([
             f"counts: train {fmt(counts_loss(train))}, test {fmt(counts_loss(test))}, a blind guess {fmt(log(V))}",
-            f"model: train {fmt(surprise(train))}, test {fmt(surprise(test))}",
+            f"model: train {fmt(surprise(train))}, test {fmt(surprise(test))}, after {steps} steps",
         ])
     if name == "shapes":
         total = 0
@@ -313,6 +329,17 @@ def run(words):
         return f'after "{start}": ' + ", ".join(f"{show(b)} {fmt(c)}" for c, b in order[:5])
     if name == "gradcheck":
         return gradcheck()
+    if name == "train":
+        if not is_number(arg) or not 1 <= int(arg) <= 100000:
+            return "usage: train <steps>, from 1 to 100000"
+        lines, size = [], math.ceil(int(arg) / 5)
+        for done in range(0, int(arg), size):
+            chunk = min(size, int(arg) - done)
+            total = 0.0
+            for _ in range(chunk):
+                total += train_step()
+            lines.append(f"step {steps}: loss {fmt(total / chunk)}")
+        return "\n".join(lines)
     if name == "help":
         return "\n".join(HELP)
     return f"unknown command: {name}. Type help for the list."
