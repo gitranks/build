@@ -164,6 +164,8 @@ const runs = [call("run_command", { command: command(`console.log(${sum[0]} * ${
 runs.push(call("run_command", { command: command("require('fs').rmSync('notes.txt')") }), heard);
 await session("run-a-command", [`what is ${sum[0]} times ${sum[1]}?`, "yes", "delete my notes", pick(["no", "nope", "not now"])], runs);
 said.push(["run-a-command", `notes.txt is still there: ${fs.existsSync(join(folder, "notes.txt")) ? "yes" : "no"}`]);
+const slow = command(`console.log('${pick(["starting", "working", "waiting"])}'); setTimeout(Date.now, 5000)`);
+await session("a-time-limit", ["run the slow one", "yes"], [call("run_command", { command: slow, seconds: 2 }), heard]);
 server.close();
 try {
   fs.rmSync(top, { recursive: true, force: true });
