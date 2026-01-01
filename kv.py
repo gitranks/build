@@ -18,6 +18,7 @@ HELP = [
     "stats                 count the keys, the records and the bytes",
     "compact               keep only the latest record of each key",
     "crash <key> <value>   set, but stop halfway, as a power cut would",
+    "crash compact         compact, but stop halfway",
     "help                  this list",
     "exit                  stop kv",
 ]
@@ -100,14 +101,19 @@ def read(key):
 
 
 # Copy the latest record of each key into a new file, then put the new file in the log's place.
-def compact():
+def compact(crash):
     global end, records
     was = f"records {records}, bytes {end}"
     with open(FILE, "rb") as file:
         log = file.read()
     keep = b"".join(log[start : start + size] for start, size in index.values())
     with open(FILE + ".new", "wb") as new:
-        new.write(keep)
+        new.write(keep[: len(keep) // 2] if crash else keep)
+        new.flush()
+        if crash:
+            sys.stdout.flush()
+            os._exit(3)
+        os.fsync(new.fileno())  # the new file is whole on the disk before it takes the log's place
     os.replace(FILE + ".new", FILE)  # os.rename would refuse on Windows, where the log is already there
     index.clear()
     end = records = 0
@@ -149,7 +155,9 @@ def run(words):
     if name == "stats":
         return f"keys {len(index)}, records {records}, old records {records - len(index)}, bytes {end}"
     if name == "compact":
-        return compact() if records else "the log is empty"
+        return compact(False) if records else "the log is empty"
+    if name == "crash" and key == "compact" and not value:
+        return compact(True) if records else "the log is empty"
     if name == "crash":
         if not key or not value:
             return "usage: crash <key> <value>"
@@ -163,6 +171,10 @@ def run(words):
     return f"unknown command: {name}. Type help for the list."
 
 
+# A compaction that stopped before its rename left its new file behind. The log is whole, so the new file goes.
+if os.path.exists(FILE + ".new"):
+    os.remove(FILE + ".new")
+    print("kv: removed a compaction that did not finish. The log is as it was before it.")
 load()
 print(f"kv: ready, keys {len(index)}. Type help for the commands.")
 while True:

@@ -116,6 +116,9 @@ session("survive-a-crash", [f"get {saved}", f"get {saved}2", f"set {saved}2 back
 with open(FILE, "ab") as log:
     log.write((pick(['{"set": "oops"}', "this line is not JSON", '["set","half"]']) + "\n").encode())
 session("skip-a-damaged-record", [f"set {saved} " + pick(["done", "later"]), f"get {saved}", "stats"])
+session("compact-safely", ["set " + pick(["mode", "theme"]) + " dark", "crash compact"])
+said.append(("compact-safely", "data.log.new is there: " + ("yes" if os.path.exists(FILE + ".new") else "no")))
+session("compact-safely", ["compact", "stats"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
