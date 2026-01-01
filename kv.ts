@@ -10,6 +10,7 @@ const HELP = [
   "del <key>             delete the key",
   "keys                  list every key",
   "fill <count>          set key1, key2 and on, up to the count",
+  "stats                 count the keys, the records and the bytes",
   "help                  this list",
   "exit                  stop kv",
 ];
@@ -21,6 +22,7 @@ const FILE = at > 0 && process.argv[at + 1] ? process.argv[at + 1] : "data.log";
 // The index: for each key, where its latest record starts in the log and how long it is, in bytes.
 const index = new Map<string, { start: number; size: number }>();
 let end = 0; // the log's length in bytes: where the next record goes
+let records = 0; // every record in the log, the old ones too
 
 // Write records at the end of the log, one line each.
 function write(batch: string[][]): void {
@@ -43,6 +45,7 @@ function load(): void {
 function note(record: string[], size: number): void {
   if (record[0] === "set") index.set(record[1], { start: end, size });
   else index.delete(record[1]);
+  records += 1;
   end += size;
 }
 
@@ -92,6 +95,9 @@ function run(words: string[]): string {
     for (let i = 1; i <= count; i++) batch.push(["set", `key${i}`, `value ${i}`]);
     write(batch);
     return `OK, set key1 to key${count}`;
+  }
+  if (name === "stats") {
+    return `keys ${index.size}, records ${records}, old records ${records - index.size}, bytes ${end}`;
   }
   if (name === "help") return HELP.join("\n");
   return `unknown command: ${name}. Type help for the list.`;
