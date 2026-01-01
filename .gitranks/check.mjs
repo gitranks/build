@@ -119,6 +119,8 @@ async function session(about, lines, replies = [], options = {}) {
 
 await session("what-you-will-build", []);
 await session("read-messages", ["/help", "", pick(["hello", "hi there", "good morning"]), "/exit", "/help"]);
+const question = pick(["what is 6 times 7?", "what is the capital of France?", "is water wet?"]);
+await session("ask-the-model", [pick(["hello", "hi there", "good morning"]), question], [heard, heard]);
 server.close();
 try {
   fs.rmSync(top, { recursive: true, force: true });
