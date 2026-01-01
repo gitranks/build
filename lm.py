@@ -14,6 +14,7 @@ HELP = [
     "encode <text>         turn text into numbers, one for each character",
     "decode <numbers>      turn numbers back into text",
     "counts <character>    the characters that came after this one, and how often",
+    "write <start>         go on from the start, one character at a time",
     "help                  this list",
     "exit                  stop lm",
 ]
@@ -65,6 +66,16 @@ pairs = [[0] * V for _ in range(V)]
 for i in range(len(ids) - 1):
     pairs[ids[i]][ids[i + 1]] += 1
 
+# Go on from the start, one character at a time: each time, the character that came next most often.
+LENGTH = 60
+
+def write(start):
+    out = list(start)
+    while len(out) < len(start) + LENGTH:
+        row = pairs[out[-1]]
+        out.append(row.index(max(row)))
+    return decode(out)
+
 # A whole number, such as 42.
 def is_number(word):
     return re.fullmatch(r"[0-9]{1,9}", word) is not None
@@ -99,6 +110,14 @@ def run(words):
             return f'nothing came after "{arg}"'
         top = ", ".join(f"{show(b)} {count}" for count, b in order[:5])
         return f'after "{arg}": {top}' + (f" and {len(order) - 5} more" if len(order) > 5 else "") + f", {total} in all"
+    if name == "write":
+        if not arg:
+            return "usage: write <start>"
+        start = clean(arg)
+        missing = [ch for ch in start if ch not in ALPHABET]
+        if not start or missing:
+            return f'not in the alphabet: "{missing[0] if missing else arg}"'
+        return write(encode(start))
     if name == "help":
         return "\n".join(HELP)
     return f"unknown command: {name}. Type help for the list."
