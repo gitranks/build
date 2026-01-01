@@ -38,3 +38,15 @@ class TasksTest(unittest.TestCase):
         status, body = self.call("GET", "/api/tasks/7")
         self.assertEqual(status, 404)
         self.assertEqual(body["error"], "no task with id 7")
+
+    def test_list_the_tasks(self):
+        self.call("POST", "/api/tasks", {"title": "Buy milk"})
+        self.call("POST", "/api/tasks", {"title": "Call Grace", "done": True})
+        body = self.call("GET", "/api/tasks")[1]
+        self.assertEqual([task["title"] for task in body], ["Buy milk", "Call Grace"])
+
+    def test_change_a_task_then_delete_it(self):
+        self.call("POST", "/api/tasks", {"title": "Buy milk"})
+        self.assertEqual(self.call("PATCH", "/api/tasks/1", {"done": True})[1], {"id": 1, "title": "Buy milk", "done": True})
+        self.assertEqual(self.call("DELETE", "/api/tasks/1")[0], 204)
+        self.assertEqual(self.call("GET", "/api/tasks/1")[0], 404)
