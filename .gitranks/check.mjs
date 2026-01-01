@@ -68,6 +68,7 @@ groups.push(["test-on-new-text", ["text", "loss"]]);
 groups.push(["the-gradient", ["gradcheck"]]);
 groups.push(["learn-from-mistakes", [`train ${pick(["60", "80", "100"])}`, "loss", `seed ${seed}`, `write ${start}`, "train 0"]]);
 groups.push(["look-back", ["train 50", "loss", `seed ${seed}`, `write ${start}`]]);
+groups.push(["attention", [`attend ${pick(["the cat", "a dog", "my hat"])}`, "gradcheck"]]);
 groups.push(["read-commands", ["help", "", pick(["fly", "hello", "learn"]) + " away", "exit", "help"]]);
 session(groups);
 try {

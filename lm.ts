@@ -17,6 +17,7 @@ const HELP = [
   "next <text>           the model's guess for the character after the text",
   "gradcheck             nudge a number of each table and see the loss move",
   "train <steps>         learn from the text, one short piece at each step",
+  "attend <text>         how much each character looks at the ones before it",
   "help                  this list",
   "exit                  stop lm",
 ];
@@ -135,6 +136,8 @@ const model: Record<string, Matrix> = {
   emb: matrix(V, D, 0.5), // a row of numbers for each character
   out: matrix(D, V, 0.5), // from those numbers to a score for each character
   wv: matrix(D, D, 0.25), // what a character passes on to the ones after it
+  wq: matrix(D, D, 0.25), // what a character looks for
+  wk: matrix(D, D, 0.25), // what a character offers to the ones that look
 };
 let steps = 0; // how many training steps the model has taken
 
@@ -158,20 +161,23 @@ function softmax(scores: number[]): number[] {
   for (const x of e) total += x;
   return e.map((x) => x / total);
 }
+const SCALE = 1 / Math.sqrt(D);
 
 // Run the model over a window of characters: after each one, a score for every character that may come next.
 function forward(x: number[]) {
   const h = x.map((id) => model.emb[id]);
   const v = h.map((row) => times(row, model.wv));
-  // Each character takes the mean of itself and the ones before it, never the ones after (the mask).
-  const a = h.map((_, t) => new Array<number>(t + 1).fill(1 / (t + 1)));
+  const q = h.map((row) => times(row, model.wq));
+  const k = h.map((row) => times(row, model.wk));
+  // Attention: each character weighs itself and the ones before it, never the ones after (the mask).
+  const a = h.map((_, t) => softmax(k.slice(0, t + 1).map((key) => dot(q[t], key) * SCALE)));
   const z = h.map((row, t) => {
     const mix = new Array<number>(D).fill(0);
     for (let u = 0; u <= t; u++) for (let i = 0; i < D; i++) mix[i] += a[t][u] * v[u][i];
     return row.map((e, i) => e + mix[i]);
   });
   const logits = z.map((row) => times(row, model.out));
-  return { x, h, v, a, z, logits, p: logits.map(softmax) };
+  return { x, h, v, q, k, a, z, logits, p: logits.map(softmax) };
 }
 type Pass = ReturnType<typeof forward>;
 // The model's loss: the mean of -log(the chance it gave the character that came next).
@@ -203,12 +209,22 @@ function backward(f: Pass, y: number[]): Record<string, Matrix> {
   }
   const dh = dz.map((row) => [...row]); // z is h plus the mix, so h gets all of z's gradient, and the mix too
   const dv = f.h.map(() => new Array<number>(D).fill(0));
+  const dq = f.h.map(() => new Array<number>(D).fill(0));
+  const dk = f.h.map(() => new Array<number>(D).fill(0));
   for (let t = 0; t < n; t++) {
+    const da = f.a[t].map((_, u) => dot(dz[t], f.v[u]));
+    let mean = 0;
+    for (let u = 0; u <= t; u++) mean += f.a[t][u] * da[u];
     for (let u = 0; u <= t; u++) {
       for (let i = 0; i < D; i++) dv[u][i] += f.a[t][u] * dz[t][i];
+      const ds = f.a[t][u] * (da[u] - mean) * SCALE; // back through the softmax of the weights
+      for (let i = 0; i < D; i++) {
+        dq[t][i] += ds * f.k[u][i];
+        dk[u][i] += ds * f.q[t][i];
+      }
     }
   }
-  for (const [name, d] of [["wv", dv]] as const) {
+  for (const [name, d] of [["wv", dv], ["wq", dq], ["wk", dk]] as const) {
     for (let t = 0; t < n; t++) {
       for (let i = 0; i < D; i++) for (let j = 0; j < D; j++) g[name][i][j] += f.h[t][i] * d[t][j];
       for (let i = 0; i < D; i++) dh[t][i] += dot(model[name][i], d[t]);
@@ -348,6 +364,13 @@ function run(words: string[]): string {
       lines.push(`step ${steps}: loss ${fmt(sum / chunk)}`);
     }
     return lines.join("\n");
+  }
+  if (name === "attend") {
+    const start = clean(arg);
+    const missing = [...start].find((ch) => !ALPHABET.includes(ch));
+    if (!start || missing) return "usage: attend <text>, with characters of the alphabet";
+    const f = forward(encode(start).slice(-T));
+    return f.a.map((row, t) => `${show(f.x[t])} ` + row.map((w) => fmt(w, 2)).join(" ")).join("\n");
   }
   if (name === "help") return HELP.join("\n");
   return `unknown command: ${name}. Type help for the list.`;
