@@ -14,6 +14,7 @@ const HELP = [
   "help                          this list",
   "exit                          stop pipe",
 ];
+const BATCH = 4; // how many clean rows wait in the buffer before a flush
 
 // A clean row: its time in seconds since 1970 in UTC, its host and metric, and its value in hundredths.
 type Row = { time: number; host: string; metric: string; value: number };
@@ -39,6 +40,10 @@ function save(): void {
 let rows: Row[] = []; // the rows the last run kept
 let bad: string[] = []; // the lines it dropped, and why
 let seen = new Set<string>(); // the time, host and metric of each row it kept
+
+// Clean rows wait in the buffer. A flush adds them to their windows and saves the store, in one write.
+let buffer: Row[] = [];
+let flushes = 0;
 
 // The names of the CSV files in the inbox folder, in order.
 function inbox(): string[] {
@@ -132,6 +137,14 @@ function query(metric: string, host?: string): string {
   return some(shown, `(no rows of ${metric})`);
 }
 
+// Flush the buffer: add its rows to their windows and save the store.
+function flush(): void {
+  for (const row of buffer) add(row);
+  buffer = [];
+  save();
+  flushes += 1;
+}
+
 // Read one file's lines and keep their rows.
 function load(name: string): string {
   const all = lines(name);
@@ -145,9 +158,11 @@ function load(name: string): string {
     if (typeof row === "string") bad.push(`${name} line ${i + 1}: ${row}: ${trim(all[i])}`);
     else {
       rows.push(row);
-      add(row);
+      buffer.push(row);
+      if (buffer.length === BATCH) flush();
     }
   }
+  flush();
   store.files[name] = all.length;
   save();
   return `${name}: lines ${from + 1} to ${all.length}, kept ${rows.length - kept}, dropped ${bad.length - dropped}`;
@@ -158,8 +173,9 @@ function run(): string {
   rows = [];
   bad = [];
   seen = new Set();
+  flushes = 0;
   for (const name of names) console.log(load(name));
-  return `run: files ${names.length}, kept ${rows.length}, dropped ${bad.length}, windows ${Object.keys(store.windows).length}`;
+  return `run: files ${names.length}, kept ${rows.length}, dropped ${bad.length}, windows ${Object.keys(store.windows).length}, flushes ${flushes}`;
 }
 
 // The prompt pipe> shows only when you type at a terminal, not when another program sends the commands.

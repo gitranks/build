@@ -108,6 +108,9 @@ session("save-the-store", keep, ["run"]);
 fs.appendFileSync(join(keep, "inbox", "a.csv"), "0\n" + csv([row(at("10:01:05"), host, metric, "40")]));
 session("save-the-store", keep, ["files", "run", `query ${metric}`]);
 said.push(["save-the-store", `store.json.new is there: ${fs.existsSync(join(keep, "store.json.new")) ? "yes" : "no"}`]);
+const many = pick([5, 8, 9]);
+const batched = Array.from({ length: many }, (_, i) => row(at(`10:00:${String(i * 5).padStart(2, "0")}`), host, metric, String(i + 1)));
+session("write-in-batches", box("batch", { "a.csv": csv(batched), "b.csv": csv(["# nothing here yet"]) }), ["run", "run"]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
