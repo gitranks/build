@@ -14,6 +14,11 @@ site.addsitedir(str(Path(__file__).parent / "packages"))
 from mcp.server import MCPServer
 from pydantic import Field
 
+INSTRUCTIONS = (
+    "my-server rolls dice and picks one of a few options at random. Use roll_dice for any dice roll "
+    "and pick_one when the person cannot decide. Say the result in plain words."
+)
+
 
 # Logs go to standard error. Standard output is the SDK's, for messages alone.
 def log(text: str) -> None:
@@ -31,7 +36,7 @@ def random_below(n: int) -> int:
     return state % n
 
 
-mcp = MCPServer("my-server", version="2.0.0")
+mcp = MCPServer("my-server", version="2.0.0", instructions=INSTRUCTIONS)
 
 
 # The shape of each tool's result. The SDK turns it into the outputSchema and sends the result as data.
