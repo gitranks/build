@@ -25,6 +25,13 @@ def pick(options):
 said = []  # each line to print, with the step it is about, or "always"
 folder = tempfile.mkdtemp(prefix="lm-check-")
 TEXT = os.path.join(folder, "text.txt")
+# A text of the check's own, made from the seed, with capitals, marks and line ends for lm to clean.
+raw = ""
+while len(raw) < 400:
+    raw += pick(["The cat", "A dog", "My fox", "Old Bob", "The hen"]) + " " + pick(["sat on", "ran to", "looked at", "slept by", "sang to"])
+    raw += " " + pick(["the mat", "a tree", "the river", "my hat", "the moon"]) + pick([". ", "! ", ".\n", ", and ", "?  ", ".\t"])
+with open(TEXT, "w", encoding="utf-8", newline="") as file:
+    file.write(raw)
 
 # Start lm once and send it each group's commands, with a word it does not know between two groups, so the answers
 # to each group can be told apart. All runs together get 20 seconds at most, and a lm that does not stop ends the
@@ -73,6 +80,7 @@ def session(groups):
 
 
 groups = [("what-you-will-build", [])]
+groups.append(("clean-the-text", ["text"]))
 groups.append(("read-commands", ["help", "", pick(["fly", "hello", "learn"]) + " away", "exit", "help"]))
 session(groups)
 shutil.rmtree(folder, ignore_errors=True)
