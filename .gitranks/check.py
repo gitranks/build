@@ -14,6 +14,22 @@ lines = []
 said = []  # each line the programs printed, with what it answers: an id, "logged", "prompt" or "always"
 
 
+def pick(options):
+    global n
+    n = (n * 48271) % 2147483647 or 1
+    return options[n % len(options)]
+
+
+def call(id, method, params=None):
+    message = {"jsonrpc": "2.0", "id": id, "method": method}
+    if params is not None:
+        message["params"] = params
+    return json.dumps(message, separators=(",", ":"))
+
+
+lines += [call(1, pick(["hello", "say/hi", "what/now", "roll/please"])), "this line is not JSON"]
+
+
 def show(name, file, args, sent):
     data = "".join(line + "\n" for line in sent).encode()
     # Files, not pipes: a program left running can not keep the check waiting.
@@ -31,6 +47,9 @@ def show(name, file, args, sent):
     for line in stderr.splitlines():
         if line.startswith("my-server: "):
             said.append(("logged" if name == "server" else name, f"{name} logged: {line[11:].strip()}"))
+    crash = [line for line in stderr.splitlines() if line[:1].isalpha() and "Error" in line.split(":")[0]]
+    if crash:
+        said.append(("always", f"{name} crashed: {crash[-1].strip()}"))
     if code is None:
         said.append(("always", f"{name} did not stop within 5 seconds"))
     elif code != 0:
