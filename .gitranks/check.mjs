@@ -173,6 +173,8 @@ const ends = (ask) => {
   return `The tool's answer has ${got.length} characters and ends with: ${oneLine(got.slice(-45))}`;
 };
 await session("keep-it-short", ["read big.txt"], [call("read_file", { path: "big.txt" }), ends]);
+const pages = Array.from({ length: 11 }, (_, i) => call("read_file", { path: `page${i + 1}.txt` }));
+await session("a-limit-on-rounds", [`read every ${pick(["page", "chapter", "part"])}`], [...pages, heard]);
 server.close();
 try {
   fs.rmSync(top, { recursive: true, force: true });

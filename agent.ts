@@ -71,10 +71,13 @@ function failed(error: Error): string {
   return "no answer from the model server. Is it running? README.md says how to start it.";
 }
 
+// The most times the model may use tools for one message of yours, before the agent stops and asks you.
+const ROUNDS = 10;
+
 // One message from you, and the model's answer to it.
 async function turn(text: string): Promise<void> {
   messages.push({ role: "user", content: text });
-  for (;;) {
+  for (let round = 1; round <= ROUNDS; round++) {
     const answer = await ask();
     const calls = answer.tool_calls ?? [];
     if (!calls.length) {
@@ -84,6 +87,7 @@ async function turn(text: string): Promise<void> {
     messages.push({ role: "assistant", content: answer.content, tool_calls: calls });
     for (const call of calls) messages.push({ role: "tool", tool_call_id: call.id, content: cut(await use(call)) });
   }
+  console.log(`agent: the model used tools ${ROUNDS} times with no answer, so I stopped. Say how to go on.`);
 }
 
 // Run one tool the model asked for, and give back what to send the model.
