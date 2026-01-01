@@ -165,6 +165,10 @@ const post = (target, body) =>
 
 await session("what-you-will-build", null);
 await session("listen-on-a-port", (port) => ask(port, "listen-on-a-port", [get("/")]));
+await session("read-the-request", async (port) => {
+  const [line, ...rest] = get(pick(["/", "/hello", "/cats"])).split("\r\n");
+  await ask(port, "read-the-request", [line + "\r\n", rest.join("\r\n")], { label: `${line}, in two pieces` });
+});
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
