@@ -221,6 +221,8 @@ runs = [call("run_command", {"command": command(f"print({a} * {b})")}), heard]
 runs += [call("run_command", {"command": command("import os; os.remove('notes.txt')")}), heard]
 session("run-a-command", [f"what is {a} times {b}?", "yes", "delete my notes", pick(["no", "nope", "not now"])], runs)
 said.append(("run-a-command", "notes.txt is still there: " + ("yes" if os.path.exists(os.path.join(folder, "notes.txt")) else "no")))
+slow = command("import time; print('" + pick(["starting", "working", "waiting"]) + "', flush=True); time.sleep(5)")
+session("a-time-limit", ["run the slow one", "yes"], [call("run_command", {"command": slow, "seconds": 2}), heard])
 server.shutdown()
 shutil.rmtree(top, ignore_errors=True)
 

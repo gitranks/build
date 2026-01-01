@@ -4,6 +4,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 import urllib.error
 import urllib.request
 
@@ -58,7 +59,10 @@ TOOLS = [
         "old_text": text("the text to change"),
         "new_text": text("the text to put in its place"),
     }),
-    tool("run_command", "Run a shell command in the folder. The person is asked first.", {"command": text("the command")}),
+    tool("run_command", "Run a shell command in the folder. The person is asked first.", {
+        "command": text("the command"),
+        "seconds": {"type": "number", "description": "how long it may run: 10 when left out, 60 at most"},
+    }, ["command"]),
 ]
 
 
@@ -122,7 +126,7 @@ def use(call):
     if name == "edit_file":
         return edit(args.get("path"), args.get("old_text"), args.get("new_text"))
     if name == "run_command":
-        return run(args.get("command"))
+        return run(args.get("command"), args.get("seconds"))
     return f"error: there is no tool named {name}"
 
 
@@ -190,7 +194,7 @@ def edit(given, old, now):
 
 
 # Run a command in the folder, but only once you say yes: a command can do anything you can.
-def run(command):
+def run(command, seconds):
     if not isinstance(command, str) or not command.strip():
         return "error: give a command"
     # Control characters are shown as codes, so none of them can hide a part of the command on the screen.
@@ -198,8 +202,17 @@ def run(command):
     print(f"agent: run this command? {shown} (yes or no)")
     if (line("yes or no> ") or "").strip().lower() not in ("y", "yes"):
         return "The person said no, so the command did not run. Ask them what to do instead."
-    done = subprocess.run(command, shell=True, cwd=ROOT, stdin=subprocess.DEVNULL, capture_output=True)
-    return f"exit code {done.returncode}\n" + (done.stdout + done.stderr).decode("utf-8", "replace")
+    # A command that runs too long is stopped. Its output goes to a file: a program it started and left running could
+    # hold a pipe open, and the agent would wait for it. On Windows such a program may go on running.
+    limit = min(seconds, 60) if type(seconds) in (int, float) and seconds > 0 else 10
+    with tempfile.TemporaryFile() as out:
+        try:
+            done = subprocess.run(command, shell=True, cwd=ROOT, stdin=subprocess.DEVNULL, stdout=out, stderr=out, timeout=limit)
+            end = f"exit code {done.returncode}"
+        except subprocess.TimeoutExpired:
+            end = f"stopped after {limit:g} s: it ran too long"
+        out.seek(0)
+        return end + "\n" + out.read().decode("utf-8", "replace")
 
 
 # Read your lines one at a time. The prompt shows only when you type at a terminal, not when a program sends them.
