@@ -33,11 +33,12 @@ function answerId(line) {
 }
 
 show("server", "server.ts", ["--seed", seed], lines);
+show("prompt", "prompt.ts", [], [pick(["tools/list", "ping", "hello/again"])]);
 
 // What this step adds is printed whole: the answers it is about (by id), the logs or the prompt. Every other
 // line goes into one line with a fingerprint (a hash), so the print stays short. With --all, every line is printed,
 // after a first line that says this print is only to look at.
-const focus = [1, "logged"];
+const focus = ["prompt"];
 const every = process.argv[4] === "--all";
 const shown = ([key]) => every || key === "always" || focus.includes(key);
 if (every) console.log("all lines, printed with --all: never send this print, send the one without --all");
