@@ -6,6 +6,19 @@ import * as net from "node:net";
 const at = process.argv.indexOf("--port");
 const PORT = at > 0 ? Number(process.argv[at + 1]) : 8080;
 
+// Write an answer: the status line, one header a line, a blank line, then the body.
+function send(socket: net.Socket, body: string): void {
+  const bytes = Buffer.from(body);
+  const head = [
+    "HTTP/1.1 200 OK",
+    "Content-Type: text/plain; charset=utf-8",
+    `Content-Length: ${bytes.length}`,
+    "Connection: close",
+  ];
+  socket.write(head.join("\r\n") + "\r\n\r\n");
+  socket.end(bytes);
+}
+
 // One connection. Its bytes come in pieces of any size: they wait in `bytes` until the head ends, at a blank line.
 function serve(socket: net.Socket): void {
   let bytes = Buffer.alloc(0);
@@ -16,7 +29,7 @@ function serve(socket: net.Socket): void {
     // Print the head as it came, one line at a time.
     for (const line of bytes.subarray(0, end).toString("latin1").split("\r\n")) console.log(`web: > ${line}`);
     bytes = bytes.subarray(end + 4);
-    socket.end(); // there is no answer yet: the connection just closes
+    send(socket, "Hello from your web server!");
   });
 }
 

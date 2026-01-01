@@ -169,6 +169,7 @@ await session("read-the-request", async (port) => {
   const [line, ...rest] = get(pick(["/", "/hello", "/cats"])).split("\r\n");
   await ask(port, "read-the-request", [line + "\r\n", rest.join("\r\n")], { label: `${line}, in two pieces` });
 });
+await session("answer-by-hand", (port) => ask(port, "answer-by-hand", [get(pick(["/", "/index.html", "/dogs"]))]));
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
