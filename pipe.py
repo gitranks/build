@@ -23,6 +23,7 @@ HELP = [
     "help                          this list",
     "exit                          stop pipe",
 ]
+BATCH = 4  # how many clean rows wait in the buffer before a flush
 
 
 # A clean row: its time in seconds since 1970 in UTC, its host and metric, and its value in hundredths.
@@ -52,6 +53,10 @@ rows = []  # the rows the last run kept
 BLANKS = " \t\r"  # spaces, tabs and the \r of a Windows line end: what strip takes off, as in TypeScript
 bad = []  # the lines it dropped, and why
 seen = set()  # the time, host and metric of each row it kept
+
+# Clean rows wait in the buffer. A flush adds them to their windows and saves the store, in one write.
+buffer = []
+flushes = 0
 
 
 # The names of the CSV files in the inbox folder, in order.
@@ -162,6 +167,16 @@ def query(metric, host=None):
     return some(shown, f"(no rows of {metric})")
 
 
+# Flush the buffer: add its rows to their windows and save the store.
+def flush():
+    global buffer, flushes
+    for row in buffer:
+        add(row)
+    buffer = []
+    save()
+    flushes += 1
+
+
 # Read one file's lines and keep their rows.
 def load(name):
     every = lines(name)
@@ -178,20 +193,25 @@ def load(name):
             bad.append(f"{name} line {i + 1}: {row}: {every[i].strip(BLANKS)}")
         else:
             rows.append(row)
-            add(row)
+            buffer.append(row)
+            if len(buffer) == BATCH:
+                flush()
+    flush()
     store["files"][name] = len(every)
     save()
     return f"{name}: lines {start + 1} to {len(every)}, kept {len(rows) - kept}, dropped {len(bad) - dropped}"
 
 
 def run():
+    global flushes
     names = inbox()
     rows.clear()
     bad.clear()
     seen.clear()
+    flushes = 0
     for name in names:
         print(load(name))
-    return f"run: files {len(names)}, kept {len(rows)}, dropped {len(bad)}, windows {len(store['windows'])}"
+    return f"run: files {len(names)}, kept {len(rows)}, dropped {len(bad)}, windows {len(store['windows'])}, flushes {flushes}"
 
 
 # Do one command, its name and then its words, and give back the answer.

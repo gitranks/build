@@ -161,6 +161,9 @@ with open(os.path.join(keep, "inbox", "a.csv"), "a", encoding="utf-8", newline="
     out.write("0\n" + csv([row(at("10:01:05"), host, metric, "40")]))
 session("save-the-store", keep, ["files", "run", f"query {metric}"])
 said.append(("save-the-store", "store.json.new is there: " + ("yes" if os.path.exists(os.path.join(keep, "store.json.new")) else "no")))
+many = pick([5, 8, 9])
+batched = [row(at(f"10:00:{i * 5:02d}"), host, metric, str(i + 1)) for i in range(many)]
+session("write-in-batches", box("batch", {"a.csv": csv(batched), "b.csv": csv(["# nothing here yet"])}), ["run", "run"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
