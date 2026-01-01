@@ -13,6 +13,7 @@ const HELP = [
   "seed <number>         start the random numbers again from this number",
   "loss                  how surprised lm is by the text: lower is better",
   "shapes                the size of each table of numbers in the model",
+  "softmax <numbers>     turn scores into chances that add up to 1",
   "help                  this list",
   "exit                  stop lm",
 ];
@@ -80,8 +81,17 @@ function pick(weights: number[]): number {
   return weights.length - 1;
 }
 
-// log from + - * / alone, so that every computer gets the very same numbers.
+// exp and log from + - * / alone, so that every computer gets the very same numbers.
 const LN2 = 0.6931471805599453;
+function exp(x: number): number {
+  const k = Math.floor(x / LN2 + 0.5);
+  const r = x - k * LN2; // e to the x is 2 to the k, times e to the r, and r is small
+  let sum = 1;
+  for (let i = 14; i >= 1; i--) sum = 1 + (sum * r) / i;
+  for (let i = 0; i < k; i++) sum *= 2;
+  for (let i = 0; i > k; i--) sum /= 2;
+  return sum;
+}
 function log(x: number): number {
   let k = 0;
   for (x = Math.max(x, 1e-300); x >= 2; x /= 2) k += 1;
@@ -120,6 +130,15 @@ const model: Record<string, Matrix> = {
   out: matrix(D, V, 0.5), // from those numbers to a score for each character
 };
 
+// Scores to chances: each becomes positive, and together they add up to 1.
+function softmax(scores: number[]): number[] {
+  const top = Math.max(...scores);
+  const e = scores.map((s) => exp(s - top));
+  let total = 0;
+  for (const x of e) total += x;
+  return e.map((x) => x / total);
+}
+
 // Go on from the start, one character at a time, each picked at random by how often it came next.
 const LENGTH = 60;
 function write(start: number[]): string {
@@ -132,6 +151,8 @@ function write(start: number[]): string {
 
 // A whole number, such as 42.
 const isNumber = (word: string): boolean => /^[0-9]{1,9}$/.test(word);
+// A number that may have a point and a minus, such as -1.5.
+const isDecimal = (word: string): boolean => /^-?[0-9]{1,4}(\.[0-9]{1,4})?$/.test(word);
 // A table's rows by columns, or "broken" when it is not a table whose rows all have the same length.
 const shape = (m: unknown): string =>
   Array.isArray(m) && m.length && m.every((row) => Array.isArray(row) && row.length === m[0].length)
@@ -186,6 +207,10 @@ function run(words: string[]): string {
     let all = 0;
     for (const m of Object.values(model)) all += m.length * m[0].length;
     return Object.entries(model).map(([key, m]) => `${key} ${shape(m)}`).join(", ") + `: ${all} numbers`;
+  }
+  if (name === "softmax") {
+    if (!rest.length || rest.length > 12 || !rest.every(isDecimal)) return "usage: softmax <numbers>, such as softmax 2 1 0.5";
+    return softmax(rest.map(Number)).map((p) => fmt(p)).join(" ");
   }
   if (name === "help") return HELP.join("\n");
   return `unknown command: ${name}. Type help for the list.`;

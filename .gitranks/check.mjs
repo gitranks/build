@@ -62,6 +62,7 @@ const seed = pick(["7", "42", "1000"]);
 groups.push(["pick-at-random", [`seed ${seed}`, `write ${start}`, `write ${start}`, `seed ${seed}`, `write ${start}`, "seed x"]]);
 groups.push(["measure-the-loss", ["loss"]]);
 groups.push(["numbers-for-characters", ["shapes"]]);
+groups.push(["scores-to-chances", [`softmax ${pick(["1 2 3", "2 1 0.5", "0 0 0 0"])}`, `softmax ${pick(["1000 999", "500 501 502", "9999 0"])}`, "softmax 1 e"]]);
 groups.push(["read-commands", ["help", "", pick(["fly", "hello", "learn"]) + " away", "exit", "help"]]);
 session(groups);
 try {
