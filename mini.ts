@@ -62,7 +62,7 @@ const SYMBOLS = [ // the symbols mini knows
   "{", "}",
   ",",
 ];
-const WORDS = ["let", "true", "false", "print", "if", "else", "while", "fn"]; // mini's own words: not names of variables
+const WORDS = ["let", "true", "false", "print", "if", "else", "while", "fn", "return"]; // mini's own words
 
 // The tokenizer cuts the source into pieces: a run of spaces, a number, a name and more, or any other one
 // character. It turns each piece into a token, the words of mini, and leaves the spaces out.
@@ -98,6 +98,7 @@ function parse(tokens: Token[]): Node[] {
     if (peek().kind !== kind) throw new MiniError(`expected ${kind} but found ${peek().text}`);
     return advance();
   }
+  let inside = 0; // how many functions the parser is inside: a return is only for inside one
 
   // Statements, with ; between them, up to the end, or up to the } of a block.
   function statements(end: string): Node[] {
@@ -143,7 +144,14 @@ function parse(tokens: Token[]): Node[] {
         if (params.length) expect(",");
         params.push(expect("name").text);
       }
-      return { kind: "fn", name, params, body: block() };
+      inside++;
+      const body = block();
+      inside--;
+      return { kind: "fn", name, params, body };
+    }
+    if (accept("return")) {
+      if (!inside) throw new MiniError("return is only for inside a function");
+      return { kind: "return", value: [";", "}", "end"].includes(peek().kind) ? null : expression() };
     }
     return { kind: "expr", value: expression() };
   }
@@ -196,6 +204,14 @@ function find(scope: Scope, name: string): Scope {
   throw new MiniError(`${name} is not defined`);
 }
 
+// A return statement throws this, and the call it is in catches it, with the value.
+class Return {
+  value: Value;
+  constructor(value: Value) {
+    this.value = value;
+  }
+}
+
 // Work out the value of a node of the tree.
 function evaluate(node: Node, scope: Scope): Value {
   if (node.kind === "value") return node.value;
@@ -207,8 +223,14 @@ function evaluate(node: Node, scope: Scope): Value {
     if (typeof fn !== "object" || fn === null) throw new MiniError(`${quote(fn)} is not a function`);
     if (args.length !== fn.params.length) throw new MiniError(`${fn.name} takes (${fn.params.join(", ")})`);
     const locals: Scope = new Map(fn.params.map((param, i) => [param, args[i]]));
-    run(fn.body, locals);
-    return null;
+    let value: Value = null;
+    try {
+      run(fn.body, locals);
+    } catch (signal) {
+      if (!(signal instanceof Return)) throw signal;
+      value = signal.value;
+    }
+    return value;
   }
   return operate(node.op, evaluate(node.left, scope), evaluate(node.right, scope));
 }
@@ -224,6 +246,7 @@ function execute(node: Node, scope: Scope): Value | undefined {
   else if (node.kind === "if") run(truth(evaluate(node.test, scope), "if") ? node.then : node.otherwise, scope);
   else if (node.kind === "while") while (truth(evaluate(node.test, scope), "while")) run(node.body, scope);
   else if (node.kind === "fn") scope.set(node.name, node);
+  else if (node.kind === "return") throw new Return(node.value ? evaluate(node.value, scope) : null);
   else return evaluate(node.value, scope);
 }
 
