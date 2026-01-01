@@ -325,6 +325,36 @@ def stay_in_the_folder(port):
 
 
 session("stay-in-the-folder", stay_in_the_folder)
+
+
+def many_at_once(port):
+    name = pick(["Ada", "Alan", "Grace"])
+    said.append(("many-at-once", f"sent: GET /slow, then GET /hello?name={name} on a second connection 0.2 seconds later"))
+    slow = Link(port)
+    if slow.open:
+        slow.send(get("/slow"))
+    time.sleep(0.2)
+    quick = Link(port)
+    if quick.open:
+        quick.send(get(f"/hello?name={name}"))
+    order = []
+    until = time.monotonic() + min(4, left())
+    while len(order) < 2 and time.monotonic() < until:
+        for target, link in (("/slow", slow), (f"/hello?name={name}", quick)):
+            link.poll(0.01)
+            if target not in order and (link.closed or whole(answers_in(link.got))):
+                order.append(target)
+    for i, target in enumerate(order):
+        answers = answers_in((slow if target == "/slow" else quick).got)
+        body = answers[0]["body"].decode("utf-8", "replace").split("\n")[0] if answers and answers[0]["head"] is not None else "nothing"
+        said.append(("many-at-once", f"{'then' if i else 'first'} came the answer to {target}: {cut(body)}"))
+    if len(order) < 2:
+        said.append(("many-at-once", "one answer did not come within 4 seconds"))
+    slow.close()
+    quick.close()
+
+
+session("many-at-once", many_at_once)
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the

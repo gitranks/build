@@ -4,6 +4,8 @@ import html
 import os
 import socket
 import sys
+import threading
+import time
 import urllib.parse
 
 # Print UTF-8 with plain line ends on every system, each line as soon as it is printed.
@@ -63,6 +65,7 @@ def home(request):
         '  <li><a href="/old">/old</a> has moved to /hello</li>',
         '  <li><a href="/notes">/notes</a> keeps the notes you send</li>',
         '  <li><a href="/about.html">/about.html</a> is a file from the public folder</li>',
+        '  <li><a href="/slow">/slow</a> takes a second to answer</li>',
         "</ul>",
     )
 
@@ -93,6 +96,11 @@ def add_note(request):
     return {**text("Saved. See /notes.", 303), "headers": {"Location": "/notes"}}
 
 
+def slow(request):
+    time.sleep(1)
+    return text("That took a second.")
+
+
 ROUTES = {
     "GET /": home,
     "GET /hello": hello,
@@ -100,6 +108,7 @@ ROUTES = {
     "GET /old": old,
     "GET /notes": notes_page,
     "POST /notes": add_note,
+    "GET /slow": slow,
 }
 
 
@@ -207,6 +216,7 @@ try:
             conn, _ = listener.accept()
         except TimeoutError:
             continue
-        connected(conn)
+        # Each connection gets a thread of its own, so a slow one never makes the others wait.
+        threading.Thread(target=connected, args=(conn,), daemon=True).start()
 except KeyboardInterrupt:
     print("web: stopped")
