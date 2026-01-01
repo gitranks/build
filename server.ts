@@ -97,7 +97,14 @@ const ROUTES: Record<string, (request: Request) => Answer> = {
 
 // A file from the public folder, such as /style.css. Its type comes from the end of its name.
 function file(pathname: string): Answer {
-  const name = path.join(PUBLIC, decodeURIComponent(pathname));
+  let name: string;
+  try {
+    name = path.join(PUBLIC, decodeURIComponent(pathname));
+  } catch {
+    return text(`no page at ${pathname}`, 404); // a % sign with no two hex digits after it
+  }
+  // A path such as /../server.ts leads out of the folder: every file outside it stays private.
+  if (!name.startsWith(PUBLIC + path.sep)) return text(`no page at ${pathname}`, 404);
   if (!fs.existsSync(name) || !fs.statSync(name).isFile()) return text(`no page at ${pathname}`, 404);
   return { status: 200, type: TYPES[path.extname(name)] ?? "application/octet-stream", body: fs.readFileSync(name) };
 }

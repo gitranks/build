@@ -212,6 +212,11 @@ await session("serve-files", async (port) => {
   await ask(port, "serve-files", [get("/about.html")], { show: (line) => line.startsWith("<h1>") });
   await ask(port, "serve-files", [get(pick(["/logo.png", "/missing.html", "/style.css.old"]))]);
 });
+await session("stay-in-the-folder", async (port) => {
+  await ask(port, "stay-in-the-folder", [get(pick(["/../README.md", "/..%2fREADME.md", "/%2e%2e/README.md"]))], { brief: true });
+  await ask(port, "stay-in-the-folder", [get(pick(["/100%", "/%FF.html", "/50%25%"]))], { brief: true });
+  await ask(port, "stay-in-the-folder", [get(pick(["/about.html", "/style.css"]))], { brief: true });
+});
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
