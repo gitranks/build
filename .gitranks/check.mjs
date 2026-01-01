@@ -46,6 +46,8 @@ const value = pick(["Ada Lovelace", "deep blue", "Kyiv", "café au lait"]);
 session("set-and-get", [`set ${key} ${value}`, `get ${key}`, `get ${pick(["age", "size", "mood"])}`, `set ${key}`]);
 const gone = pick(["pet", "car", "game"]);
 session("delete-a-key", [`set ${gone} ${pick(["cat", "red bike", "chess"])}`, `del ${gone}`, `get ${gone}`, `del ${gone}`, "del"]);
+session("list-the-keys", ["keys"]);
+session("list-the-keys", [`set ${pick(["mid", "zeta", "both"])} 1`, `set ${pick(["alpha", "end", "box"])} 2`, "keys"]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

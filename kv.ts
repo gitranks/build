@@ -7,6 +7,7 @@ const HELP = [
   "set <key> <value>     keep the value under the key",
   "get <key>             say the value of the key",
   "del <key>             delete the key",
+  "keys                  list every key",
   "help                  this list",
   "exit                  stop kv",
 ];
@@ -37,6 +38,10 @@ function run(words: string[]): string {
     if (!data.has(key)) return "(not found)";
     data.delete(key);
     return "deleted";
+  }
+  if (name === "keys") {
+    const all = [...data.keys()].sort();
+    return all.length ? all.join("\n") : "(no keys)";
   }
   if (name === "help") return HELP.join("\n");
   return `unknown command: ${name}. Type help for the list.`;
