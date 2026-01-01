@@ -48,7 +48,19 @@ ROLL_DICE = {
         "additionalProperties": False,
     },
 }
-TOOLS = [ROLL_DICE]
+PICK_ONE = {
+    "name": "pick_one",
+    "description": "Pick one of the choices at random. Use it when the person cannot decide between a few options.",
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "choices": {"type": "array", "items": {"type": "string"}, "minItems": 2, "maxItems": 20, "description": "The options to pick from."},
+        },
+        "required": ["choices"],
+        "additionalProperties": False,
+    },
+}
+TOOLS = [ROLL_DICE, PICK_ONE]
 
 
 # A tool's result is a list of content. Ours is one piece of text.
@@ -78,7 +90,14 @@ def roll_dice(args: dict) -> dict:
     return text(f"You rolled {total}." if count == 1 else f"You rolled {', '.join(map(str, rolls))}: {total} in total.")
 
 
-RUN = {"roll_dice": roll_dice}
+def pick_one(args: dict) -> dict:
+    choices = args.get("choices")
+    if not isinstance(choices, list) or not 2 <= len(choices) <= 20 or not all(isinstance(c, str) for c in choices):
+        return tool_error("choices must be a list of 2 to 20 pieces of text.")
+    return text(f"I picked: {choices[random_below(len(choices))]}")
+
+
+RUN = {"roll_dice": roll_dice, "pick_one": pick_one}
 
 
 def fail(code: int, message: str) -> dict:

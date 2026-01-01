@@ -39,6 +39,9 @@ lines += [call(6, "tools/call", {"name": pick(["fly", "roll_die", "dice"]), "arg
 lines += [call(7, "tools/call", {"name": "roll_dice", "arguments": {"sides": pick([1, 1000, "six", 2.5])}})]
 lines += [call(8, "tools/call", {"name": "roll_dice", "arguments": {"count": pick([2, 3, 5])}})]
 lines += [call(9, "tools/call", {"name": "roll_dice", "arguments": {"sides": 6, "count": pick([0, 11, "two"])}})]
+choices = pick([["tea", "coffee"], ["red", "green", "blue"], ["left", "right", "up", "down"]])
+lines += [call(10, "tools/call", {"name": "pick_one", "arguments": {"choices": choices}})]
+lines += [call(11, "tools/call", {"name": "pick_one", "arguments": {"choices": pick([["alone"], "tea", [1, 2]])}})]
 
 
 def show(name, file, args, sent):
@@ -83,7 +86,7 @@ show("prompt", "prompt.py", [], [pick(["tools/list", "ping", "hello/again"])])
 # What this step adds is printed whole: the answers it is about (by id, None for id null), the logs or the prompt.
 # Every other line goes into one line with a fingerprint (a hash), so the print stays short. With --all, every line
 # is printed, after a first line that says this print is only to look at.
-focus = {8, 9}
+focus = {4, 10, 11}
 every = sys.argv[3:4] == ["--all"]
 other = [text for key, text in said if not (every or key in focus or key == "always")]
 if every:
