@@ -142,7 +142,7 @@ const hot = box("hot", { "a.csv": csv([["10:00:05", host, "70"], ["10:00:35", ho
 session("alert-on-a-limit", hot, [`alert ${metric}`, `alert ${metric} ${pick(["90", "75.5", "80"])}`, "run"]);
 fs.writeFileSync(join(hot, "inbox", "b.csv"), csv([["10:01:35", host, "99.5"], ["10:02:05", other, "100"]].map(([time, h, x]) => row(at(time), h, metric, x))));
 session("alert-on-a-limit", hot, ["run", `alert ${metric} 50`]);
-tests("test-the-cleaning");
+tests("test-a-crash");
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
