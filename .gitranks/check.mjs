@@ -131,6 +131,9 @@ await session("when-the-model-fails", ["hello"], [heard], { model: pick(["llama9
 const told = (ask) => `I got messages: ${ask.messages.length}. You told me: ${ask.messages.filter((m) => m.role === "user").map((m) => m.content).join(" / ")}`;
 const name = pick(["Ada", "Grace", "Linus", "Margaret"]);
 await session("remember-the-conversation", [`my name is ${name}`, "what is my name?", "/reset", "what is my name?"], [told, told, told]);
+const first = (ask) => `I got messages: ${ask.messages.length}. The first, from ${ask.messages[0]?.role}, says: ${oneLine(ask.messages[0]?.content)}`;
+const who = pick(["who are you?", "what do you do?", "where do you work?"]);
+await session("a-system-prompt", [who, "/reset", who], [first, first]);
 server.close();
 try {
   fs.rmSync(top, { recursive: true, force: true });

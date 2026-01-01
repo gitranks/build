@@ -17,8 +17,13 @@ const HELP = [
   "/exit    stop the agent",
 ].join("\n");
 
+// What the model reads first, before your messages: who it is and how to work.
+const SYSTEM =
+  "You are a coding agent. You work in one folder, and every path you use is inside it. " +
+  "Look with the tools before you answer. Keep your answers short, and say what you changed.";
+
 type Message = { role: string; content: string | null }; // a message, as the model server reads and writes it
-let messages: Message[] = [];
+let messages: Message[] = [{ role: "system", content: SYSTEM }];
 
 // Send the model the conversation, and give back its answer.
 async function ask(): Promise<Message> {
@@ -61,7 +66,7 @@ for (let said = await line("you> "); said !== undefined; said = await line("you>
   if (text === "/exit") break;
   if (text === "/help") console.log(HELP);
   else if (text === "/reset") {
-    messages = [];
+    messages = [{ role: "system", content: SYSTEM }];
     console.log("agent: the conversation is forgotten");
   }
   else if (text) {
