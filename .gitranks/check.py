@@ -82,6 +82,7 @@ b = pick([3, 4, 5])
 session("whole-numbers", [f"{a}", " 00" + str(b), pick(["twelve", "4x", "1.5", "-3"]), f"{a} {b}"])
 session("do-arithmetic", [f"{a} + {b} - 1", pick(["7 / 2", "17 / 5", "29 / 4"]), "2 + 3 * 4", f"{a} / 0", f"{a} +", f"{a} {pick(['x', 'plus', '^'])} {b}"])
 session("cut-into-tokens", [f"{a}+{b}", f"{a}*{b}-{b}", f"{a} {pick(['@', '?', '&'])} {b}", f"{a} {b}"])
+session("build-a-tree", ["2 + 3 * 4", f"{a} - {b} * 2 - 1", f"{a} / {b} * {b}", f"* {a}", f"{a} -"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the

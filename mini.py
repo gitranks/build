@@ -17,8 +17,6 @@ class MiniError(Exception):
 
 # A number, from its digits.
 def number(text):
-    if not re.fullmatch("[0-9]+", text):
-        raise MiniError(f"{text} is not a number")
     return int(text)
 
 
@@ -33,19 +31,6 @@ def operate(op, a, b):
     if b == 0:
         raise MiniError("division by zero")
     return a // b  # a whole number, rounded down: 7 / 2 is 3
-
-
-# Work out words such as 12 + 30 - 2: a number, then an operator and a number, again and again, from left to right.
-def calculate(words):
-    total = number(words[0])
-    for i in range(1, len(words), 2):
-        op = words[i]
-        if op not in ["+", "-", "*", "/"]:
-            raise MiniError(f"{op} is not an operator")
-        if i + 1 == len(words):
-            raise MiniError(f"{op} needs a number after it")
-        total = operate(op, total, number(words[i + 1]))
-    return total
 
 
 SYMBOLS = [  # the symbols mini knows
@@ -71,7 +56,36 @@ def tokenize(source):
             add(piece, piece)
         elif piece[0] not in " \t\r":
             raise MiniError(f"unexpected character {piece}")
+    add("end", "the end")
     return tokens
+
+
+# The parser reads the tokens into a tree. binary reads an operand, then each operator with the operand after it.
+# Each level of operators has its own function, the loosest first: in 2 + 3 * 4, 3 * 4 is one operand of the +.
+# tokens[0] is the token at hand, and tokens.pop(0) takes it off the list.
+def parse(tokens):
+    def binary(ops, operand):
+        left = operand()
+        while tokens[0].kind in ops:
+            left = Node(kind="binary", op=tokens.pop(0).kind, left=left, right=operand())
+        return left
+    def expression():
+        return binary(["+", "-"], factor)
+    def factor():
+        return binary(["*", "/"], primary)
+    def primary():
+        token = tokens.pop(0)
+        if token.kind == "number":
+            return Node(kind="value", value=number(token.text))
+        raise MiniError(f"expected a value but found {token.text}")
+    return expression()
+
+
+# Work out the value of a node of the tree.
+def evaluate(node):
+    if node.kind == "value":
+        return node.value
+    return operate(node.op, evaluate(node.left), evaluate(node.right))
 
 
 # Say what went wrong. A mistake in the program is not a crash of mini: anything else is.
@@ -84,7 +98,7 @@ def report(error):
 # Run a line that was typed, and say what went wrong if anything did: a mistake does not stop mini.
 def attempt(line):
     try:
-        print(calculate([token.text for token in tokenize(line)]))
+        print(evaluate(parse(tokenize(line))))
     except Exception as error:
         report(error)
 
