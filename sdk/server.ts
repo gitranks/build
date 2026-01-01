@@ -4,6 +4,10 @@ import { McpServer } from "@modelcontextprotocol/server";
 import { serveStdio } from "@modelcontextprotocol/server/stdio";
 import * as z from "zod/v4";
 
+const INSTRUCTIONS =
+  "my-server rolls dice and picks one of a few options at random. Use roll_dice for any dice roll " +
+  "and pick_one when the person cannot decide. Say the result in plain words.";
+
 // Logs go to standard error. Standard output is the SDK's, for messages alone.
 function log(text: string): void {
   console.error(`my-server: ${text}`);
@@ -25,7 +29,7 @@ function data<T extends Record<string, unknown>>(value: T) {
 
 // The SDK calls this to make the server for a connection: its name, its version and its tools.
 function createServer(): McpServer {
-  const server = new McpServer({ name: "my-server", version: "2.0.0" });
+  const server = new McpServer({ name: "my-server", version: "2.0.0" }, { instructions: INSTRUCTIONS });
   // A tool: its name, what the agent reads, and a schema of its input. The SDK checks every call against it.
   server.registerTool(
     "roll_dice",
