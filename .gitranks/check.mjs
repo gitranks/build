@@ -151,6 +151,10 @@ fs.writeFileSync(join(top, "secret.txt"), `the secret is ${pick(["owl", "kite", 
 const away = pick(["/secret.txt", "src/../../secret.txt"]);
 const inGit = [call("read_file", { path: away }), heard, call("read_file", { path: pick([".git/config", ".GIT/hooks/pre-commit"]) }), heard];
 await session("stay-in-the-folder", ["read the secret", "read it another way", "read git's settings"], [call("read_file", { path: "../secret.txt" }), heard, ...inGit]);
+const edits = [call("edit_file", { path: "notes.txt", old_text: word, new_text: changed }), call("read_file", { path: "notes.txt" }), heard];
+edits.push(call("edit_file", { path: "notes.txt", old_text: pick(["nothing like this", "zebra"]), new_text: "x" }), heard);
+edits.push(call("edit_file", { path: "../secret.txt", old_text: "the", new_text: "a" }), heard);
+await session("edit-a-file", [`change ${word} to ${changed}`, "change something that is not there", "change the secret"], edits);
 server.close();
 try {
   fs.rmSync(top, { recursive: true, force: true });

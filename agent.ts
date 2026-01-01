@@ -38,6 +38,11 @@ const text = (description: string) => ({ type: "string", description });
 const TOOLS = [
   tool("list_files", "List every file in the folder."),
   tool("read_file", "Read a file.", { path: text("the file's path") }),
+  tool("edit_file", "Change a file: old_text, found once in it, becomes new_text.", {
+    path: text("the file's path"),
+    old_text: text("the text to change"),
+    new_text: text("the text to put in its place"),
+  }),
 ];
 
 // Send the model the conversation, and give back its answer.
@@ -88,6 +93,7 @@ async function use(call: Call): Promise<string> {
   }
   if (name === "list_files") return list();
   if (name === "read_file") return read(args.path);
+  if (name === "edit_file") return edit(args.path, args.old_text, args.new_text);
   return `error: there is no tool named ${name}`;
 }
 
@@ -120,6 +126,21 @@ function read(given: unknown): string {
   return fs.readFileSync(file, "utf8");
 }
 const isFile = (file: string) => fs.existsSync(file) && fs.statSync(file).isFile();
+
+// Change a file: old_text, found once in it, becomes new_text.
+function edit(given: unknown, old: unknown, now: unknown): string {
+  const file = inside(given);
+  if (!file) return outside(given);
+  if (typeof old !== "string" || typeof now !== "string") return "error: give old_text and new_text";
+  if (!old) return "error: old_text is empty: give the text to change";
+  if (!isFile(file)) return `error: there is no file ${given}`;
+  const was = fs.readFileSync(file, "utf8");
+  const found = was.split(old).length - 1;
+  if (!found) return `error: old_text is not in ${given}`;
+  if (found > 1) return `error: old_text is in ${given} more than once: give more of the text around it`;
+  fs.writeFileSync(file, was.replace(old, () => now));
+  return `changed ${given}`;
+}
 
 // Read your lines one at a time. The prompt shows only when you type at a terminal, not when a program sends them.
 const lines = createInterface({ input: process.stdin })[Symbol.asyncIterator]();
