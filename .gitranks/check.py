@@ -223,6 +223,17 @@ session("run-a-command", [f"what is {a} times {b}?", "yes", "delete my notes", p
 said.append(("run-a-command", "notes.txt is still there: " + ("yes" if os.path.exists(os.path.join(folder, "notes.txt")) else "no")))
 slow = command("import time; print('" + pick(["starting", "working", "waiting"]) + "', flush=True); time.sleep(5)")
 session("a-time-limit", ["run the slow one", "yes"], [call("run_command", {"command": slow, "seconds": 2}), heard])
+rows = pick([200, 250, 300])
+with open(os.path.join(folder, "big.txt"), "wb") as f:
+    f.write("".join(f"line {i + 1} of a long file\n" for i in range(rows)).encode())
+
+
+def ends(ask):
+    got = str(ask["messages"][-1].get("content") or "") if ask["messages"] else ""
+    return f"The tool's answer has {len(got)} characters and ends with: {one_line(got[-45:])}"
+
+
+session("keep-it-short", ["read big.txt"], [call("read_file", {"path": "big.txt"}), ends])
 server.shutdown()
 shutil.rmtree(top, ignore_errors=True)
 

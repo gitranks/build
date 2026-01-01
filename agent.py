@@ -106,7 +106,7 @@ def turn(text):
             return
         messages.append({"role": "assistant", "content": answer.get("content"), "tool_calls": calls})
         for call in calls:
-            messages.append({"role": "tool", "tool_call_id": call["id"], "content": use(call)})
+            messages.append({"role": "tool", "tool_call_id": call["id"], "content": cut(use(call))})
 
 
 # Run one tool the model asked for, and give back what to send the model.
@@ -213,6 +213,14 @@ def run(command, seconds):
             end = f"stopped after {limit:g} s: it ran too long"
         out.seek(0)
         return end + "\n" + out.read().decode("utf-8", "replace")
+
+
+# A long answer from a tool is cut: a small model reads only so much, and the rest of the conversation must fit too.
+LIMIT = 3000
+
+
+def cut(text):
+    return text if len(text) <= LIMIT else f"{text[:LIMIT]}\n(cut here: {len(text) - LIMIT} more characters)"
 
 
 # Read your lines one at a time. The prompt shows only when you type at a terminal, not when a program sends them.
