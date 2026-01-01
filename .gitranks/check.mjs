@@ -159,6 +159,11 @@ const made = pick(["plans/next.txt", "docs/ideas.md", "todo/today.txt"]);
 const makes = [call("edit_file", { path: made, old_text: "", new_text: "run a command\n" }), call("list_files"), heard];
 makes.push(call("edit_file", { path: made, old_text: "", new_text: "again\n" }), heard);
 await session("make-a-file", [`make ${made}`, "make it again"], makes);
+const sum = pick([[6, 7], [12, 12], [9, 8]]);
+const runs = [call("run_command", { command: command(`console.log(${sum[0]} * ${sum[1]})`) }), heard];
+runs.push(call("run_command", { command: command("require('fs').rmSync('notes.txt')") }), heard);
+await session("run-a-command", [`what is ${sum[0]} times ${sum[1]}?`, "yes", "delete my notes", pick(["no", "nope", "not now"])], runs);
+said.push(["run-a-command", `notes.txt is still there: ${fs.existsSync(join(folder, "notes.txt")) ? "yes" : "no"}`]);
 server.close();
 try {
   fs.rmSync(top, { recursive: true, force: true });

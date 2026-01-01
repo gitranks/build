@@ -1,5 +1,6 @@
 // agent: a coding agent, written from nothing, with no library.
 // You chat with it, it asks a model, and the model may use tools on the files of this folder. Start it: node agent.ts
+import { spawnSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { createInterface } from "node:readline";
@@ -43,6 +44,7 @@ const TOOLS = [
     old_text: text("the text to change"),
     new_text: text("the text to put in its place"),
   }),
+  tool("run_command", "Run a shell command in the folder. The person is asked first.", { command: text("the command") }),
 ];
 
 // Send the model the conversation, and give back its answer.
@@ -94,6 +96,7 @@ async function use(call: Call): Promise<string> {
   if (name === "list_files") return list();
   if (name === "read_file") return read(args.path);
   if (name === "edit_file") return edit(args.path, args.old_text, args.new_text);
+  if (name === "run_command") return await run(args.command);
   return `error: there is no tool named ${name}`;
 }
 
@@ -145,6 +148,18 @@ function edit(given: unknown, old: unknown, now: unknown): string {
   if (found > 1) return `error: old_text is in ${given} more than once: give more of the text around it`;
   fs.writeFileSync(file, was.replace(old, () => now));
   return `changed ${given}`;
+}
+
+// Run a command in the folder, but only once you say yes: a command can do anything you can.
+async function run(command: unknown): Promise<string> {
+  if (typeof command !== "string" || !command.trim()) return "error: give a command";
+  // Control characters are shown as codes, so none of them can hide a part of the command on the screen.
+  const shown = command.replace(/[\u0000-\u001f\u007f-\u009f]/g, (c) => `\\x${c.charCodeAt(0).toString(16).padStart(2, "0")}`);
+  console.log(`agent: run this command? ${shown} (yes or no)`);
+  const answer = ((await line("yes or no> ")) ?? "").trim();
+  if (!/^(y|yes)$/i.test(answer)) return "The person said no, so the command did not run. Ask them what to do instead.";
+  const done = spawnSync(command, { shell: true, cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  return `exit code ${done.status}\n${done.stdout}${done.stderr}`;
 }
 
 // Read your lines one at a time. The prompt shows only when you type at a terminal, not when a program sends them.
