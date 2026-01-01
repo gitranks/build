@@ -8,6 +8,7 @@ Node = Token  # and a node of a tree is made the same way: Node(kind="binary", o
 # Read and write UTF-8 with plain line ends on every system, Windows too.
 sys.stdin.reconfigure(encoding="utf-8")
 sys.stdout.reconfigure(encoding="utf-8", newline="\n")
+where = 1  # the line mini is at: the line it reads, or the line of the statement it runs
 
 
 # A mistake in the program mini runs, such as 1 / 0: mini says what it is and goes on. It is not a crash of mini.
@@ -95,13 +96,15 @@ WORDS = ["let", "true", "false", "print", "if", "else", "while", "fn", "return"]
 PIECES = r'[ \t\r]+|[0-9]+|[A-Za-z_][A-Za-z_0-9]*|"[^"\n]*"?|[=!<>]=|[\s\S]'
 
 
-def tokenize(source):
+def tokenize(source, line=1):
+    global where
     tokens = []
 
     def add(kind, text):
-        tokens.append(Token(kind=kind, text=text))
+        tokens.append(Token(kind=kind, text=text, line=line))
 
     for piece in re.findall(PIECES, source):
+        where = line
         if re.match("[0-9]", piece):
             add("number", piece)
         elif re.match("[A-Za-z_]", piece):
@@ -142,10 +145,17 @@ def parse(tokens):
                 return found
             if tokens[0].kind == "end":
                 raise MiniError("a { has no } to close it")
-            node = statement()
+            node = lined()
             found.append(node)
             if tokens[0].kind not in [";", end, "end"] and node.kind not in ["if", "while", "fn"]:  # these end in }
                 raise MiniError(f"expected ; but found {tokens[0].text}")
+    # A statement, with the line it starts on, for an error to name.
+    def lined():
+        global where
+        where = line = tokens[0].line
+        node = statement()
+        node.line = line
+        return node
     def block():
         expect("{")
         return statements("}")
@@ -163,7 +173,7 @@ def parse(tokens):
             return Node(kind="print", value=expression())
         if accept("if"):
             test, then = expression(), block()
-            otherwise = [] if not accept("else") else [statement()] if tokens[0].kind == "if" else block()
+            otherwise = [] if not accept("else") else [lined()] if tokens[0].kind == "if" else block()
             return Node(kind="if", test=test, then=then, otherwise=otherwise)
         if accept("while"):
             return Node(kind="while", test=expression(), body=block())
@@ -253,6 +263,7 @@ class Return(Exception):
 
 # Work out the value of a node of the tree.
 def evaluate(node, scope):
+    global where
     global depth
     if node.kind == "value":
         return node.value
@@ -269,6 +280,7 @@ def evaluate(node, scope):
             raise MiniError(f"{fn.name} takes ({', '.join(fn.params)})")
         if depth == DEEPEST:
             raise MiniError(f"too deep: more than {DEEPEST} calls inside each other")
+        back = where
         depth += 1
         value = None
         try:
@@ -277,12 +289,15 @@ def evaluate(node, scope):
             value = signal.value
         finally:
             depth -= 1
+        where = back  # back to the line of the call, now that the call is done
         return value
     return operate(node.op, evaluate(node.left, scope), evaluate(node.right, scope))
 
 
 # Carry out one statement in a scope. The value of a statement that is only an expression is given back.
 def execute(node, scope):
+    global where
+    where = node.line
     if node.kind == "let":
         scope[node.name] = evaluate(node.value, scope)
     elif node.kind == "set":
@@ -295,6 +310,7 @@ def execute(node, scope):
     elif node.kind == "while":
         while truth(evaluate(node.test, scope), "while"):
             run(node.body, scope)
+            where = node.line  # back to the while's line, for its test
     elif node.kind == "fn":
         scope[node.name] = node
     elif node.kind == "return":
@@ -320,13 +336,13 @@ def report(error):
     deep = isinstance(error, RecursionError)
     if not isinstance(error, MiniError) and not deep:
         raise error
-    print(f"error: {'too deep' if deep else error}")
+    print(f"error: line {where}: {'too deep' if deep else error}")
 
 
 # Run a line that was typed, and say what went wrong if anything did: a mistake does not stop mini.
-def attempt(line):
+def attempt(text, line):
     try:
-        for node in parse(tokenize(line)):
+        for node in parse(tokenize(text, line)):
             value = execute(node, top)
             if node.kind == "expr" and value is not None:
                 print(show(value))
@@ -338,16 +354,18 @@ def attempt(line):
 def repl():
     if sys.stdin.isatty():
         print("mini: type a line, then Enter. exit stops mini.")
+    count = 0  # the lines read so far: an error names its line by this count
     while True:
         try:
             # The prompt mini> shows only when you type at a terminal, not when another program sends the lines.
             line = input("mini> " if sys.stdin.isatty() else "")
         except EOFError:  # the input has ended
             break
+        count += 1
         if line.strip() == "exit":
             break
         if line.strip():
-            attempt(line)
+            attempt(line, count)
 
 
 repl()

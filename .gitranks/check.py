@@ -105,6 +105,8 @@ session("parameters-and-scope", ["fn add(a, b) { print a + b }", f"add({a}, {b})
 session("return-a-value", ["fn square(n) { return n * n }", f"square({a})", "square(square(2))", "fn sign(n) { if n < 0 { return -1 } return 1 }", f"sign(-{b})", f"sign({b})", "return 1"])
 deep = pick([5, 10, 12])
 session("limit-the-depth", ["fn fact(n) { if n < 2 { return 1 } return n * fact(n - 1) }", f"fact({deep})", "fn down(n) { return down(n + 1) }", "down(1)", "fact(3)"])
+bad = pick(["c", "missing", "z"])
+session("errors-name-the-line", ["let a = 1", "let b = a +", f"print {bad}", f"fn f() {{ return {bad} }}", "f()", "fn g() { return a }", f"print g() + {bad}"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
