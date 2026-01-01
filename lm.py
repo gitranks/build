@@ -18,6 +18,7 @@ HELP = [
     "write <start>         go on from the start, one character at a time",
     "seed <number>         start the random numbers again from this number",
     "loss                  how surprised lm is by the text: lower is better",
+    "shapes                the size of each table of numbers in the model",
     "help                  this list",
     "exit                  stop lm",
 ]
@@ -116,6 +117,19 @@ def counts_loss(part):
         total -= log((pairs[a][b] + SMOOTH) / (sum(pairs[a]) + SMOOTH * V))
     return total / (len(part) - 1)
 
+# The model's sizes: each character becomes D numbers, and the model looks back over T characters at most.
+D = 16
+T = 8
+
+# A table of numbers, rows by columns, each a small random number to start from.
+def matrix(rows, cols, size):
+    return [[(random() * 2 - 1) * size for _ in range(cols)] for _ in range(rows)]
+
+model = {
+    "emb": matrix(V, D, 0.5),  # a row of numbers for each character
+    "out": matrix(D, V, 0.5),  # from those numbers to a score for each character
+}
+
 # Go on from the start, one character at a time, each picked at random by how often it came next.
 LENGTH = 60
 
@@ -128,6 +142,12 @@ def write(start):
 # A whole number, such as 42.
 def is_number(word):
     return re.fullmatch(r"[0-9]{1,9}", word) is not None
+
+# A table's rows by columns, or "broken" when it is not a table whose rows all have the same length.
+def shape(m):
+    if isinstance(m, list) and m and all(isinstance(row, list) and len(row) == len(m[0]) for row in m):
+        return f"{len(m)} × {len(m[0])}"
+    return "broken"
 
 # Run one command, its name and then its words, and give back the answer.
 def run(words):
@@ -175,6 +195,11 @@ def run(words):
         return write(encode(start))
     if name == "loss":
         return f"counts: {fmt(counts_loss(ids))}, a blind guess {fmt(log(V))}"
+    if name == "shapes":
+        total = 0
+        for m in model.values():
+            total += len(m) * len(m[0])
+        return ", ".join(f"{key} {shape(m)}" for key, m in model.items()) + f": {total} numbers"
     if name == "help":
         return "\n".join(HELP)
     return f"unknown command: {name}. Type help for the list."
