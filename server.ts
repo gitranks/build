@@ -36,7 +36,19 @@ const ROLL_DICE = {
     additionalProperties: false,
   },
 };
-const TOOLS = [ROLL_DICE];
+const PICK_ONE = {
+  name: "pick_one",
+  description: "Pick one of the choices at random. Use it when the person cannot decide between a few options.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      choices: { type: "array", items: { type: "string" }, minItems: 2, maxItems: 20, description: "The options to pick from." },
+    },
+    required: ["choices"],
+    additionalProperties: false,
+  },
+};
+const TOOLS = [ROLL_DICE, PICK_ONE];
 
 // A tool's result is a list of content. Ours is one piece of text.
 function text(words: string): object {
@@ -62,7 +74,15 @@ function rollDice(args: any): object {
   return text(count === 1 ? `You rolled ${total}.` : `You rolled ${rolls.join(", ")}: ${total} in total.`);
 }
 
-const RUN = new Map<string, (args: any) => object>([["roll_dice", rollDice]]);
+function pickOne(args: any): object {
+  const choices = args.choices;
+  if (!Array.isArray(choices) || choices.length < 2 || choices.length > 20 || !choices.every((c) => typeof c === "string")) {
+    return toolError("choices must be a list of 2 to 20 pieces of text.");
+  }
+  return text(`I picked: ${choices[randomBelow(choices.length)]}`);
+}
+
+const RUN = new Map<string, (args: any) => object>([["roll_dice", rollDice], ["pick_one", pickOne]]);
 
 function fail(code: number, message: string): Answer {
   return { error: { code, message } };
