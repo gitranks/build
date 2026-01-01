@@ -24,6 +24,7 @@ function operate(op: string, a: Value, b: Value): Value {
 
 const SYMBOLS = [ // the symbols mini knows
   "+", "-", "*", "/",
+  "(", ")",
 ];
 
 // The tokenizer cuts the source into pieces: a run of spaces, a number, a name and more, or any other one
@@ -46,24 +47,42 @@ function tokenize(source: string): Token[] {
 function parse(tokens: Token[]): Node {
   const peek = (): Token => tokens[0];
   const advance = (): Token => tokens.shift() as Token; // the next token, taken off the list
+  const accept = (kind: string): boolean => {
+    if (peek().kind !== kind) return false;
+    advance();
+    return true;
+  };
+  function expect(kind: string): Token {
+    if (peek().kind !== kind) throw new MiniError(`expected ${kind} but found ${peek().text}`);
+    return advance();
+  }
   function binary(ops: string[], operand: () => Node): Node {
     let left = operand();
     while (ops.includes(peek().kind)) left = { kind: "binary", op: advance().kind, left, right: operand() };
     return left;
   }
   const expression = (): Node => binary(["+", "-"], factor);
-  const factor = (): Node => binary(["*", "/"], primary);
+  const factor = (): Node => binary(["*", "/"], unary);
+  const unary = (): Node => (accept("-") ? { kind: "negate", value: unary() } : primary());
   function primary(): Node {
     const token = advance();
     if (token.kind === "number") return { kind: "value", value: number(token.text) };
+    if (token.kind === "(") {
+      const node = expression();
+      expect(")");
+      return node;
+    }
     throw new MiniError(`expected a value but found ${token.text}`);
   }
-  return expression();
+  const tree = expression();
+  if (peek().kind !== "end") throw new MiniError(`expected an operator but found ${peek().text}`);
+  return tree;
 }
 
 // Work out the value of a node of the tree.
 function evaluate(node: Node): Value {
   if (node.kind === "value") return node.value;
+  if (node.kind === "negate") return operate("-", 0, evaluate(node.value));
   return operate(node.op, evaluate(node.left), evaluate(node.right));
 }
 

@@ -55,6 +55,7 @@ session("whole-numbers", [`${a}`, " 00" + b, pick(["twelve", "4x", "1.5", "-3"])
 session("do-arithmetic", [`${a} + ${b} - 1`, pick(["7 / 2", "17 / 5", "29 / 4"]), "2 + 3 * 4", `${a} / 0`, `${a} +`, `${a} ${pick(["x", "plus", "^"])} ${b}`]);
 session("cut-into-tokens", [`${a}+${b}`, `${a}*${b}-${b}`, `${a} ${pick(["@", "?", "&"])} ${b}`, `${a} ${b}`]);
 session("build-a-tree", ["2 + 3 * 4", `${a} - ${b} * 2 - 1`, `${a} / ${b} * ${b}`, `* ${a}`, `${a} -`]);
+session("brackets-and-minus", [`(${a} + ${b}) * 2`, `-${a} + ${b}`, `-(${a} - ${b}) * 2`, `(${a} + 1`, `${a} ${b}`]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
