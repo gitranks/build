@@ -18,6 +18,7 @@ HELP = [
     "run                           read every file in the inbox",
     "rows                          show the rows the last run kept, 10 at most",
     "bad                           show the lines the last run dropped and why, 10 at most",
+    "query <metric> [host]         a metric's numbers, minute by minute",
     "help                          this list",
     "exit                          stop pipe",
 ]
@@ -130,6 +131,23 @@ def add(row):
     w["max"] = max(w["max"], row.value)
 
 
+# A window's average in hundredths, rounded half up with whole numbers only, so it is the same everywhere.
+def average(w):
+    return (2 * w["sum"] + w["count"]) // (2 * w["count"])
+
+
+# A metric's windows, on one host or on every host, in order of time and then of host.
+def query(metric, host=None):
+    found = []
+    for key, w in store["windows"].items():
+        m, h, start = key.split(" ")
+        if m == metric and (not host or h == host):
+            found.append((int(start), h, w))
+    found.sort(key=lambda f: (f[0], f[1]))
+    shown = [f"{when(start)[:16]} {h} count {w['count']} avg {number(average(w))} min {number(w['min'])} max {number(w['max'])}" for start, h, w in found]
+    return some(shown, f"(no rows of {metric})")
+
+
 # Read one file's lines and keep their rows.
 def load(name):
     every = lines(name)
@@ -172,6 +190,8 @@ def command(words):
         return some([f"{when(r.time)} {r.host} {r.metric} {number(r.value)}" for r in rows], "(no rows)")
     if name == "bad":
         return some(bad, "(no bad lines)")
+    if name == "query":
+        return query(*words[1:3]) if len(words) > 1 else "usage: query <metric> [host]"
     if name == "help":
         return "\n".join(HELP)
     return f"unknown command: {name}. Type help for the list."
