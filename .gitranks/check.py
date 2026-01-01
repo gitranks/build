@@ -1,0 +1,174 @@
+# The quiet check of a step: it starts the agent a few times, in a folder of its own, with messages made from the
+# seed. A stand-in answers in the model's place, from a script, so no model is needed. The check prints what the
+# agent said. It decides nothing: GitRanks compares the print with what it expects.
+import hashlib
+import http.server
+import json
+import os
+import re
+import shutil
+import socket
+import subprocess
+import sys
+import tempfile
+import threading
+import time
+
+sys.stdout.reconfigure(encoding="utf-8", newline="\n")
+step = sys.argv[1] if len(sys.argv) > 1 else ""
+n = 1
+for ch in sys.argv[2] if len(sys.argv) > 2 else "1":
+    n = (n * 31 + ord(ch)) % 2147483647
+
+
+def pick(options):
+    global n
+    n = (n * 48271) % 2147483647 or 1
+    return options[n % len(options)]
+
+
+said = []  # each line to print, with the step it is about, or "always"
+AGENT = os.path.abspath("agent.py")
+top = tempfile.mkdtemp(prefix="agent-check-")
+folder = os.path.join(top, "work")  # the folder the agent works in
+os.mkdir(folder)
+
+# The stand-in for the model: a small server on this computer, on a free port, that answers each request with the
+# next answer of the session's script. It knows one model, "stand-in", as a model server knows the models it has.
+script = []
+asks = 0
+
+
+class StandIn(http.server.BaseHTTPRequestHandler):
+    def do_POST(self):
+        global asks
+        try:
+            ask = json.loads(self.rfile.read(int(self.headers.get("Content-Length") or 0)))
+        except ValueError:
+            ask = None
+        status = 404
+        if self.path != "/v1/chat/completions" or not isinstance(ask, dict) or not isinstance(ask.get("messages"), list):
+            answer = {"error": {"message": "the stand-in answers only a chat sent to /v1/chat/completions"}}
+        elif ask.get("model") != "stand-in":
+            answer = {"error": {"message": f'model "{ask.get("model")}" not found, try pulling it first'}}
+        else:
+            status = 200
+            asks += 1
+            reply = (script.pop(0) if script else lambda ask: "(the stand-in has nothing more to say)")(ask)
+            if isinstance(reply, str):
+                message = {"role": "assistant", "content": reply}
+            else:
+                calls = [{"id": f"call_{asks}_{i}", "type": "function", "function": {"name": name, "arguments": args}} for i, (name, args) in enumerate(reply)]
+                message = {"role": "assistant", "content": "", "tool_calls": calls}
+            answer = {"choices": [{"index": 0, "message": message, "finish_reason": "stop" if isinstance(reply, str) else "tool_calls"}]}
+        data = json.dumps(answer).encode()
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def log_message(self, *args):
+        pass
+
+
+server = http.server.ThreadingHTTPServer(("127.0.0.1", 0), StandIn)
+threading.Thread(target=server.serve_forever, daemon=True).start()
+url = f"http://127.0.0.1:{server.server_address[1]}/v1"
+
+
+# The stand-in's answers. Some say what it got, so the print shows what the agent sent the model.
+def one_line(text):
+    line = " | ".join(str("" if text is None else text).replace("\r", "").strip().split("\n"))
+    return line[:90] + "..." if len(line) > 90 else line
+
+
+def heard(ask):
+    last = ask["messages"][-1] if ask["messages"] else {}
+    source = f"tool {last.get('tool_call_id')}" if last.get("role") == "tool" else last.get("role")
+    return f"I got messages: {len(ask['messages'])}. The last, from {source}, says: {one_line(last.get('content'))}"
+
+
+def to_json(value):
+    return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+
+
+def call(name, args=None):
+    return lambda ask: [(name, to_json(args or {}))]
+
+
+# A command for the agent to run: this runtime, as it is named on this computer. The print names it python.
+RUNTIME = f'"{sys.executable}"'
+
+
+def command(code):
+    return f'{RUNTIME} -c "{code}"'
+
+
+# Start the agent once, send it these lines, and keep what it printed. All the sessions together get 20 seconds at
+# most, and an agent that does not stop ends the check there: the next sessions would wait for it too.
+deadline = time.monotonic() + 20
+stopped = False
+
+
+def clean(text):
+    # The runtime's path and the stand-in's address differ on each computer, so the print names neither.
+    for this, that in ((to_json(RUNTIME)[1:-1], "python"), (RUNTIME, "python"), (url, "the stand-in")):
+        text = text.replace(this, that)
+    return text
+
+
+def session(about, lines, replies=(), url_given=None, model="stand-in"):
+    global stopped, script, asks
+    if stopped:
+        return
+    timeout = min(5, deadline - time.monotonic())
+    if timeout < 0.5:
+        stopped = True
+        said.append(("always", "the check ran out of time: the agent took too long to answer"))
+        return
+    said.append((about, "sent: " + (" | ".join(lines) or "nothing")))
+    script = list(replies)
+    asks = 0
+    sent = "".join(line + "\n" for line in lines).encode()
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8"}
+    args = [sys.executable, AGENT, "--url", url_given or url, "--model", model]
+    # Files, not pipes: a program the agent started and left running can not keep the check waiting.
+    with tempfile.TemporaryFile() as out, tempfile.TemporaryFile() as err:
+        try:
+            code = subprocess.run(args, input=sent, stdout=out, stderr=err, timeout=timeout, env=env, cwd=folder).returncode
+        except subprocess.TimeoutExpired:
+            code = None
+        out.seek(0)
+        err.seek(0)
+        stdout, stderr = out.read().decode("utf-8", "replace"), err.read().decode("utf-8", "replace")
+    for line in clean(stdout).splitlines():
+        if line.strip():
+            said.append((about, line.rstrip()))
+    # A crash's line, with each path in it cut to its file's name.
+    crash = [line for line in stderr.splitlines() if line[:1].isalpha() and "Error" in line.split(":")[0]]
+    if crash:
+        said.append(("always", "the agent crashed: " + re.sub(r"""(['"])[^'"]*[\\/]([^\\/'"]*)\1""", r"\1\2\1", clean(crash[-1].strip()))))
+    if code is None:
+        stopped = True
+        said.append(("always", "the agent did not stop when its input ended, so the check stopped there"))
+    elif code != 0:
+        said.append(("always", f"the agent stopped with code {code}"))
+
+
+session("what-you-will-build", [])
+server.shutdown()
+shutil.rmtree(top, ignore_errors=True)
+
+# What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
+# print stays short. With --all, every line is printed, after a first line that says this print is only to look at.
+every = sys.argv[3:4] == ["--all"]
+shown = [text for about, text in said if every or about in ("always", step)]
+rest = [text for about, text in said if not (every or about in ("always", step))]
+if every:
+    print("all lines, printed with --all: never send this print, send the one without --all")
+for text in shown:
+    print(text)
+if rest:
+    digest = hashlib.sha256("\n".join(rest).encode()).hexdigest()[:8]
+    print(f"{len(rest)} more lines (earlier steps' answers and the logs), fingerprint {digest}: to see them, add --all at the end of the check command")
