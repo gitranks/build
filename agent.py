@@ -94,10 +94,14 @@ def failed(error):
     return "no answer from the model server. Is it running? README.md says how to start it."
 
 
+# The most times the model may use tools for one message of yours, before the agent stops and asks you.
+ROUNDS = 10
+
+
 # One message from you, and the model's answer to it.
 def turn(text):
     messages.append({"role": "user", "content": text})
-    while True:
+    for _ in range(ROUNDS):
         answer = ask()
         calls = answer.get("tool_calls") or []
         if not calls:
@@ -107,6 +111,7 @@ def turn(text):
         messages.append({"role": "assistant", "content": answer.get("content"), "tool_calls": calls})
         for call in calls:
             messages.append({"role": "tool", "tool_call_id": call["id"], "content": cut(use(call))})
+    print(f"agent: the model used tools {ROUNDS} times with no answer, so I stopped. Say how to go on.")
 
 
 # Run one tool the model asked for, and give back what to send the model.
