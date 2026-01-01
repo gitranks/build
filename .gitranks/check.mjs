@@ -8,11 +8,16 @@ for (const ch of process.argv[3] ?? "1") n = (n * 31 + ch.charCodeAt(0)) % 21474
 const seed = String(n);
 const lines = [];
 const said = []; // each line the programs printed, with what it answers: an id, "logged", "prompt" or "always"
+const pick = (list) => list[(n = (n * 48271) % 2147483647 || 1) % list.length];
+const call = (id, method, params) => JSON.stringify({ jsonrpc: "2.0", id, method, params });
+lines.push(call(1, pick(["hello", "say/hi", "what/now", "roll/please"])), "this line is not JSON");
 
 function show(name, file, args, input) {
   const run = spawnSync(process.execPath, [file, ...args], { input: input.map((l) => l + "\n").join(""), encoding: "utf8", timeout: 5000 });
   for (const l of run.stdout.split("\n")) if (l.trim()) said.push([name === "server" ? answerId(l) : name, `${name} said: ${l.trim()}`]);
   for (const l of run.stderr.split("\n")) if (l.startsWith("my-server: ")) said.push([name === "server" ? "logged" : name, `${name} logged: ${l.slice(11).trim()}`]);
+  const crash = run.stderr.split("\n").find((l) => /^[A-Za-z]*Error\b/.test(l));
+  if (crash) said.push(["always", `${name} crashed: ${crash.trim()}`]);
   if (run.status !== 0) said.push(["always", run.status === null ? `${name} did not stop within 5 seconds` : `${name} stopped with code ${run.status}`]);
 }
 
