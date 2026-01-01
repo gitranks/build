@@ -56,3 +56,4 @@ def show(name, file, args, sent):
 
 
 show("server", "server.py", ["--seed", seed], lines)
+show("prompt", "prompt.py", [], [pick(["tools/list", "ping", "hello/again"])])
