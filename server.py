@@ -11,6 +11,35 @@ at = sys.argv.index("--port") if "--port" in sys.argv else 0
 PORT = int(sys.argv[at + 1]) if 0 < at < len(sys.argv) - 1 else 8080
 
 
+# Add the next piece of the request's bytes. An empty piece: the browser closed the connection.
+def more(conn, data):
+    piece = conn.recv(65536)
+    if not piece:
+        raise ConnectionError("the browser closed the connection")
+    return data + piece
+
+
+# One connection. Its bytes come in pieces of any size: they wait in `data` until the head ends, at a blank line.
+def serve(conn):
+    data = b""
+    while b"\r\n\r\n" not in data:
+        data = more(conn, data)
+    end = data.index(b"\r\n\r\n")
+    # Print the head as it came, one line at a time.
+    for line in data[:end].decode("latin-1").split("\r\n"):
+        print(f"web: > {line}")
+
+
+# One connection, closed at the end. A browser may hang up at any time: that ends its connection, never the server.
+def connected(conn):
+    conn.settimeout(1)  # a browser may open a connection and send nothing: after a second, it is closed
+    with conn:
+        try:
+            serve(conn)
+        except OSError:
+            pass
+
+
 # A server on a plain socket. 127.0.0.1 is this computer: only programs on it can connect, nobody else on your network.
 try:
     listener = socket.create_server(("127.0.0.1", PORT))
@@ -25,7 +54,6 @@ try:
             conn, _ = listener.accept()
         except TimeoutError:
             continue
-        print("web: a browser connected")
-        conn.close()
+        connected(conn)
 except KeyboardInterrupt:
     print("web: stopped")

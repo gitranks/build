@@ -235,6 +235,14 @@ def post(target, body):
 
 session("what-you-will-build", None)
 session("listen-on-a-port", lambda port: ask(port, "listen-on-a-port", [get("/")]))
+
+
+def read_the_request(port):
+    line, *rest = get(pick(["/", "/hello", "/cats"])).split("\r\n")
+    ask(port, "read-the-request", [line + "\r\n", "\r\n".join(rest)], label=f"{line}, in two pieces")
+
+
+session("read-the-request", read_the_request)
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
