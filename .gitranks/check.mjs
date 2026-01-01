@@ -44,6 +44,8 @@ session("read-commands", ["help", "", pick(["fly", "hello", "remember"]) + " awa
 const key = pick(["name", "color", "city"]);
 const value = pick(["Ada Lovelace", "deep blue", "Kyiv", "café au lait"]);
 session("set-and-get", [`set ${key} ${value}`, `get ${key}`, `get ${pick(["age", "size", "mood"])}`, `set ${key}`]);
+const gone = pick(["pet", "car", "game"]);
+session("delete-a-key", [`set ${gone} ${pick(["cat", "red bike", "chess"])}`, `del ${gone}`, `get ${gone}`, `del ${gone}`, "del"]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

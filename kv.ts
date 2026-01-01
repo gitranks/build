@@ -6,6 +6,7 @@ import { createInterface } from "node:readline";
 const HELP = [
   "set <key> <value>     keep the value under the key",
   "get <key>             say the value of the key",
+  "del <key>             delete the key",
   "help                  this list",
   "exit                  stop kv",
 ];
@@ -30,6 +31,12 @@ function run(words: string[]): string {
   if (name === "get") {
     if (!key) return "usage: get <key>";
     return data.get(key) ?? "(not found)";
+  }
+  if (name === "del") {
+    if (!key) return "usage: del <key>";
+    if (!data.has(key)) return "(not found)";
+    data.delete(key);
+    return "deleted";
   }
   if (name === "help") return HELP.join("\n");
   return `unknown command: ${name}. Type help for the list.`;
