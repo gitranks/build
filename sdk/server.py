@@ -4,6 +4,7 @@ import secrets
 import site
 import sys
 from pathlib import Path
+from typing import Annotated
 
 # pip put the SDK in the folder packages beside this file. These lines make Python look there first, before any
 # package of the same name your Python has already.
@@ -11,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).parent / "packages"))
 site.addsitedir(str(Path(__file__).parent / "packages"))
 
 from mcp.server import MCPServer
+from pydantic import Field
 
 
 # Logs go to standard error. Standard output is the SDK's, for messages alone.
@@ -34,9 +36,14 @@ mcp = MCPServer("my-server", version="2.0.0")
 
 # One decorator makes a tool: its name is the function's, its description the docstring, its input the arguments.
 @mcp.tool()
-def roll_dice(sides: int = 6) -> str:
-    """Roll a die and say the number. Use it whenever the person asks for a dice roll."""
-    return f"You rolled {random_below(sides) + 1}."
+def roll_dice(
+    sides: Annotated[int, Field(ge=2, le=100, description="How many sides each die has. 6 if not given.")] = 6,
+    count: Annotated[int, Field(ge=1, le=10, description="How many dice to roll. 1 if not given.")] = 1,
+) -> str:
+    """Roll one or more dice and say each number and the total. Use it whenever the person asks for a dice roll."""
+    rolls = [random_below(sides) + 1 for _ in range(count)]
+    total = sum(rolls)
+    return f"You rolled {total}." if count == 1 else f"You rolled {', '.join(map(str, rolls))}: {total} in total."
 
 
 # Started as a program, not imported: serve on standard input and output until the agent closes them.
