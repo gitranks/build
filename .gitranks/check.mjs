@@ -137,6 +137,13 @@ await session("check-the-fields", async (port) => {
   ];
   for (const body of bodies) await call(port, "check-the-fields", "POST", "/api/tasks", body);
 });
+await session("change-and-delete", async (port) => {
+  await call(port, "change-and-delete", "POST", "/api/tasks", JSON.stringify({ title: pick(titles) }));
+  await call(port, "change-and-delete", "PATCH", "/api/tasks/1", pick(['{"done":true}', '{"title":"Buy oat milk"}', '{"title":"Call Ada","done":true}']));
+  await call(port, "change-and-delete", "PATCH", "/api/tasks/1", pick(['{"title":""}', '{"done":"no"}', '{"title":7}']));
+  await call(port, "change-and-delete", "DELETE", "/api/tasks/1");
+  await call(port, "change-and-delete", pick(["GET", "DELETE"]), "/api/tasks/1");
+});
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

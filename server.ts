@@ -21,6 +21,7 @@ const TYPES: Record<string, string> = {
 const REASONS: Record<number, string> = {
   200: "OK",
   201: "Created",
+  204: "No Content",
   301: "Moved Permanently",
   303: "See Other",
   400: "Bad Request",
@@ -156,6 +157,18 @@ const ROUTES: Record<string, (request: Request) => Answer | Promise<Answer>> = {
     const task = tasks.get(idOf(request));
     return task ? json(task) : missing(request);
   },
+  "PATCH /api/tasks/:id": (request) => {
+    const task = tasks.get(idOf(request));
+    if (!task) return missing(request);
+    const given = fields(request, false);
+    if ("status" in given) return given;
+    Object.assign(task, given); // only the fields the body gave
+    return json(task);
+  },
+  "DELETE /api/tasks/:id": (request) => {
+    if (!tasks.delete(idOf(request))) return missing(request);
+    return { status: 204, type: "", body: "" };
+  },
 };
 
 // A file from the public folder, such as /style.css. Its type comes from the end of its name.
@@ -213,6 +226,7 @@ function send(socket: net.Socket, answer: Answer, keep: boolean): void {
     `Content-Length: ${bytes.length}`,
     `Connection: ${keep ? "keep-alive" : "close"}`,
   ];
+  if (answer.status === 204) head.splice(1, 2); // 204 No Content has no body: no Content-Type, no Content-Length
   for (const [name, value] of Object.entries(answer.headers ?? {})) head.push(`${name}: ${value}`);
   socket.write(head.join("\r\n") + "\r\n\r\n");
   socket.write(bytes);
