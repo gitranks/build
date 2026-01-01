@@ -4,7 +4,7 @@ import secrets
 import site
 import sys
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, TypedDict
 
 # pip put the SDK in the folder packages beside this file. These lines make Python look there first, before any
 # package of the same name your Python has already.
@@ -34,24 +34,33 @@ def random_below(n: int) -> int:
 mcp = MCPServer("my-server", version="2.0.0")
 
 
+# The shape of each tool's result. The SDK turns it into the outputSchema and sends the result as data.
+class Rolls(TypedDict):
+    rolls: list[int]
+    total: int
+
+
+class Choice(TypedDict):
+    choice: str
+
+
 # One decorator makes a tool: its name is the function's, its description the docstring, its input the arguments.
 @mcp.tool()
 def roll_dice(
     sides: Annotated[int, Field(ge=2, le=100, description="How many sides each die has. 6 if not given.")] = 6,
     count: Annotated[int, Field(ge=1, le=10, description="How many dice to roll. 1 if not given.")] = 1,
-) -> str:
+) -> Rolls:
     """Roll one or more dice and say each number and the total. Use it whenever the person asks for a dice roll."""
     rolls = [random_below(sides) + 1 for _ in range(count)]
-    total = sum(rolls)
-    return f"You rolled {total}." if count == 1 else f"You rolled {', '.join(map(str, rolls))}: {total} in total."
+    return {"rolls": rolls, "total": sum(rolls)}
 
 
 @mcp.tool()
 def pick_one(
     choices: Annotated[list[str], Field(min_length=2, max_length=20, description="The options to pick from.")],
-) -> str:
+) -> Choice:
     """Pick one of the choices at random. Use it when the person cannot decide between a few options."""
-    return f"I picked: {choices[random_below(len(choices))]}"
+    return {"choice": choices[random_below(len(choices))]}
 
 
 # Started as a program, not imported: serve on standard input and output until the agent closes them.
