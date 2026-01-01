@@ -15,6 +15,7 @@ const HELP = [
   "shapes                the size of each table of numbers in the model",
   "softmax <numbers>     turn scores into chances that add up to 1",
   "next <text>           the model's guess for the character after the text",
+  "gradcheck             nudge a number of each table and see the loss move",
   "help                  this list",
   "exit                  stop lm",
 ];
@@ -173,6 +174,25 @@ function surprise(part: number[]): number {
   return sum / (part.length - 1);
 }
 
+// Nudge one number of each table up and down a little, and see how fast the loss moves: the gradient, measured.
+// It is the number in row 0, column 1; in emb, row 0 is the first character of the alphabet, most often the space.
+function gradcheck(): string {
+  const x = train.slice(0, T);
+  const y = train.slice(1, T + 1);
+  const lines: string[] = [];
+  for (const name in model) {
+    const m = model[name];
+    const keep = m[0][1];
+    m[0][1] = keep + 0.00001;
+    const up = lossOf(forward(x), y);
+    m[0][1] = keep - 0.00001;
+    const down = lossOf(forward(x), y);
+    m[0][1] = keep;
+    lines.push(`${name}: ${fmt((up - down) / 0.00002, 6)} by a nudge`);
+  }
+  return lines.join("\n");
+}
+
 // Go on from the start, one character at a time, each picked at random by how often it came next.
 const LENGTH = 60;
 function write(start: number[]): string {
@@ -259,6 +279,7 @@ function run(words: string[]): string {
     const order = p.map((chance, b) => [chance, b]).sort((x, y) => y[0] - x[0]);
     return `after "${start}": ` + order.slice(0, 5).map(([c, b]) => `${show(b)} ${fmt(c)}`).join(", ");
   }
+  if (name === "gradcheck") return gradcheck();
   if (name === "help") return HELP.join("\n");
   return `unknown command: ${name}. Type help for the list.`;
 }
