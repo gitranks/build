@@ -1,5 +1,7 @@
 // agent: a coding agent, written from nothing, with no library.
 // You chat with it, it asks a model, and the model may use tools on the files of this folder. Start it: node agent.ts
+import * as fs from "node:fs";
+import * as path from "node:path";
 import { createInterface } from "node:readline";
 
 // The model server and the model: Ollama on this computer, unless --url and --model say another (see README.md).
@@ -9,6 +11,7 @@ function option(name: string, fallback: string): string {
 }
 const SERVER = option("--url", "http://127.0.0.1:11434/v1");
 const MODEL = option("--model", "qwen2.5:3b");
+const ROOT = process.cwd(); // the folder the agent works in: the one you start it in
 
 // The commands you can type, as /help shows them.
 const HELP = [
@@ -58,14 +61,32 @@ function failed(error: Error): string {
 // One message from you, and the model's answer to it.
 async function turn(text: string): Promise<void> {
   messages.push({ role: "user", content: text });
-  const answer = await ask();
-  const calls = answer.tool_calls ?? [];
-  if (calls.length) {
-    for (const call of calls) console.log(`tool: ${call.function.name} ${call.function.arguments}`);
-    return console.log("agent: the model asked for a tool. The next step runs it.");
+  for (;;) {
+    const answer = await ask();
+    const calls = answer.tool_calls ?? [];
+    if (!calls.length) {
+      messages.push({ role: "assistant", content: answer.content });
+      return console.log(answer.content ?? "");
+    }
+    messages.push({ role: "assistant", content: answer.content, tool_calls: calls });
+    for (const call of calls) messages.push({ role: "tool", tool_call_id: call.id, content: await use(call) });
   }
-  messages.push({ role: "assistant", content: answer.content });
-  console.log(answer.content ?? "");
+}
+
+// Run one tool the model asked for, and give back what to send the model.
+async function use(call: Call): Promise<string> {
+  const { name, arguments: given } = call.function;
+  console.log(`tool: ${name} ${given}`);
+  if (name === "list_files") return list();
+  return `error: there is no tool named ${name}`;
+}
+
+// Every file in the folder, one path a line, but not git's own files or what tools install.
+function list(): string {
+  const skip = /(^|[\\/])(\.git|node_modules|__pycache__|\.venv)([\\/]|$)/;
+  const files = fs.readdirSync(ROOT, { recursive: true, encoding: "utf8" }).filter((file) => !skip.test(file));
+  const paths = files.filter((file) => fs.statSync(path.join(ROOT, file)).isFile()).map((file) => file.split(path.sep).join("/"));
+  return paths.sort().join("\n") || "(the folder is empty)";
 }
 
 // Read your lines one at a time. The prompt shows only when you type at a terminal, not when a program sends them.

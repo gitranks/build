@@ -136,6 +136,13 @@ const who = pick(["who are you?", "what do you do?", "where do you work?"]);
 await session("a-system-prompt", [who, "/reset", who], [first, first]);
 const offered = (ask) => `I can use: ${(ask.tools ?? []).map((tool) => tool.function?.name).join(", ") || "no tools"}`;
 await session("offer-a-tool", ["which tools do you have?", "what files are here?"], [offered, call("list_files")]);
+// The folder's own files.
+const [note, word, changed] = pick([["remember the milk", "milk", "bread"], ["water the plants", "plants", "cactus"], ["call the bank", "bank", "school"]]);
+fs.writeFileSync(join(folder, "notes.txt"), `todo: ${note}\n`);
+fs.mkdirSync(join(folder, "src"));
+fs.writeFileSync(join(folder, "src", pick(["hello.js", "main.py", "app.ts"])), "print('hello')\n");
+const other = pick(["delete_all", "search_web", "open_browser"]);
+await session("the-agent-loop", ["what files are here?", "use another tool"], [call("list_files"), heard, call(other), heard]);
 server.close();
 try {
   fs.rmSync(top, { recursive: true, force: true });
