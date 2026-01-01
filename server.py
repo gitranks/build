@@ -38,11 +38,12 @@ def number(text: str) -> int | float:
 # The tools this server offers. The agent reads each description to decide when to use it.
 ROLL_DICE = {
     "name": "roll_dice",
-    "description": "Roll a die and say the number. Use it whenever the person asks for a dice roll.",
+    "description": "Roll one or more dice and say each number and the total. Use it whenever the person asks for a dice roll.",
     "inputSchema": {
         "type": "object",
         "properties": {
-            "sides": {"type": "integer", "minimum": 2, "maximum": 100, "description": "How many sides the die has. 6 if not given."},
+            "sides": {"type": "integer", "minimum": 2, "maximum": 100, "description": "How many sides each die has. 6 if not given."},
+            "count": {"type": "integer", "minimum": 1, "maximum": 10, "description": "How many dice to roll. 1 if not given."},
         },
         "additionalProperties": False,
     },
@@ -67,9 +68,14 @@ def whole(value, low: int, high: int) -> bool:
 
 def roll_dice(args: dict) -> dict:
     sides = 6 if args.get("sides") is None else args["sides"]
+    count = 1 if args.get("count") is None else args["count"]
     if not whole(sides, 2, 100):
         return tool_error(f"sides must be a whole number from 2 to 100, not {to_json(args.get('sides'))}.")
-    return text(f"You rolled {random_below(sides) + 1}.")
+    if not whole(count, 1, 10):
+        return tool_error(f"count must be a whole number from 1 to 10, not {to_json(args.get('count'))}.")
+    rolls = [random_below(sides) + 1 for _ in range(count)]
+    total = sum(rolls)
+    return text(f"You rolled {total}." if count == 1 else f"You rolled {', '.join(map(str, rolls))}: {total} in total.")
 
 
 RUN = {"roll_dice": roll_dice}
