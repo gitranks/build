@@ -29,10 +29,6 @@ said = []  # each line to print, with the step it is about, or "always"
 folder = tempfile.mkdtemp(prefix="web-check-")
 
 
-def cut(line):
-    return line[:100] + "..." if len(line) > 100 else line
-
-
 # All the sessions together get 20 seconds at most, and a server that never says it listens ends the check there:
 # the next sessions would wait for it too.
 deadline = time.monotonic() + 20
@@ -152,252 +148,45 @@ class Link:
             self.sock.close()
 
 
-# What came back, split into answers: each is a head up to a blank line, then as many bytes of body as its
-# Content-Length says. A head with no blank line yet is kept as it is.
-def answers_in(data):
-    answers = []
-    while data:
-        end = data.find(b"\r\n\r\n")
-        if end < 0:
-            answers.append({"head": None, "body": data})
-            break
-        head = data[:end].decode("latin-1")
-        found = re.search(r"\r\ncontent-length: *([0-9]+)", head, re.IGNORECASE)
-        size = int(found.group(1)) if found else None
-        stop = len(data) if size is None else min(len(data), end + 4 + size)
-        answers.append({"head": head, "size": size, "body": data[end + 4 : stop]})
-        data = data[stop:]
-    return answers
-
-
-def whole(answers):
-    return len([a for a in answers if a["head"] is not None and a["size"] is not None and len(a["body"]) >= a["size"]])
-
-
-# Print one answer: its status line and headers on one line, then the lines of its body that `show` keeps.
-def tell(about, answer, show):
-    if not answer:
-        said.append((about, "got: nothing, the connection closed"))
-        return
-    if answer["head"] is None:
-        said.append((about, "got: no blank line after the head: " + cut(json.dumps(answer["body"].decode("latin-1"), ensure_ascii=False))))
-        return
-    said.append((about, "got: " + " | ".join(answer["head"].split("\r\n"))))
-    if answer["size"] is not None and len(answer["body"]) < answer["size"]:
-        said.append((about, f"body: {len(answer['body'])} bytes came, but Content-Length says {answer['size']}"))
-    for i, line in enumerate(answer["body"].decode("utf-8", "replace").split("\n")):
-        if line.strip() and show(line, i):
-            said.append((about, f"body: {cut(line.rstrip())}"))
-
-
-# Send a request on a connection of its own, in one piece or a few, and print what came back. The request asks the
-# server to close the connection after its answer, so the check reads until it closes.
-def ask(port, about, pieces, label=None, show=lambda line, i: i < 3, brief=False):
-    request = "".join(pieces)
-    sent = label or request.split("\r\n")[0]
+# Send one request on a connection of its own, with its body when it has one, and print it and its answer on one
+# line: the status, each header but the length and the connection, and the body.
+def call(port, about, method, target, body=""):
+    sent = f"{method} {target}" + (f" {body}" if body else "")
     link = Link(port)
     if not link.open:
-        said.extend([(about, f"sent: {sent}"), (about, "got: nothing, the server is not listening")])
+        said.append((about, f"{sent} -> nothing, the server is not listening"))
         return
-    for i, piece in enumerate(pieces):
-        if i:
-            time.sleep(0.15)
-        link.send(piece)
+    link.send(f"{method} {target} HTTP/1.1\r\nHost: localhost\r\nContent-Length: {len(body.encode())}\r\nConnection: close\r\n\r\n{body}")
     link.wait(lambda: False)
     link.close()
-    answers = answers_in(link.got)
-    answer = answers[0] if answers else None
-    if brief:
-        status = answer["head"].split("\r\n")[0] if answer and answer["head"] is not None else "nothing"
-        body = answer["body"].decode("utf-8", "replace").split("\n")[0] if answer and answer["head"] is not None else ""
-        said.append((about, f"sent: {sent} -> got: {status}" + (f" | body: {cut(body)}" if body else "")))
-    else:
-        said.append((about, f"sent: {sent}"))
-        tell(about, answer, show)
-    if len(answers) > 1:
-        said.append((about, f"then {len(link.got) - (len(answer['head']) + 4 + len(answer['body']))} bytes more than Content-Length says"))
+    end = link.got.find(b"\r\n\r\n")
+    if end < 0:
+        said.append((about, f"{sent} -> " + ("an answer with no blank line after its head" if link.got else "nothing, the connection closed")))
+        return
+    first, *headers = link.got[:end].decode("latin-1").split("\r\n")
+    shown = [line for line in headers if not re.match(r"(content-length|connection):", line, re.IGNORECASE)]
+    answer = re.sub(r"\s*\n\s*", " ", link.got[end + 4 :].decode("utf-8", "replace")).strip()
+    words = [f"{sent} -> {first.removeprefix('HTTP/1.1 ')}", *shown, answer[:200] + "..." if len(answer) > 200 else answer]
+    said.append((about, " | ".join(word for word in words if word)))
     if not link.closed:
         said.append((about, "the server did not close the connection within 3 seconds"))
 
 
-# A request with no body, as a browser sends one when you open a page.
-def get(target, method="GET"):
-    return f"{method} {target} HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n"
+def compact(value):
+    return json.dumps(value, separators=(",", ":"))
 
 
-# A form's request: a body of name=value, with its length in Content-Length.
-def post(target, body):
-    return (
-        f"POST {target} HTTP/1.1\r\nHost: localhost\r\nContent-Type: application/x-www-form-urlencoded\r\n"
-        f"Content-Length: {len(body.encode())}\r\nConnection: close\r\n\r\n{body}"
-    )
+titles = ["Buy milk", "Call Grace", "Water the plants"]
 
 
-session("what-you-will-build", None)
-session("listen-on-a-port", lambda port: ask(port, "listen-on-a-port", [get("/")]))
+def answer_in_json(port):
+    call(port, "answer-in-json", "GET", "/api/tasks")
+    call(port, "answer-in-json", "POST", "/api/tasks", compact({"title": pick(titles)}))
+    call(port, "answer-in-json", "POST", "/api/tasks", compact({"title": pick(["Read a book", "Fix the bike"]), "done": True}))
+    call(port, "answer-in-json", "GET", "/api/tasks")
 
 
-def read_the_request(port):
-    line, *rest = get(pick(["/", "/hello", "/cats"])).split("\r\n")
-    ask(port, "read-the-request", [line + "\r\n", "\r\n".join(rest)], label=f"{line}, in two pieces")
-
-
-session("read-the-request", read_the_request)
-session("answer-by-hand", lambda port: ask(port, "answer-by-hand", [get(pick(["/", "/index.html", "/dogs"]))]))
-
-
-def read_the_request_line(port):
-    ask(port, "read-the-request-line", [get(pick(["/hello?name=Ada", "/cats/1", "/a/b/c"]))])
-    target = pick(["/notes", "/x?y=z", "/"])
-    ask(port, "read-the-request-line", [get(target, pick(["DELETE", "PUT", "POST"]))])
-
-
-session("read-the-request-line", read_the_request_line)
-
-
-def read_the_headers(port):
-    extra = "User-Agent: " + pick(["web-check/1", "curious-browser", "a teapot"]) + "\r\nX-Color:   " + pick(["blue", "green", "red"]) + "  \r\nACCEPT: text/plain\r\nX-Time: 12:30\r\n"
-    ask(port, "read-the-headers", [get("/" + pick(["page", "headers", "hello"])).replace("\r\n\r\n", f"\r\n{extra}\r\n", 1)], show=lambda line, i: i < 7)
-
-
-session("read-the-headers", read_the_headers)
-
-
-def not_found(port):
-    ask(port, "not-found", [get("/")], show=lambda line, i: i < 1)
-    ask(port, "not-found", [get(pick(["/cats", "/nothing/here", "/hello"]))])
-
-
-session("not-found", not_found)
-
-
-def routes(port):
-    ask(port, "routes", [get("/")])
-    ask(port, "routes", [get("/hello?name=" + pick(["Ada", "Grace+Hopper", "Zo%C3%AB"]))])
-    ask(port, "routes", [get("/hello")])
-
-
-session("routes", routes)
-
-
-def status_codes(port):
-    target = pick(["/hello", "/", "/headers"])
-    ask(port, "moved-and-not-allowed", [get(target, pick(["POST", "PUT", "DELETE"]))])
-    ask(port, "moved-and-not-allowed", [get("/old")])
-
-
-session("moved-and-not-allowed", status_codes)
-session("send-html", lambda port: ask(port, "send-html", [get("/")], show=lambda line, i: re.search(r"<title>|<p>", line)))
-note = pick(["Buy+milk%21", "Call+Grace", "Caf%C3%A9+at+3"])
-
-
-def read_a_body(port):
-    head, body = post("/notes", f"note={note}").split("\r\n\r\n")
-    ask(port, "read-a-body", [head + "\r\n\r\n", body], label=f"POST /notes with the body note={note}, in two pieces")
-    ask(port, "read-a-body", [get("/notes")], show=lambda line, i: line.startswith("<p>"))
-
-
-session("read-a-body", read_a_body)
-
-
-def show_notes_safely(port):
-    sly = pick(["%3Cb%3Ebold%3C%2Fb%3E", "%3Cscript%3Ealert(1)%3C%2Fscript%3E", "Tom+%26+%22Jerry%22"])
-    ask(port, "show-notes-safely", [post("/notes", f"note={sly}")], label=f"POST /notes with the body note={sly}", brief=True)
-    ask(port, "show-notes-safely", [get("/notes")], show=lambda line, i: line.startswith("<p>"))
-
-
-session("show-notes-safely", show_notes_safely)
-
-
-def serve_files(port):
-    ask(port, "serve-files", [get("/style.css")], show=lambda line, i: i < 1)
-    ask(port, "serve-files", [get("/about.html")], show=lambda line, i: line.startswith("<h1>"))
-    ask(port, "serve-files", [get(pick(["/logo.png", "/missing.html", "/style.css.old"]))])
-
-
-session("serve-files", serve_files)
-
-
-def stay_in_the_folder(port):
-    ask(port, "stay-in-the-folder", [get(pick(["/../README.md", "/..%2fREADME.md", "/%2e%2e/README.md"]))], brief=True)
-    ask(port, "stay-in-the-folder", [get(pick(["/100%", "/%FF.html", "/50%25%"]))], brief=True)
-    ask(port, "stay-in-the-folder", [get(pick(["/about.html", "/style.css"]))], brief=True)
-
-
-session("stay-in-the-folder", stay_in_the_folder)
-
-
-def many_at_once(port):
-    name = pick(["Ada", "Alan", "Grace"])
-    said.append(("many-at-once", f"sent: GET /slow, then GET /hello?name={name} on a second connection 0.2 seconds later"))
-    slow = Link(port)
-    if slow.open:
-        slow.send(get("/slow"))
-    time.sleep(0.2)
-    quick = Link(port)
-    if quick.open:
-        quick.send(get(f"/hello?name={name}"))
-    order = []
-    until = time.monotonic() + min(4, left())
-    while len(order) < 2 and time.monotonic() < until:
-        for target, link in (("/slow", slow), (f"/hello?name={name}", quick)):
-            link.poll(0.01)
-            if target not in order and (link.closed or whole(answers_in(link.got))):
-                order.append(target)
-    for i, target in enumerate(order):
-        answers = answers_in((slow if target == "/slow" else quick).got)
-        body = answers[0]["body"].decode("utf-8", "replace").split("\n")[0] if answers and answers[0]["head"] is not None else "nothing"
-        said.append(("many-at-once", f"{'then' if i else 'first'} came the answer to {target}: {cut(body)}"))
-    if len(order) < 2:
-        said.append(("many-at-once", "one answer did not come within 4 seconds"))
-    slow.close()
-    quick.close()
-
-
-session("many-at-once", many_at_once)
-
-
-def keep_alive(port):
-    names = [pick(["Ada", "Alan"]), pick(["Grace", "Linus"])]
-    said.append(("keep-alive", f"sent: GET /hello?name={names[0]} and GET /hello?name={names[1]} at once, on one connection"))
-    link = Link(port)
-    if link.open:
-        link.send("".join(get(f"/hello?name={name}").replace("Connection: close\r\n", "") for name in names))
-    link.wait(lambda: whole(answers_in(link.got)) >= 2)
-    said.append(("keep-alive", "sent: GET /hello on the same connection, with Connection: close"))
-    if not link.closed:
-        link.send(get("/hello"))
-    link.wait(lambda: False)
-    for answer in answers_in(link.got):
-        tell("keep-alive", answer, lambda line, i: i < 1)
-    said.append(("keep-alive", "then the server closed the connection" if link.closed else "the server did not close the connection within 3 seconds"))
-    link.close()
-
-
-session("keep-alive", keep_alive)
-
-
-def a_bad_request(port):
-    line = pick(["HELLO", "GET /hello", "GET /hello HTTP/1.1 please"])
-    ask(port, "a-bad-request", [f"{line}\r\nHost: localhost\r\n\r\n"], brief=True)
-    header = pick(["Name Ada", "no colon here", ": blue"])
-    ask(port, "a-bad-request", [get("/hello").replace("Host: localhost", f"Host: localhost\r\n{header}")], label=f'GET /hello with the header line "{header}"', brief=True)
-    size = pick(["ten", "-5", "1e3"])
-    ask(port, "a-bad-request", [get("/notes", "POST").replace("Host: localhost", f"Host: localhost\r\nContent-Length: {size}")], label=f"POST /notes with Content-Length: {size}", brief=True)
-    big = pick(["5000000", "1000001", "99999999"])
-    ask(port, "a-bad-request", [get("/notes", "POST").replace("Host: localhost", f"Host: localhost\r\nContent-Length: {big}")], label=f"POST /notes with Content-Length: {big}", brief=True)
-    ask(port, "a-bad-request", [get("/hello?name=" + pick(["again", "still+here"]))], brief=True)
-
-
-session("a-bad-request", a_bad_request)
-
-
-def an_error_in_a_route(port):
-    ask(port, "an-error-in-a-route", [get("/crash")])
-    ask(port, "an-error-in-a-route", [get("/hello?name=" + pick(["after", "still+here"]))])
-
-
-session("an-error-in-a-route", an_error_in_a_route)
+session("answer-in-json", answer_in_json)
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the

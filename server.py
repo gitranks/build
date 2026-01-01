@@ -7,6 +7,7 @@ import sys
 import threading
 import time
 import urllib.parse
+from json import dumps, loads
 
 # Print UTF-8 with plain line ends on every system, each line as soon as it is printed.
 sys.stdout.reconfigure(encoding="utf-8", newline="\n", line_buffering=True)
@@ -27,6 +28,7 @@ TYPES = {
 # The words that go with each status code on an answer's first line.
 REASONS = {
     200: "OK",
+    201: "Created",
     301: "Moved Permanently",
     303: "See Other",
     400: "Bad Request",
@@ -42,6 +44,11 @@ def text(body, status=200):
     return {"status": status, "type": "text/plain; charset=utf-8", "body": body}
 
 
+# An answer in JSON, for a program to read: a value written as text, such as {"id":1,"title":"Buy milk","done":false}.
+def json(value, status=200):
+    return {"status": status, "type": "application/json", "body": dumps(value, ensure_ascii=False, separators=(",", ":"))}
+
+
 # An HTML page: the browser draws it, and follows its links.
 def page(title, *lines):
     top = [
@@ -55,6 +62,10 @@ def page(title, *lines):
 
 # The notes people send from the form on /notes, kept in memory while the server runs.
 notes = []
+
+# The tasks of the API at /api/tasks, kept in memory by their id while the server runs, and the last id given.
+tasks = {}
+last_id = 0
 
 
 # The routes: each function below answers one method and path, as ROUTES says.
@@ -109,6 +120,21 @@ def crash(request):
     raise RuntimeError("this route always fails")
 
 
+def list_tasks(request):
+    return json(list(tasks.values()))
+
+
+def add_task(request):
+    global last_id
+    # The body is JSON, such as {"title":"Buy milk"}: loads turns it into a dict.
+    given = loads(request["body"])
+    last_id += 1
+    task = {"id": last_id, "title": "", "done": False, **given}
+    tasks[str(last_id)] = task
+    # 201 Created, and Location says where the new task lives.
+    return {**json(task, 201), "headers": {"Location": f"/api/tasks/{last_id}"}}
+
+
 ROUTES = {
     "GET /": home,
     "GET /hello": hello,
@@ -118,6 +144,8 @@ ROUTES = {
     "POST /notes": add_note,
     "GET /slow": slow,
     "GET /crash": crash,
+    "GET /api/tasks": list_tasks,
+    "POST /api/tasks": add_task,
 }
 
 
