@@ -13,6 +13,13 @@ const pick = (list) => list[(n = (n * 48271) % 2147483647 || 1) % list.length];
 const said = []; // each line to print, with the step it is about, or "always"
 const folder = fs.mkdtempSync(join(tmpdir(), "lm-check-"));
 const TEXT = join(folder, "text.txt");
+// A text of the check's own, made from the seed, with capitals, marks and line ends for lm to clean.
+let raw = "";
+while (raw.length < 400) {
+  raw += `${pick(["The cat", "A dog", "My fox", "Old Bob", "The hen"])} ${pick(["sat on", "ran to", "looked at", "slept by", "sang to"])}`;
+  raw += ` ${pick(["the mat", "a tree", "the river", "my hat", "the moon"])}${pick([". ", "! ", ".\n", ", and ", "?  ", ".\t"])}`;
+}
+fs.writeFileSync(TEXT, raw);
 
 // Start lm once and send it each group's commands, with a word it does not know between two groups, so the answers
 // to each group can be told apart. All runs together get 20 seconds at most, and a lm that does not stop ends the
@@ -45,6 +52,7 @@ function session(groups) {
 }
 
 const groups = [["what-you-will-build", []]];
+groups.push(["clean-the-text", ["text"]]);
 groups.push(["read-commands", ["help", "", pick(["fly", "hello", "learn"]) + " away", "exit", "help"]]);
 session(groups);
 try {
