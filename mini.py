@@ -35,6 +35,7 @@ def operate(op, a, b):
 
 SYMBOLS = [  # the symbols mini knows
     "+", "-", "*", "/",
+    "(", ")",
 ]
 
 
@@ -64,6 +65,15 @@ def tokenize(source):
 # Each level of operators has its own function, the loosest first: in 2 + 3 * 4, 3 * 4 is one operand of the +.
 # tokens[0] is the token at hand, and tokens.pop(0) takes it off the list.
 def parse(tokens):
+    def accept(kind):
+        if tokens[0].kind != kind:
+            return False
+        tokens.pop(0)
+        return True
+    def expect(kind):
+        if tokens[0].kind != kind:
+            raise MiniError(f"expected {kind} but found {tokens[0].text}")
+        return tokens.pop(0)
     def binary(ops, operand):
         left = operand()
         while tokens[0].kind in ops:
@@ -72,19 +82,30 @@ def parse(tokens):
     def expression():
         return binary(["+", "-"], factor)
     def factor():
-        return binary(["*", "/"], primary)
+        return binary(["*", "/"], unary)
+    def unary():
+        return Node(kind="negate", value=unary()) if accept("-") else primary()
     def primary():
         token = tokens.pop(0)
         if token.kind == "number":
             return Node(kind="value", value=number(token.text))
+        if token.kind == "(":
+            node = expression()
+            expect(")")
+            return node
         raise MiniError(f"expected a value but found {token.text}")
-    return expression()
+    tree = expression()
+    if tokens[0].kind != "end":
+        raise MiniError(f"expected an operator but found {tokens[0].text}")
+    return tree
 
 
 # Work out the value of a node of the tree.
 def evaluate(node):
     if node.kind == "value":
         return node.value
+    if node.kind == "negate":
+        return operate("-", 0, evaluate(node.value))
     return operate(node.op, evaluate(node.left), evaluate(node.right))
 
 
