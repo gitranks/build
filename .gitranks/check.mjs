@@ -122,6 +122,11 @@ await session("answer-in-json", async (port) => {
   await call(port, "answer-in-json", "POST", "/api/tasks", JSON.stringify({ title: pick(["Read a book", "Fix the bike"]), done: true }));
   await call(port, "answer-in-json", "GET", "/api/tasks");
 });
+await session("a-task-by-id", async (port) => {
+  await call(port, "a-task-by-id", "POST", "/api/tasks", JSON.stringify({ title: pick(titles) }));
+  await call(port, "a-task-by-id", "GET", "/api/tasks/1");
+  await call(port, "a-task-by-id", "GET", `/api/tasks/${pick(["2", "42", "abc"])}`);
+});
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

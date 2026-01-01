@@ -71,6 +71,10 @@ type Task = { id: number; title: string; done: boolean };
 const tasks = new Map<string, Task>();
 let lastId = 0;
 
+// The id in a path such as /api/tasks/7, and the answer when no task has it: 404, in JSON like every API answer.
+const idOf = (request: Request) => request.target.split("?")[0].split("/")[3];
+const missing = (request: Request) => json({ error: `no task with id ${idOf(request)}` }, 404);
+
 // The routes: a method and a path, each with the function that answers it.
 const ROUTES: Record<string, (request: Request) => Answer | Promise<Answer>> = {
   "GET /": () =>
@@ -122,6 +126,10 @@ const ROUTES: Record<string, (request: Request) => Answer | Promise<Answer>> = {
     // 201 Created, and Location says where the new task lives.
     return { ...json(task, 201), headers: { Location: `/api/tasks/${task.id}` } };
   },
+  "GET /api/tasks/:id": (request) => {
+    const task = tasks.get(idOf(request));
+    return task ? json(task) : missing(request);
+  },
 };
 
 // A file from the public folder, such as /style.css. Its type comes from the end of its name.
@@ -140,7 +148,8 @@ function file(pathname: string): Answer {
 
 // Find the route for a request. A path with no route gets 404 Not Found.
 function handle(request: Request): Answer | Promise<Answer> {
-  const [pathname] = request.target.split("?");
+  // A path such as /api/tasks/7 goes to the routes of /api/tasks/:id, which read the 7 from the target.
+  const pathname = request.target.split("?")[0].replace(/^\/api\/tasks\/[^/]+$/, "/api/tasks/:id");
   const route = ROUTES[`${request.method} ${pathname}`];
   if (route) return route(request);
   // The path has routes, but for other methods: 405, and the Allow header names them.
