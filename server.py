@@ -33,6 +33,7 @@ REASONS = {
     404: "Not Found",
     405: "Method Not Allowed",
     413: "Content Too Large",
+    500: "Internal Server Error",
 }
 
 
@@ -68,6 +69,7 @@ def home(request):
         '  <li><a href="/notes">/notes</a> keeps the notes you send</li>',
         '  <li><a href="/about.html">/about.html</a> is a file from the public folder</li>',
         '  <li><a href="/slow">/slow</a> takes a second to answer</li>',
+        '  <li><a href="/crash">/crash</a> fails every time</li>',
         "</ul>",
     )
 
@@ -103,6 +105,10 @@ def slow(request):
     return text("That took a second.")
 
 
+def crash(request):
+    raise RuntimeError("this route always fails")
+
+
 ROUTES = {
     "GET /": home,
     "GET /hello": hello,
@@ -111,6 +117,7 @@ ROUTES = {
     "GET /notes": notes_page,
     "POST /notes": add_note,
     "GET /slow": slow,
+    "GET /crash": crash,
 }
 
 
@@ -177,7 +184,12 @@ def send(conn, answer, keep):
 
 # Answer one request, and say so in the log.
 def respond(conn, request, keep, number):
-    answer = handle(request)
+    # An error in a route is the server's own fault: the browser gets 500, and the server goes on.
+    try:
+        answer = handle(request)
+    except Exception as error:
+        print(f"web: {request['method']} {request['target']} failed: {error}")
+        answer = text("Something went wrong on the server.", 500)
     print(f"web: {request['method']} {request['target']} {answer['status']}, request {number} on its connection")
     send(conn, answer, keep)
 

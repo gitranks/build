@@ -390,6 +390,14 @@ def a_bad_request(port):
 
 
 session("a-bad-request", a_bad_request)
+
+
+def an_error_in_a_route(port):
+    ask(port, "an-error-in-a-route", [get("/crash")])
+    ask(port, "an-error-in-a-route", [get("/hello?name=" + pick(["after", "still+here"]))])
+
+
+session("an-error-in-a-route", an_error_in_a_route)
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
