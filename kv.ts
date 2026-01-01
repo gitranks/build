@@ -11,6 +11,7 @@ const HELP = [
   "keys                  list every key",
   "fill <count>          set key1, key2 and on, up to the count",
   "stats                 count the keys, the records and the bytes",
+  "compact               keep only the latest record of each key",
   "help                  this list",
   "exit                  stop kv",
 ];
@@ -60,6 +61,19 @@ function read(key: string): string | undefined {
   return JSON.parse(bytes.toString("utf8"))[2];
 }
 
+// Copy the latest record of each key into a new file, then put the new file in the log's place.
+function compact(): string {
+  const was = `records ${records}, bytes ${end}`;
+  const log = fs.readFileSync(FILE);
+  const keep = Buffer.concat([...index.values()].map(({ start, size }) => log.subarray(start, start + size)));
+  fs.writeFileSync(FILE + ".new", keep);
+  fs.renameSync(FILE + ".new", FILE);
+  index.clear();
+  end = records = 0;
+  load();
+  return `compacted: ${was} before; records ${records}, bytes ${end} now`;
+}
+
 // The prompt kv> shows only when you type at a terminal, not when another program sends the commands.
 function ask(): void {
   if (process.stdin.isTTY) process.stdout.write("kv> ");
@@ -99,6 +113,7 @@ function run(words: string[]): string {
   if (name === "stats") {
     return `keys ${index.size}, records ${records}, old records ${records - index.size}, bytes ${end}`;
   }
+  if (name === "compact") return records ? compact() : "the log is empty";
   if (name === "help") return HELP.join("\n");
   return `unknown command: ${name}. Type help for the list.`;
 }

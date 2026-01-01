@@ -69,6 +69,7 @@ session("an-index", ["del after"]);
 session("jump-to-the-value", [`get ${greeting}`, "get key2", `set ${greeting}2 ${pick(["ünïcödé", "日本語", "ελλάδα"])}`, `set after ${pick(["three", "four"])}`, "get after"]);
 const counter = pick(["visits", "score", "level"]);
 session("count-the-waste", [`set ${counter} 1`, `set ${counter} 2`, `set ${counter} 3`, "stats"]);
+session("compact-the-log", ["compact", "stats", `get ${counter}`]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
