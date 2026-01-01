@@ -23,6 +23,14 @@ for line in sys.stdin:
     method, _, params = line.strip().partition(" ")
     if not method:
         continue
+    if method.startswith("{"):  # sent just as you typed it; only a correct notification gets no answer
+        try:
+            msg = json.loads(line)
+            note = isinstance(msg, dict) and msg.get("jsonrpc") == "2.0" and isinstance(msg.get("method"), str) and "id" not in msg
+        except ValueError:
+            note = False
+        send(line.strip(), not note)
+        continue
     try:
         params = json.loads(params) if params else None
     except ValueError:

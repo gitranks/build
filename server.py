@@ -151,10 +151,17 @@ for line in sys.stdin:
     try:
         msg = json.loads(line, parse_float=number)
     except ValueError:
-        log("that line is not JSON")
+        send({"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": "Parse error: that line is not JSON"}})
+        continue
+    if not isinstance(msg, dict) or msg.get("jsonrpc") != "2.0" or not isinstance(msg.get("method"), str):
+        send({"jsonrpc": "2.0", "id": None, "error": {"code": -32600, "message": "Invalid Request: not a JSON-RPC 2.0 request"}})
         continue
     log(f"got {msg.get('method')}")
     if "id" not in msg:
         continue  # a notification: it gets no answer
-    send({"jsonrpc": "2.0", "id": msg["id"], **handle(msg)})
+    try:
+        send({"jsonrpc": "2.0", "id": msg["id"], **handle(msg)})
+    except Exception as err:
+        log(f"a bug: {err!r}")
+        send({"jsonrpc": "2.0", "id": msg["id"], "error": {"code": -32603, "message": "Internal error"}})
 log("standard input closed, stopping")
