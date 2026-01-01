@@ -204,6 +204,10 @@ function find(scope: Scope, name: string): Scope {
   throw new MiniError(`${name} is not defined`);
 }
 
+// mini's own limit on calls inside calls. A recursion that never stops ends here, the same in every language.
+const DEEPEST = 50;
+let depth = 0;
+
 // A return statement throws this, and the call it is in catches it, with the value.
 class Return {
   value: Value;
@@ -222,13 +226,17 @@ function evaluate(node: Node, scope: Scope): Value {
     const args = node.args.map((arg: Node) => evaluate(arg, scope));
     if (typeof fn !== "object" || fn === null) throw new MiniError(`${quote(fn)} is not a function`);
     if (args.length !== fn.params.length) throw new MiniError(`${fn.name} takes (${fn.params.join(", ")})`);
+    if (depth === DEEPEST) throw new MiniError(`too deep: more than ${DEEPEST} calls inside each other`);
     const locals: Scope = new Map(fn.params.map((param, i) => [param, args[i]]));
+    depth++;
     let value: Value = null;
     try {
       run(fn.body, locals);
     } catch (signal) {
       if (!(signal instanceof Return)) throw signal;
       value = signal.value;
+    } finally {
+      depth--;
     }
     return value;
   }
@@ -263,8 +271,10 @@ function truth(value: Value, word: string): boolean {
 
 // Say what went wrong. A mistake in the program is not a crash of mini: anything else is.
 function report(error: unknown): void {
-  if (!(error instanceof MiniError)) throw error;
-  console.log(`error: ${error.message}`);
+  // A program can nest too deep for the language mini is written in too, with no call: 1 + (1 + (1 + ...)).
+  const deep = error instanceof RangeError && error.message.includes("call stack");
+  if (!(error instanceof MiniError) && !deep) throw error;
+  console.log(`error: ${deep ? "too deep" : (error as Error).message}`);
 }
 
 // The prompt mini> shows only when you type at a terminal, not when another program sends the lines.

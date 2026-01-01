@@ -75,6 +75,8 @@ const fn = pick(["hello", "greet", "say_hi"]);
 session("functions", [`fn ${fn}() { print "hi from ${fn}" }`, `${fn}()`, fn, `${a}()`, `${fn}(); ${fn}()`]);
 session("parameters-and-scope", ["fn add(a, b) { print a + b }", `add(${a}, ${b})`, "add(1)", "a", `let k = ${b}; fn use_k(n) { print n + k } use_k(1); fn own_k() { let k = 100; print k } own_k(); k`, "let c = 0; fn inc() { c = c + 1 } inc(); inc(); c"]);
 session("return-a-value", ["fn square(n) { return n * n }", `square(${a})`, "square(square(2))", "fn sign(n) { if n < 0 { return -1 } return 1 }", `sign(-${b})`, `sign(${b})`, "return 1"]);
+const deep = pick([5, 10, 12]);
+session("limit-the-depth", ["fn fact(n) { if n < 2 { return 1 } return n * fact(n - 1) }", `fact(${deep})`, "fn down(n) { return down(n + 1) }", "down(1)", "fact(3)"]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
