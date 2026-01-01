@@ -11,7 +11,7 @@ const HELP = [
   "crash <flushes>               run, but stop after that many flushes, as a crash would",
   "rows                          show the rows the last run kept, 10 at most",
   "bad                           show the lines the last run dropped and why, 10 at most",
-  "query <metric> [host]         a metric's numbers, minute by minute",
+  "query <metric> [host] [<n>m]  a metric's numbers, minute by minute, or n minutes at a time",
   "help                          this list",
   "exit                          stop pipe",
 ];
@@ -128,13 +128,19 @@ function add(row: Row): void {
 // A window's average in hundredths, rounded half up with whole numbers only, so it is the same everywhere.
 const average = (w: Window) => Math.floor((2 * w.sum + w.count) / (2 * w.count));
 
-// A metric's windows, on one host or on every host, in order of time and then of host.
-function query(metric: string, host?: string): string {
-  const found: [number, string, Window][] = [];
+// A metric's windows, on one host or on every host, in order of time and then of host. A window of n minutes
+// starts at a multiple of n minutes and folds its minutes into one: counts and sums add up.
+function query(metric: string, host: string | undefined, minutes: number): string {
+  const by = new Map<string, [number, string, Window]>();
   for (const [key, w] of Object.entries(store.windows)) {
-    const [m, h, start] = key.split(" ");
-    if (m === metric && (!host || h === host)) found.push([Number(start), h, w]);
+    const [m, h, time] = key.split(" ");
+    if (m !== metric || (host && h !== host)) continue;
+    const start = Number(time) - (Number(time) % (minutes * 60));
+    const into = by.get(`${start} ${h}`)?.[2];
+    if (!into) by.set(`${start} ${h}`, [start, h, { ...w }]);
+    else Object.assign(into, { count: into.count + w.count, sum: into.sum + w.sum, min: Math.min(into.min, w.min), max: Math.max(into.max, w.max) });
   }
+  const found = [...by.values()];
   found.sort((a, b) => a[0] - b[0] || (a[1] < b[1] ? -1 : 1));
   const shown = found.map(([start, h, w]) => `${when(start).slice(0, 16)} ${h} count ${w.count} avg ${number(average(w))} min ${number(w.min)} max ${number(w.max)}`);
   return some(shown, `(no rows of ${metric})`);
@@ -203,7 +209,12 @@ function command(words: string[]): string {
   if (name === "crash") return /^[1-9][0-9]{0,5}$/.test(arg ?? "") ? run(Number(arg)) : "usage: crash <flushes>, a whole number";
   if (name === "rows") return some(rows.map((r) => `${when(r.time)} ${r.host} ${r.metric} ${number(r.value)}`), "(no rows)");
   if (name === "bad") return some(bad, "(no bad lines)");
-  if (name === "query") return words[1] ? query(words[1], words[2]) : "usage: query <metric> [host]";
+  if (name === "query") {
+    const size = words.find((word) => /^[1-9][0-9]{0,3}m$/.test(word)); // 5m: five minutes at a time
+    const [metric, host] = words.slice(1).filter((word) => word !== size);
+    if (!metric) return "usage: query <metric> [host] [<n>m]";
+    return query(metric, host, size ? Number(size.slice(0, -1)) : 1);
+  }
   if (name === "help") return HELP.join("\n");
   return `unknown command: ${name}. Type help for the list.`;
 }

@@ -119,6 +119,9 @@ const commented = csv(["05", "15", "25"].map((s) => row(at(`10:00:${s}`), host, 
 const once = box("once", { "a.csv": commented, "b.csv": csv([row(at("10:01:05"), other, metric, "7")]) });
 session("count-each-row-once", once, [`crash ${pick(["1", "2", "3"])}`]);
 session("count-each-row-once", once, ["files", "run", `query ${metric}`]);
+const spread = [["10:00:05", host, "10"], ["10:00:35", host, "70"], ["10:03:05", host, "20"], ["10:04:59", host, "30"], ["10:05:00", host, "40"], ["10:14:05", host, "50"], ["10:07:05", other, "60"]];
+const wide = box("wide", { "a.csv": csv(spread.map(([time, h, x]) => row(at(time), h, metric, x))) });
+session("bigger-windows", wide, ["run", `query ${metric} ${pick(["5m", "10m", "15m"])}`, `query ${metric} ${host} 60m`, `query ${metric} 0m`]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
