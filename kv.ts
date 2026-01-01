@@ -18,10 +18,15 @@ const HELP = [
 const at = process.argv.indexOf("--file");
 const FILE = at > 0 && process.argv[at + 1] ? process.argv[at + 1] : "data.log";
 
+// The index: for each key, where its latest record starts in the log and how long it is, in bytes.
+const index = new Map<string, { start: number; size: number }>();
+let end = 0; // the log's length in bytes: where the next record goes
+
 // Write records at the end of the log, one line each.
 function write(batch: string[][]): void {
   const lines = batch.map((record) => JSON.stringify(record) + "\n");
   fs.appendFileSync(FILE, lines.join(""));
+  batch.forEach((record, i) => note(record, Buffer.byteLength(lines[i])));
 }
 
 // Read the whole log from the start: the latest record of each key says what it holds now.
@@ -35,6 +40,23 @@ function scan(): Map<string, string> {
     else now.delete(key);
   }
   return now;
+}
+
+// Read the log once, at start, and note where each key's latest record is.
+function load(): void {
+  if (!fs.existsSync(FILE)) return;
+  const log = fs.readFileSync(FILE);
+  while (end < log.length) {
+    const stop = log.indexOf("\n", end) + 1 || log.length;
+    note(JSON.parse(log.toString("utf8", end, stop)), stop - end);
+  }
+}
+
+// Note one record that was just read or written, and the bytes it takes.
+function note(record: string[], size: number): void {
+  if (record[0] === "set") index.set(record[1], { start: end, size });
+  else index.delete(record[1]);
+  end += size;
 }
 
 // The prompt kv> shows only when you type at a terminal, not when another program sends the commands.
@@ -57,12 +79,12 @@ function run(words: string[]): string {
   }
   if (name === "del") {
     if (!key) return "usage: del <key>";
-    if (!scan().has(key)) return "(not found)";
+    if (!index.has(key)) return "(not found)";
     write([["del", key]]);
     return "deleted";
   }
   if (name === "keys") {
-    const all = [...scan().keys()].sort();
+    const all = [...index.keys()].sort();
     return all.length ? all.join("\n") : "(no keys)";
   }
   if (name === "fill") {
@@ -77,7 +99,8 @@ function run(words: string[]): string {
   return `unknown command: ${name}. Type help for the list.`;
 }
 
-console.log("kv: ready. Type help for the commands.");
+load();
+console.log(`kv: ready, keys ${index.size}. Type help for the commands.`);
 ask();
 const input = createInterface({ input: process.stdin });
 input.on("line", (line) => {

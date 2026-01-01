@@ -63,6 +63,9 @@ logFrom("write-it-down", before);
 session("read-it-back", [`get ${key}`, "keys"]);
 const many = pick([3, 4, 5]);
 session("fill-it-up", [`fill ${many}`, `get key${many}`, `get key${many + 1}`, `fill ${pick(["0", "lots", "2000000"])}`]);
+const greeting = pick(["hello", "greeting", "word"]);
+session("an-index", [`set ${greeting} ${pick(["привіт", "こんにちは", "olá"])}`, `set after ${pick(["one", "two"])}`, "del after"]);
+session("an-index", ["del after"]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
