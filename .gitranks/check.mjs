@@ -61,6 +61,8 @@ const word = pick(["sky", "tea", "song"]);
 session("write-it-down", [`set ${word} ${pick(["grey", "green", "loud"])}`, `set ${word} ${pick(["blue", "black", "soft"])}`, `del ${word}`]);
 logFrom("write-it-down", before);
 session("read-it-back", [`get ${key}`, "keys"]);
+const many = pick([3, 4, 5]);
+session("fill-it-up", [`fill ${many}`, `get key${many}`, `get key${many + 1}`, `fill ${pick(["0", "lots", "2000000"])}`]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

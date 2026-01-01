@@ -9,6 +9,7 @@ const HELP = [
   "get <key>             say the value of the key",
   "del <key>             delete the key",
   "keys                  list every key",
+  "fill <count>          set key1, key2 and on, up to the count",
   "help                  this list",
   "exit                  stop kv",
 ];
@@ -63,6 +64,14 @@ function run(words: string[]): string {
   if (name === "keys") {
     const all = [...scan().keys()].sort();
     return all.length ? all.join("\n") : "(no keys)";
+  }
+  if (name === "fill") {
+    const count = /^[0-9]+$/.test(key ?? "") ? Number(key) : 0;
+    if (count < 1 || count > 1000000) return "usage: fill <count>, a whole number from 1 to 1000000";
+    const batch: string[][] = [];
+    for (let i = 1; i <= count; i++) batch.push(["set", `key${i}`, `value ${i}`]);
+    write(batch);
+    return `OK, set key1 to key${count}`;
   }
   if (name === "help") return HELP.join("\n");
   return `unknown command: ${name}. Type help for the list.`;
