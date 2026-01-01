@@ -1,6 +1,7 @@
 # pipe: a small data pipeline, written from nothing, with no library.
 # It reads the CSV files in its inbox, cleans their rows, counts them minute by minute and answers questions.
 # Start it with: python pipe.py
+from datetime import datetime, timezone
 import os
 import re
 import sys
@@ -52,6 +53,17 @@ def some(lines, none):
     return "\n".join(lines[:10] + ([f"and {len(lines) - 10} more"] if len(lines) > 10 else []))
 
 
+# A time such as 2026-11-27T10:00:05Z in seconds since 1970, or None when it is not a real time from 2000 to 2099.
+def seconds(text):
+    m = re.fullmatch(r"(20[0-9]{2})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})Z", text)
+    if not m:
+        return None
+    try:
+        return int(datetime(*map(int, m.groups()), tzinfo=timezone.utc).timestamp())
+    except ValueError:  # not a real time, such as 31 November or 24:00
+        return None
+
+
 # A number with at most two decimals, such as 42 or 42.5, in hundredths: 4200, 4250. None for anything else.
 def hundredths(text):
     if not re.fullmatch(r"[0-9]{1,9}(\.[0-9]{1,2})?", text):
@@ -64,13 +76,15 @@ def hundredths(text):
 def problem(fields):
     if len(fields) != 4:
         return "not 4 fields"
+    if seconds(fields[0]) is None:
+        return "bad time"
     return "bad value" if hundredths(fields[3]) is None else None
 
 
 # Read one file's lines and keep their rows.
 def load(name):
     every = lines(name)
-    kept = len(rows)
+    kept, dropped = len(rows), len(bad)
     for i in range(len(every)):
         fields = split(every[i])
         if not fields:
@@ -80,7 +94,7 @@ def load(name):
             bad.append(f"{name} line {i + 1}: {why}: {every[i].strip(BLANKS)}")
         else:
             rows.append(fields)
-    return f"{name}: lines {len(every)}, rows {len(rows) - kept}"
+    return f"{name}: lines {len(every)}, kept {len(rows) - kept}, dropped {len(bad) - dropped}"
 
 
 def run():
@@ -89,7 +103,7 @@ def run():
     bad.clear()
     for name in names:
         print(load(name))
-    return f"run: files {len(names)}, rows {len(rows)}"
+    return f"run: files {len(names)}, kept {len(rows)}, dropped {len(bad)}"
 
 
 # Do one command, its name and then its words, and give back the answer.

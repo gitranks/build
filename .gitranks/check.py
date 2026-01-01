@@ -129,6 +129,14 @@ fields = pick(["web-1,cpu", "only one field", f"{host},{metric},1,2"])
 value = pick(["n/a", "-3", "12.345", "1e3", ""])
 checked = [row(at("10:00:05"), host, metric, v()), "", f"{at('10:00:15')},{fields}", row(at("10:00:25"), host, metric, value), row(at("10:00:35"), host, metric, pick(["0.5", "100", "3.10"]))]
 session("check-each-row", box("check", {"a.csv": csv(checked)}), ["bad", "run", "bad"])
+times = [
+    pick(["2026-02-30T10:00:00Z", "2026-04-31T10:00:00Z", "2025-02-29T10:00:00Z"]),
+    pick(["2026-11-27T10:60:00Z", "2026-11-27T10:00:60Z"]),
+    pick(["1999-12-31T23:59:59Z", "2100-01-01T00:00:00Z", "1970-01-01T00:00:00Z"]),
+    pick(["2026-11-27T10:00:05", "27/11/2026 10:00:05", "1764237605"]),
+    "2028-02-29T10:00:00Z",
+]
+session("check-the-times", box("times", {"a.csv": csv([row(t, host, metric, v()) for t in times])}), ["run", "bad"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
