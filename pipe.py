@@ -12,6 +12,7 @@ sys.stdout.reconfigure(encoding="utf-8", newline="\n")
 HELP = [
     "files                         list the CSV files in the inbox folder",
     "run                           read every file in the inbox",
+    "rows                          show the rows the last run kept, 10 at most",
     "help                          this list",
     "exit                          stop pipe",
 ]
@@ -33,9 +34,19 @@ def lines(name):
         return file.read().split("\n")[:-1]
 
 
-# The fields of a line: the pieces of text between its commas.
+# The fields of a line, or None for a line with no row in it: a blank line, a # comment or the header.
 def split(line):
-    return line.strip(BLANKS).split(",")
+    text = line.strip(BLANKS)
+    if not text or text.startswith("#") or text.lower().startswith("time,"):
+        return None
+    return text.split(",")
+
+
+# At most 10 lines of a list, and how many more there are.
+def some(lines, none):
+    if not lines:
+        return none
+    return "\n".join(lines[:10] + ([f"and {len(lines) - 10} more"] if len(lines) > 10 else []))
 
 
 # Read one file's lines and keep their rows.
@@ -44,6 +55,8 @@ def load(name):
     kept = len(rows)
     for i in range(len(every)):
         fields = split(every[i])
+        if not fields:
+            continue
         rows.append(fields)
     return f"{name}: lines {len(every)}, rows {len(rows) - kept}"
 
@@ -66,6 +79,8 @@ def command(words):
         return "\n".join(f"{name}: lines {len(lines(name))}" for name in names)
     if name == "run":
         return run()
+    if name == "rows":
+        return some([" | ".join(fields) for fields in rows], "(no rows)")
     if name == "help":
         return "\n".join(HELP)
     return f"unknown command: {name}. Type help for the list."

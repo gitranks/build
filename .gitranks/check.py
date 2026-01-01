@@ -123,6 +123,8 @@ def v():
 
 first = csv([f"# {metric} of {host}", "time,host,metric,value", row(at("10:00:05"), host, metric, v()), "", row(at("10:00:35"), host, metric, v())], "\r\n")
 session("read-the-rows", box("rows", {"a.csv": first, "b.csv": csv([row(at("10:01:05"), other, metric, v())])}), ["run", "run"])
+shown = csv(["TIME,HOST,METRIC,VALUE", row(at("10:02:05"), host, metric, v()) + ", "])
+session("show-the-rows", box("show", {"a.csv": first + shown}), ["rows", "run", "rows"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
