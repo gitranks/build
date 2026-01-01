@@ -20,6 +20,7 @@ HELP = [
     "loss                  how surprised lm is by the text: lower is better",
     "shapes                the size of each table of numbers in the model",
     "softmax <numbers>     turn scores into chances that add up to 1",
+    "next <text>           the model's guess for the character after the text",
     "help                  this list",
     "exit                  stop lm",
 ]
@@ -141,6 +142,14 @@ model = {
     "out": matrix(D, V, 0.5),  # from those numbers to a score for each character
 }
 
+# A row of numbers times a table: one number for each column of the table.
+def times(row, m):
+    out = [0.0] * len(m[0])
+    for i in range(len(row)):
+        for j in range(len(out)):
+            out[j] += row[i] * m[i][j]
+    return out
+
 # Scores to chances: each becomes positive, and together they add up to 1.
 def softmax(scores):
     top = max(scores)
@@ -149,6 +158,12 @@ def softmax(scores):
     for x in e:
         total += x
     return [x / total for x in e]
+
+# Run the model over a window of characters: after each one, a score for every character that may come next.
+def forward(x):
+    z = [model["emb"][n] for n in x]
+    logits = [times(row, model["out"]) for row in z]
+    return {"x": x, "z": z, "logits": logits, "p": [softmax(row) for row in logits]}
 
 # Go on from the start, one character at a time, each picked at random by how often it came next.
 LENGTH = 60
@@ -228,6 +243,13 @@ def run(words):
         if not rest or len(rest) > 12 or not all(is_decimal(w) for w in rest):
             return "usage: softmax <numbers>, such as softmax 2 1 0.5"
         return " ".join(fmt(p) for p in softmax([float(w) for w in rest]))
+    if name == "next":
+        start = clean(arg)
+        if not start or any(ch not in ALPHABET for ch in start):
+            return "usage: next <text>, with characters of the alphabet"
+        p = forward(encode(start)[-T:])["p"][-1]
+        order = sorted(([c, b] for b, c in enumerate(p)), key=lambda each: -each[0])
+        return f'after "{start}": ' + ", ".join(f"{show(b)} {fmt(c)}" for c, b in order[:5])
     if name == "help":
         return "\n".join(HELP)
     return f"unknown command: {name}. Type help for the list."

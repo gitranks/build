@@ -91,6 +91,7 @@ groups.append(("pick-at-random", [f"seed {seed}", f"write {start}", f"write {sta
 groups.append(("measure-the-loss", ["loss"]))
 groups.append(("numbers-for-characters", ["shapes"]))
 groups.append(("scores-to-chances", ["softmax " + pick(["1 2 3", "2 1 0.5", "0 0 0 0"]), "softmax " + pick(["1000 999", "500 501 502", "9999 0"]), "softmax 1 e"]))
+groups.append(("a-first-guess", [f"next {start}", "next " + pick(["at", "o", "the m"]), "next zebra"]))
 groups.append(("read-commands", ["help", "", pick(["fly", "hello", "learn"]) + " away", "exit", "help"]))
 session(groups)
 shutil.rmtree(folder, ignore_errors=True)
