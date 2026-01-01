@@ -164,6 +164,10 @@ said.append(("save-the-store", "store.json.new is there: " + ("yes" if os.path.e
 many = pick([5, 8, 9])
 batched = [row(at(f"10:00:{i * 5:02d}"), host, metric, str(i + 1)) for i in range(many)]
 session("write-in-batches", box("batch", {"a.csv": csv(batched), "b.csv": csv(["# nothing here yet"])}), ["run", "run"])
+six = csv([row(at(f"10:00:{s}"), host, metric, s) for s in ["05", "15", "25", "35", "45", "55"]])
+crashed = box("crash", {"a.csv": six})
+session("crash-in-the-middle", crashed, [pick(["crash 0", "crash x", "crash"]), "crash 1"])
+session("crash-in-the-middle", crashed, ["run", f"query {metric}"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the

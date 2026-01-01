@@ -17,6 +17,7 @@ sys.stdout.reconfigure(encoding="utf-8", newline="\n")
 HELP = [
     "files                         list the CSV files in the inbox folder, and how many lines of each are loaded",
     "run                           load the new lines of every file in the inbox",
+    "crash <flushes>               run, but stop after that many flushes, as a crash would",
     "rows                          show the rows the last run kept, 10 at most",
     "bad                           show the lines the last run dropped and why, 10 at most",
     "query <metric> [host]         a metric's numbers, minute by minute",
@@ -57,6 +58,7 @@ seen = set()  # the time, host and metric of each row it kept
 # Clean rows wait in the buffer. A flush adds them to their windows and saves the store, in one write.
 buffer = []
 flushes = 0
+crash_at = 0  # crash stops pipe right after this flush
 
 
 # The names of the CSV files in the inbox folder, in order.
@@ -175,6 +177,9 @@ def flush():
     buffer = []
     save()
     flushes += 1
+    if flushes == crash_at:
+        sys.stdout.flush()
+        os._exit(3)
 
 
 # Read one file's lines and keep their rows.
@@ -202,13 +207,14 @@ def load(name):
     return f"{name}: lines {start + 1} to {len(every)}, kept {len(rows) - kept}, dropped {len(bad) - dropped}"
 
 
-def run():
-    global flushes
+def run(crash):
+    global flushes, crash_at
     names = inbox()
     rows.clear()
     bad.clear()
     seen.clear()
     flushes = 0
+    crash_at = crash
     for name in names:
         print(load(name))
     return f"run: files {len(names)}, kept {len(rows)}, dropped {len(bad)}, windows {len(store['windows'])}, flushes {flushes}"
@@ -216,14 +222,16 @@ def run():
 
 # Do one command, its name and then its words, and give back the answer.
 def command(words):
-    name = words[0]
+    name, arg = words[0], words[1] if len(words) > 1 else ""
     if name == "files":
         names = inbox()
         if not names:
             return "(no CSV files in the inbox folder)"
         return "\n".join(f"{name}: lines {len(lines(name))}, loaded {store['files'].get(name, 0)}" for name in names)
     if name == "run":
-        return run()
+        return run(0)
+    if name == "crash":
+        return run(int(arg)) if re.fullmatch(r"[1-9][0-9]{0,5}", arg) else "usage: crash <flushes>, a whole number"
     if name == "rows":
         return some([f"{when(r.time)} {r.host} {r.metric} {number(r.value)}" for r in rows], "(no rows)")
     if name == "bad":
