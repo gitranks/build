@@ -203,7 +203,7 @@ session("alert-on-a-limit", hot, [f"alert {metric}", f"alert {metric} " + pick([
 with open(os.path.join(hot, "inbox", "b.csv"), "w", encoding="utf-8", newline="") as out:
     out.write(csv([row(at(t), h, metric, x) for t, h, x in [("10:01:35", host, "99.5"), ("10:02:05", other, "100")]]))
 session("alert-on-a-limit", hot, ["run", f"alert {metric} 50"])
-tests("test-the-cleaning")
+tests("test-a-crash")
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the

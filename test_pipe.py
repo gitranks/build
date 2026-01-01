@@ -27,3 +27,15 @@ class PipeTest(unittest.TestCase):
             "a.csv line 3: bad time: 2026-11-27T10:00:65Z,web-1,cpu,41",
             "a.csv line 4: not 4 fields: web-1,cpu,42",
         ])
+
+    def test_moves_a_time_to_utc_before_it_counts_the_minute(self):
+        file = "2026-11-27 12:00:05+02:00,web-1,cpu,40\n2026-11-27T10:00:35Z,web-1,cpu,45\n"
+        self.assertEqual(pipe({"a.csv": file}, ["run", "query cpu"])[-1], "2026-11-27 10:00 web-1 count 2 avg 42.5 min 40 max 45")
+
+    def test_a_run_after_a_crash_counts_each_row_once(self):
+        file = "".join(f"2026-11-27T10:00:{s}Z,web-1,cpu,{s}\n" for s in ["05", "15", "25", "35", "45", "55"])
+        self.assertEqual(pipe({"a.csv": file}, ["crash 1"], ["run", "query cpu"]), [
+            "a.csv: lines 5 to 6, kept 2, dropped 0",
+            "run: files 1, kept 2, dropped 0, windows 1, flushes 1",
+            "2026-11-27 10:00 web-1 count 6 avg 30 min 5 max 55",
+        ])
