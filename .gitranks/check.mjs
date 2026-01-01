@@ -256,6 +256,18 @@ await session("keep-alive", async (port) => {
   said.push(["keep-alive", link.closed ? "then the server closed the connection" : "the server did not close the connection within 3 seconds"]);
   link.socket.destroy();
 });
+await session("a-bad-request", async (port) => {
+  const brief = { brief: true };
+  const line = pick(["HELLO", "GET /hello", "GET /hello HTTP/1.1 please"]);
+  await ask(port, "a-bad-request", [`${line}\r\nHost: localhost\r\n\r\n`], brief);
+  const header = pick(["Name Ada", "no colon here", ": blue"]);
+  await ask(port, "a-bad-request", [get("/hello").replace("Host: localhost", `Host: localhost\r\n${header}`)], { ...brief, label: `GET /hello with the header line "${header}"` });
+  const size = pick(["ten", "-5", "1e3"]);
+  await ask(port, "a-bad-request", [get("/notes", "POST").replace("Host: localhost", `Host: localhost\r\nContent-Length: ${size}`)], { ...brief, label: `POST /notes with Content-Length: ${size}` });
+  const big = pick(["5000000", "1000001", "99999999"]);
+  await ask(port, "a-bad-request", [get("/notes", "POST").replace("Host: localhost", `Host: localhost\r\nContent-Length: ${big}`)], { ...brief, label: `POST /notes with Content-Length: ${big}` });
+  await ask(port, "a-bad-request", [get(`/hello?name=${pick(["again", "still+here"])}`)], brief);
+});
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

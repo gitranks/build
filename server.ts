@@ -22,8 +22,10 @@ const REASONS: Record<number, string> = {
   200: "OK",
   301: "Moved Permanently",
   303: "See Other",
+  400: "Bad Request",
   404: "Not Found",
   405: "Method Not Allowed",
+  413: "Content Too Large",
 };
 
 // A request, as the browser sent it. Its first line is three words, such as: GET /hello HTTP/1.1
@@ -127,15 +129,21 @@ function handle(request: Request): Answer | Promise<Answer> {
 }
 
 // Read a request's head: its first line, then one header a line.
-function parse(head: string): Request {
+// A request it can not read gets back the answer to send instead: 400 Bad Request, or 413 for a body too big.
+function parse(head: string): Request | Answer {
   const [first, ...lines] = head.split("\r\n");
-  const [method, target, version] = first.split(" ");
+  const [method, target, version, ...more] = first.split(" ");
+  if (!target || !version?.startsWith("HTTP/") || more.length) return text("bad request: the first line is not METHOD TARGET VERSION", 400);
   // A header line is a name, a colon and a value. A name has no case: Host and host are the same.
   const headers = new Map<string, string>();
   for (const line of lines) {
     const colon = line.indexOf(":");
+    if (colon < 1) return text(`bad request: a header line has no name and colon: ${line}`, 400);
     headers.set(line.slice(0, colon).trim().toLowerCase(), line.slice(colon + 1).trim());
   }
+  const size = headers.get("content-length") ?? "0";
+  if (!/^[0-9]+$/.test(size)) return text("bad request: Content-Length is not a whole number", 400);
+  if (Number(size) > 1000000) return text("bad request: the body is over 1 MB", 413);
   return { method, target, version, headers, body: Buffer.alloc(0) };
 }
 
@@ -172,6 +180,13 @@ function serve(socket: net.Socket): void {
     bytes = Buffer.concat([bytes, piece]);
     for (let end = bytes.indexOf("\r\n\r\n"); end >= 0; end = bytes.indexOf("\r\n\r\n")) {
       const request = parse(bytes.subarray(0, end).toString("latin1"));
+      if ("status" in request) {
+        // What comes after a request it can not read can not be read either: answer, then close.
+        console.log(`web: ${request.body}`);
+        answered = answered.then(() => send(socket, request, false));
+        socket.removeAllListeners("data");
+        return;
+      }
       const size = Math.max(Number(request.headers.get("content-length")) || 0, 0);
       if (bytes.length < end + 4 + size) return; // the body is not all here yet
       request.body = bytes.subarray(end + 4, end + 4 + size);
