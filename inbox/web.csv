@@ -1,0 +1,8 @@
+# The CPU of two web servers, in percent
+time,host,metric,value
+2026-11-27T10:00:05Z,web-1,cpu,41
+2026-11-27T10:00:35Z,web-1,cpu,47.5
+2026-11-27T10:01:05Z,web-1,cpu,93
+2026-11-27T10:01:35Z,web-1,cpu,97.25
+2026-11-27T10:00:10Z,web-2,cpu,38
+2026-11-27T10:00:40Z,web-2,cpu,n/a

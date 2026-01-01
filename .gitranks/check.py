@@ -95,6 +95,10 @@ def session(about, path, commands):
 
 session("what-you-will-build", box("start", {}), [])
 session("read-commands", box("commands", {}), ["help", "", pick(["fly", "hello", "remember"]) + " away", "exit", "help"])
+session("list-the-inbox", box("no-inbox", None), ["files"])
+name = pick(["web", "api", "db"])
+listed = {f"{name}.csv": "one\ntwo\nthree\n", "2026-11-27.csv": "first\r\nsecond, with no line end yet", "notes.txt": "not a CSV file\n"}
+session("list-the-inbox", box("listed", listed), ["files"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
