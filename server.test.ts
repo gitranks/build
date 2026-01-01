@@ -25,3 +25,15 @@ test("create a task", async () => {
   assert.equal(status, 201);
   assert.deepEqual(body, { id: 1, title: "Buy milk", done: false });
 });
+
+test("refuse a task with no title", async () => {
+  const { status, body } = await call("POST", "/api/tasks", { done: true });
+  assert.equal(status, 400);
+  assert.equal(body.field, "title");
+});
+
+test("answer 404 for a task that is not there", async () => {
+  const { status, body } = await call("GET", "/api/tasks/7");
+  assert.equal(status, 404);
+  assert.equal(body.error, "no task with id 7");
+});
