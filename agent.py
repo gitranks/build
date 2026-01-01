@@ -52,6 +52,11 @@ def text(description):
 TOOLS = [
     tool("list_files", "List every file in the folder."),
     tool("read_file", "Read a file.", {"path": text("the file's path")}),
+    tool("edit_file", "Change a file: old_text, found once in it, becomes new_text.", {
+        "path": text("the file's path"),
+        "old_text": text("the text to change"),
+        "new_text": text("the text to put in its place"),
+    }),
 ]
 
 
@@ -112,6 +117,8 @@ def use(call):
         return list_files()
     if name == "read_file":
         return read(args.get("path"))
+    if name == "edit_file":
+        return edit(args.get("path"), args.get("old_text"), args.get("new_text"))
     return f"error: there is no tool named {name}"
 
 
@@ -148,6 +155,29 @@ def read(given):
         return f"error: there is no file {given}"
     with open(file, encoding="utf-8", errors="replace", newline="") as f:
         return f.read()
+
+
+# Change a file: old_text, found once in it, becomes new_text.
+def edit(given, old, now):
+    file = inside(given)
+    if not file:
+        return outside(given)
+    if not isinstance(old, str) or not isinstance(now, str):
+        return "error: give old_text and new_text"
+    if not old:
+        return "error: old_text is empty: give the text to change"
+    if not os.path.isfile(file):
+        return f"error: there is no file {given}"
+    with open(file, encoding="utf-8", errors="replace", newline="") as f:
+        was = f.read()
+    found = was.count(old)
+    if not found:
+        return f"error: old_text is not in {given}"
+    if found > 1:
+        return f"error: old_text is in {given} more than once: give more of the text around it"
+    with open(file, "w", encoding="utf-8", newline="") as f:
+        f.write(was.replace(old, now, 1))
+    return f"changed {given}"
 
 
 # Read your lines one at a time. The prompt shows only when you type at a terminal, not when a program sends them.

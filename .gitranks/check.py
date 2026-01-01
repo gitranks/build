@@ -208,6 +208,10 @@ with open(os.path.join(top, "secret.txt"), "wb") as f:
 away = pick(["/secret.txt", "src/../../secret.txt"])
 in_git = [call("read_file", {"path": away}), heard, call("read_file", {"path": pick([".git/config", ".GIT/hooks/pre-commit"])}), heard]
 session("stay-in-the-folder", ["read the secret", "read it another way", "read git's settings"], [call("read_file", {"path": "../secret.txt"}), heard, *in_git])
+edits = [call("edit_file", {"path": "notes.txt", "old_text": word, "new_text": changed}), call("read_file", {"path": "notes.txt"}), heard]
+edits += [call("edit_file", {"path": "notes.txt", "old_text": pick(["nothing like this", "zebra"]), "new_text": "x"}), heard]
+edits += [call("edit_file", {"path": "../secret.txt", "old_text": "the", "new_text": "a"}), heard]
+session("edit-a-file", [f"change {word} to {changed}", "change something that is not there", "change the secret"], edits)
 server.shutdown()
 shutil.rmtree(top, ignore_errors=True)
 
