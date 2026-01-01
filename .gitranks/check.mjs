@@ -56,6 +56,7 @@ function session(about, dir, commands) {
 }
 
 session("what-you-will-build", box("start", {}), []);
+session("read-commands", box("commands", {}), ["help", "", pick(["fly", "hello", "remember"]) + " away", "exit", "help"]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
