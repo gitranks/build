@@ -26,11 +26,12 @@ function randomBelow(n: number): number {
 // The tools this server offers. The agent reads each description to decide when to use it.
 const ROLL_DICE = {
   name: "roll_dice",
-  description: "Roll a die and say the number. Use it whenever the person asks for a dice roll.",
+  description: "Roll one or more dice and say each number and the total. Use it whenever the person asks for a dice roll.",
   inputSchema: {
     type: "object",
     properties: {
-      sides: { type: "integer", minimum: 2, maximum: 100, description: "How many sides the die has. 6 if not given." },
+      sides: { type: "integer", minimum: 2, maximum: 100, description: "How many sides each die has. 6 if not given." },
+      count: { type: "integer", minimum: 1, maximum: 10, description: "How many dice to roll. 1 if not given." },
     },
     additionalProperties: false,
   },
@@ -49,10 +50,16 @@ function toolError(words: string): object {
 
 function rollDice(args: any): object {
   const sides = args.sides ?? 6;
+  const count = args.count ?? 1;
   if (!Number.isInteger(sides) || sides < 2 || sides > 100) {
     return toolError(`sides must be a whole number from 2 to 100, not ${JSON.stringify(args.sides)}.`);
   }
-  return text(`You rolled ${randomBelow(sides) + 1}.`);
+  if (!Number.isInteger(count) || count < 1 || count > 10) {
+    return toolError(`count must be a whole number from 1 to 10, not ${JSON.stringify(args.count)}.`);
+  }
+  const rolls = Array.from({ length: count }, () => randomBelow(sides) + 1);
+  const total = rolls.reduce((sum, roll) => sum + roll, 0);
+  return text(count === 1 ? `You rolled ${total}.` : `You rolled ${rolls.join(", ")}: ${total} in total.`);
 }
 
 const RUN = new Map<string, (args: any) => object>([["roll_dice", rollDice]]);
