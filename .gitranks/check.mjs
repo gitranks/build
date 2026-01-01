@@ -103,6 +103,11 @@ const minute = [row(at("10:00:05"), host, metric, "10"), row(at("10:00:59"), hos
 session("count-by-minute", box("minute", { "a.csv": csv(minute) }), ["run", "run"]);
 const asked = [row(at("10:00:05"), host, metric, "0.01"), row(at("10:00:35"), host, metric, "0.04"), row(at("10:01:05"), host, metric, pick(["1", "2.5", "99.99"])), row(at("09:59:59"), other, metric, "50"), row(at("10:00:00"), other, metric, "70")];
 session("answer-a-query", box("query", { "a.csv": csv(asked) }), ["run", `query ${metric}`, `query ${metric} ${other}`, "query disk", "query"]);
+const keep = box("keep", { "a.csv": csv([row(at("10:00:05"), host, metric, "10"), row(at("10:00:15"), host, metric, "20")]) + row(at("10:00:25"), host, metric, "3") });
+session("save-the-store", keep, ["run"]);
+fs.appendFileSync(join(keep, "inbox", "a.csv"), "0\n" + csv([row(at("10:01:05"), host, metric, "40")]));
+session("save-the-store", keep, ["files", "run", `query ${metric}`]);
+said.push(["save-the-store", `store.json.new is there: ${fs.existsSync(join(keep, "store.json.new")) ? "yes" : "no"}`]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

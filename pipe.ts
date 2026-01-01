@@ -6,8 +6,8 @@ import { createInterface } from "node:readline";
 
 // The commands pipe knows, as help shows them.
 const HELP = [
-  "files                         list the CSV files in the inbox folder",
-  "run                           read every file in the inbox",
+  "files                         list the CSV files in the inbox folder, and how many lines of each are loaded",
+  "run                           load the new lines of every file in the inbox",
   "rows                          show the rows the last run kept, 10 at most",
   "bad                           show the lines the last run dropped and why, 10 at most",
   "query <metric> [host]         a metric's numbers, minute by minute",
@@ -24,7 +24,17 @@ type Window = { count: number; sum: number; min: number; max: number };
 // The store: each window by its key, which is the metric, the host and the minute's first second.
 const store = {
   windows: {} as Record<string, Window>,
+  files: {} as Record<string, number>, // how many lines of each file are loaded
 };
+
+// The store is kept in store.json, so it is still there when pipe starts again.
+if (fs.existsSync("store.json")) Object.assign(store, JSON.parse(fs.readFileSync("store.json", "utf8")));
+
+// Save the store: write a new file, then put it in the old one's place. A crash leaves one whole file or the other.
+function save(): void {
+  fs.writeFileSync("store.json.new", JSON.stringify(store));
+  fs.renameSync("store.json.new", "store.json");
+}
 
 let rows: Row[] = []; // the rows the last run kept
 let bad: string[] = []; // the lines it dropped, and why
@@ -125,8 +135,10 @@ function query(metric: string, host?: string): string {
 // Read one file's lines and keep their rows.
 function load(name: string): string {
   const all = lines(name);
+  const from = store.files[name] ?? 0; // the lines loaded before are skipped
+  if (from >= all.length) return `${name}: no new lines`;
   const [kept, dropped] = [rows.length, bad.length];
-  for (let i = 0; i < all.length; i++) {
+  for (let i = from; i < all.length; i++) {
     const fields = split(all[i]);
     if (!fields) continue;
     const row = clean(fields);
@@ -136,7 +148,9 @@ function load(name: string): string {
       add(row);
     }
   }
-  return `${name}: lines ${all.length}, kept ${rows.length - kept}, dropped ${bad.length - dropped}`;
+  store.files[name] = all.length;
+  save();
+  return `${name}: lines ${from + 1} to ${all.length}, kept ${rows.length - kept}, dropped ${bad.length - dropped}`;
 }
 
 function run(): string {
@@ -144,7 +158,6 @@ function run(): string {
   rows = [];
   bad = [];
   seen = new Set();
-  store.windows = {}; // each run counts every file again
   for (const name of names) console.log(load(name));
   return `run: files ${names.length}, kept ${rows.length}, dropped ${bad.length}, windows ${Object.keys(store.windows).length}`;
 }
@@ -160,7 +173,7 @@ function command(words: string[]): string {
   if (name === "files") {
     const names = inbox();
     if (!names.length) return "(no CSV files in the inbox folder)";
-    return names.map((name) => `${name}: lines ${lines(name).length}`).join("\n");
+    return names.map((name) => `${name}: lines ${lines(name).length}, loaded ${store.files[name] ?? 0}`).join("\n");
   }
   if (name === "run") return run();
   if (name === "rows") return some(rows.map((r) => `${when(r.time)} ${r.host} ${r.metric} ${number(r.value)}`), "(no rows)");
