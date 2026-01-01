@@ -45,6 +45,7 @@ function session(groups) {
 }
 
 const groups = [["what-you-will-build", []]];
+groups.push(["read-commands", ["help", "", pick(["fly", "hello", "learn"]) + " away", "exit", "help"]]);
 session(groups);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
