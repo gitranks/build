@@ -32,6 +32,8 @@ lines += [call(2, "initialize", {"protocolVersion": version, "capabilities": {},
 lines += [call("odd", pick(["initialize", "ping", "tools/list"]), pick(["oops", [1, 2], 7]))]
 lines += [call(3, "ping")]
 lines += [call(4, "tools/list")]
+lines += [call(5, "tools/call", {"name": "roll_dice", "arguments": {"sides": pick([6, 8, 12, 20, None])}})]
+lines += [call(6, "tools/call", {"name": pick(["fly", "roll_die", "dice"]), "arguments": {}})]
 
 
 def show(name, file, args, sent):
