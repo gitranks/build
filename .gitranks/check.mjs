@@ -40,6 +40,7 @@ function session(about, commands) {
 }
 
 session("what-you-will-build", []);
+session("read-commands", ["help", "", pick(["fly", "hello", "remember"]) + " away", "exit", "help"]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
