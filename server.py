@@ -17,6 +17,27 @@ def log(text: str) -> None:
     print(f"my-server: {text}", file=sys.stderr)
 
 
+# JSON has one kind of number, so 6.0 is the whole number 6, as JavaScript reads it.
+def number(text: str) -> int | float:
+    value = float(text)
+    return int(value) if value.is_integer() else value
+
+
+# The tools this server offers. The agent reads each description to decide when to use it.
+ROLL_DICE = {
+    "name": "roll_dice",
+    "description": "Roll a die and say the number. Use it whenever the person asks for a dice roll.",
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "sides": {"type": "integer", "minimum": 2, "maximum": 100, "description": "How many sides the die has. 6 if not given."},
+        },
+        "additionalProperties": False,
+    },
+}
+TOOLS = [ROLL_DICE]
+
+
 def fail(code: int, message: str) -> dict:
     return {"error": {"code": code, "message": message}}
 
@@ -32,12 +53,14 @@ def handle(msg: dict) -> dict:
         return {
             "result": {
                 "protocolVersion": asked if asked in VERSIONS else VERSIONS[0],
-                "capabilities": {},
+                "capabilities": {"tools": {}},
                 "serverInfo": {"name": "my-server", "version": "0.1.0"},
             }
         }
     if msg["method"] == "ping":
         return {"result": {}}
+    if msg["method"] == "tools/list":
+        return {"result": {"tools": TOOLS}}
     return fail(-32601, f"Method not found: {msg['method']}")
 
 
@@ -56,7 +79,7 @@ for line in sys.stdin:
     if not line.strip():
         continue
     try:
-        msg = json.loads(line)
+        msg = json.loads(line, parse_float=number)
     except ValueError:
         log("that line is not JSON")
         continue

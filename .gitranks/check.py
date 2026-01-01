@@ -31,6 +31,7 @@ version = pick(["2025-11-25", "2025-06-18", "2024-11-05"])
 lines += [call(2, "initialize", {"protocolVersion": version, "capabilities": {}, "clientInfo": {"name": "check", "version": "1"}})]
 lines += [call("odd", pick(["initialize", "ping", "tools/list"]), pick(["oops", [1, 2], 7]))]
 lines += [call(3, "ping")]
+lines += [call(4, "tools/list")]
 
 
 def show(name, file, args, sent):
