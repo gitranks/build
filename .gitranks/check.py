@@ -160,6 +160,7 @@ def session(about, lines, replies=(), url_given=None, model="stand-in"):
 
 
 session("what-you-will-build", [])
+session("read-messages", ["/help", "", pick(["hello", "hi there", "good morning"]), "/exit", "/help"])
 server.shutdown()
 shutil.rmtree(top, ignore_errors=True)
 
