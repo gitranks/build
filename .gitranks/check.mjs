@@ -101,6 +101,8 @@ const names = {
 session("names-times-and-duplicates", box("names", names), ["run", "rows", "bad"]);
 const minute = [row(at("10:00:05"), host, metric, "10"), row(at("10:00:59"), host, metric, "20"), row(at("10:01:00"), host, metric, "30"), row(at("10:00:30"), other, metric, "40")];
 session("count-by-minute", box("minute", { "a.csv": csv(minute) }), ["run", "run"]);
+const asked = [row(at("10:00:05"), host, metric, "0.01"), row(at("10:00:35"), host, metric, "0.04"), row(at("10:01:05"), host, metric, pick(["1", "2.5", "99.99"])), row(at("09:59:59"), other, metric, "50"), row(at("10:00:00"), other, metric, "70")];
+session("answer-a-query", box("query", { "a.csv": csv(asked) }), ["run", `query ${metric}`, `query ${metric} ${other}`, "query disk", "query"]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

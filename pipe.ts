@@ -10,6 +10,7 @@ const HELP = [
   "run                           read every file in the inbox",
   "rows                          show the rows the last run kept, 10 at most",
   "bad                           show the lines the last run dropped and why, 10 at most",
+  "query <metric> [host]         a metric's numbers, minute by minute",
   "help                          this list",
   "exit                          stop pipe",
 ];
@@ -106,6 +107,21 @@ function add(row: Row): void {
   w.max = Math.max(w.max, row.value);
 }
 
+// A window's average in hundredths, rounded half up with whole numbers only, so it is the same everywhere.
+const average = (w: Window) => Math.floor((2 * w.sum + w.count) / (2 * w.count));
+
+// A metric's windows, on one host or on every host, in order of time and then of host.
+function query(metric: string, host?: string): string {
+  const found: [number, string, Window][] = [];
+  for (const [key, w] of Object.entries(store.windows)) {
+    const [m, h, start] = key.split(" ");
+    if (m === metric && (!host || h === host)) found.push([Number(start), h, w]);
+  }
+  found.sort((a, b) => a[0] - b[0] || (a[1] < b[1] ? -1 : 1));
+  const shown = found.map(([start, h, w]) => `${when(start).slice(0, 16)} ${h} count ${w.count} avg ${number(average(w))} min ${number(w.min)} max ${number(w.max)}`);
+  return some(shown, `(no rows of ${metric})`);
+}
+
 // Read one file's lines and keep their rows.
 function load(name: string): string {
   const all = lines(name);
@@ -149,6 +165,7 @@ function command(words: string[]): string {
   if (name === "run") return run();
   if (name === "rows") return some(rows.map((r) => `${when(r.time)} ${r.host} ${r.metric} ${number(r.value)}`), "(no rows)");
   if (name === "bad") return some(bad, "(no bad lines)");
+  if (name === "query") return words[1] ? query(words[1], words[2]) : "usage: query <metric> [host]";
   if (name === "help") return HELP.join("\n");
   return `unknown command: ${name}. Type help for the list.`;
 }
