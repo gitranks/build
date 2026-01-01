@@ -108,6 +108,11 @@ session("jump-to-the-value", [f"get {greeting}", "get key2", f"set {greeting}2 "
 counter = pick(["visits", "score", "level"])
 session("count-the-waste", [f"set {counter} 1", f"set {counter} 2", f"set {counter} 3", "stats"])
 session("compact-the-log", ["compact", "stats", f"get {counter}"])
+saved = pick(["plan", "note", "todo"])
+cut = size()
+session("survive-a-crash", [f"set {saved} " + pick(["ship it", "buy milk", "call home"]), f"crash {saved}2 " + pick(["lost", "gone"])])
+log_from("survive-a-crash", cut)
+session("survive-a-crash", [f"get {saved}", f"get {saved}2", f"set {saved}2 back", f"get {saved}2"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the

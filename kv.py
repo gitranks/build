@@ -17,6 +17,7 @@ HELP = [
     "fill <count>          set key1, key2 and on, up to the count",
     "stats                 count the keys, the records and the bytes",
     "compact               keep only the latest record of each key",
+    "crash <key> <value>   set, but stop halfway, as a power cut would",
     "help                  this list",
     "exit                  stop kv",
 ]
@@ -35,6 +36,9 @@ def write(batch):
     lines = [(to_json(record) + "\n").encode() for record in batch]
     with open(FILE, "ab") as log:
         log.write(b"".join(lines))
+        # Wait until the disk has the lines, so OK means saved.
+        log.flush()
+        os.fsync(log.fileno())
     for record, line in zip(batch, lines):
         note(record, len(line))
 
@@ -50,7 +54,12 @@ def load():
     with open(FILE, "rb") as file:
         log = file.read()
     while end < len(log):
-        stop = log.find(b"\n", end) + 1 or len(log)
+        stop = log.find(b"\n", end) + 1
+        if stop == 0:
+            # A record with no line end was cut short by a crash. It was never saved, so it goes.
+            os.truncate(FILE, end)
+            print("kv: dropped a record cut short at the end of the log")
+            break
         note(json.loads(log[end:stop]), stop - end)
 
 
@@ -126,6 +135,14 @@ def run(words):
         return f"keys {len(index)}, records {records}, old records {records - len(index)}, bytes {end}"
     if name == "compact":
         return compact() if records else "the log is empty"
+    if name == "crash":
+        if not key or not value:
+            return "usage: crash <key> <value>"
+        line = to_json(["set", key, value]) + "\n"
+        with open(FILE, "ab") as log:
+            log.write(line[: len(line) // 2].encode())
+        sys.stdout.flush()
+        os._exit(3)
     if name == "help":
         return "\n".join(HELP)
     return f"unknown command: {name}. Type help for the list."
