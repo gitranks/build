@@ -37,3 +37,17 @@ test("answer 404 for a task that is not there", async () => {
   assert.equal(status, 404);
   assert.equal(body.error, "no task with id 7");
 });
+
+test("list the tasks", async () => {
+  await call("POST", "/api/tasks", { title: "Buy milk" });
+  await call("POST", "/api/tasks", { title: "Call Grace", done: true });
+  const { body } = await call("GET", "/api/tasks");
+  assert.deepEqual(body.map((task: { title: string }) => task.title), ["Buy milk", "Call Grace"]);
+});
+
+test("change a task then delete it", async () => {
+  await call("POST", "/api/tasks", { title: "Buy milk" });
+  assert.deepEqual((await call("PATCH", "/api/tasks/1", { done: true })).body, { id: 1, title: "Buy milk", done: true });
+  assert.equal((await call("DELETE", "/api/tasks/1")).status, 204);
+  assert.equal((await call("GET", "/api/tasks/1")).status, 404);
+});

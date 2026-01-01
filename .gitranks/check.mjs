@@ -186,7 +186,7 @@ async function tests(about) {
   for (const [name, result] of results.sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) said.push([about, `${result}: ${name}`]);
 }
 
-await tests("test-the-errors");
+await tests("test-change-and-delete");
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
