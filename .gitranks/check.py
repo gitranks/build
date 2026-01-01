@@ -99,6 +99,8 @@ session("if-and-while", [
     "if true { print 1",
 ])
 session("text-values", [f'"{pick(["hello", "mini", "Ada"])}"', f'"n = " + {a}', '"ab" == "a" + "b"', '"a" * 2', f'"{pick(["no end", "half"])}', f'let s = ""; let i = 0; while i < {b} {{ s = s + "*"; i = i + 1 }} s'])
+fn = pick(["hello", "greet", "say_hi"])
+session("functions", [f'fn {fn}() {{ print "hi from {fn}" }}', f"{fn}()", fn, f"{a}()", f"{fn}(); {fn}()"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the

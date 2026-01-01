@@ -32,8 +32,8 @@ def number(text):
 
 # Work out one operator on two values.
 def operate(op, a, b):
-    if op == "==":
-        return type(a) is type(b) and a == b  # in mini, 1 and true are not the same
+    if op == "==":  # in mini, 1 and true are not the same, and a function is the same only as itself
+        return type(a) is type(b) and (a is b if type(a) is Node else a == b)
     if op == "!=":
         return not operate("==", a, b)
     if op == "+" and (type(a) is str or type(b) is str):
@@ -63,6 +63,10 @@ def operate(op, a, b):
 
 # How mini writes a value: true and false in small letters.
 def show(value):
+    if value is None:
+        return "none"
+    if isinstance(value, Node):  # a function's value is its own node of the tree
+        return f"<fn {value.name}>"
     if type(value) is bool:
         return "true" if value else "false"
     return str(value)
@@ -82,7 +86,7 @@ SYMBOLS = [  # the symbols mini knows
     ";",
     "{", "}",
 ]
-WORDS = ["let", "true", "false", "print", "if", "else", "while"]  # mini's own words: they can not name a variable
+WORDS = ["let", "true", "false", "print", "if", "else", "while", "fn"]  # mini's own words: not names of variables
 
 
 # The tokenizer cuts the source into pieces: a run of spaces, a number, a name and more, or any other one
@@ -138,7 +142,7 @@ def parse(tokens):
                 raise MiniError("a { has no } to close it")
             node = statement()
             found.append(node)
-            if tokens[0].kind not in [";", end, "end"] and node.kind not in ["if", "while"]:  # these end in }
+            if tokens[0].kind not in [";", end, "end"] and node.kind not in ["if", "while", "fn"]:  # these end in }
                 raise MiniError(f"expected ; but found {tokens[0].text}")
     def block():
         expect("{")
@@ -160,6 +164,11 @@ def parse(tokens):
             return Node(kind="if", test=test, then=then, otherwise=otherwise)
         if accept("while"):
             return Node(kind="while", test=expression(), body=block())
+        if accept("fn"):
+            name = expect("name").text
+            expect("(")
+            expect(")")
+            return Node(kind="fn", name=name, body=block())
         return Node(kind="expr", value=expression())
     def binary(ops, operand):
         left = operand()
@@ -173,7 +182,14 @@ def parse(tokens):
     def factor():
         return binary(["*", "/", "%"], unary)
     def unary():
-        return Node(kind="negate", value=unary()) if accept("-") else primary()
+        return Node(kind="negate", value=unary()) if accept("-") else call()
+    # A value, then any number of calls of it: f() or f(1, 2).
+    def call():
+        node = primary()
+        while accept("("):
+            expect(")")
+            node = Node(kind="call", callee=node)
+        return node
     def primary():
         token = tokens.pop(0)
         if token.kind == "number":
@@ -211,6 +227,12 @@ def evaluate(node, scope):
         return find(scope, node.name)[node.name]
     if node.kind == "negate":
         return operate("-", 0, evaluate(node.value, scope))
+    if node.kind == "call":
+        fn = evaluate(node.callee, scope)
+        if not isinstance(fn, Node):
+            raise MiniError(f"{quote(fn)} is not a function")
+        run(fn.body, top)
+        return None
     return operate(node.op, evaluate(node.left, scope), evaluate(node.right, scope))
 
 
@@ -228,6 +250,8 @@ def execute(node, scope):
     elif node.kind == "while":
         while truth(evaluate(node.test, scope), "while"):
             run(node.body, scope)
+    elif node.kind == "fn":
+        scope[node.name] = node
     else:
         return evaluate(node.value, scope)
 
@@ -255,7 +279,7 @@ def attempt(line):
     try:
         for node in parse(tokenize(line)):
             value = execute(node, top)
-            if node.kind == "expr":
+            if node.kind == "expr" and value is not None:
                 print(show(value))
     except Exception as error:
         report(error)
