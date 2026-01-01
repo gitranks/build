@@ -23,6 +23,7 @@ HELP = [
     "next <text>           the model's guess for the character after the text",
     "gradcheck             nudge a number of each table and see the loss move",
     "train <steps>         learn from the text, one short piece at each step",
+    "attend <text>         how much each character looks at the ones before it",
     "help                  this list",
     "exit                  stop lm",
 ]
@@ -146,6 +147,8 @@ model = {
     "emb": matrix(V, D, 0.5),  # a row of numbers for each character
     "out": matrix(D, V, 0.5),  # from those numbers to a score for each character
     "wv": matrix(D, D, 0.25),  # what a character passes on to the ones after it
+    "wq": matrix(D, D, 0.25),  # what a character looks for
+    "wk": matrix(D, D, 0.25),  # what a character offers to the ones that look
 }
 steps = 0  # how many training steps the model has taken
 
@@ -172,12 +175,16 @@ def softmax(scores):
         total += x
     return [x / total for x in e]
 
+SCALE = 1 / math.sqrt(D)
+
 # Run the model over a window of characters: after each one, a score for every character that may come next.
 def forward(x):
     h = [model["emb"][n] for n in x]
     v = [times(row, model["wv"]) for row in h]
-    # Each character takes the mean of itself and the ones before it, never the ones after (the mask).
-    a = [[1 / (t + 1)] * (t + 1) for t in range(len(h))]
+    q = [times(row, model["wq"]) for row in h]
+    k = [times(row, model["wk"]) for row in h]
+    # Attention: each character weighs itself and the ones before it, never the ones after (the mask).
+    a = [softmax([dot(q[t], key) * SCALE for key in k[: t + 1]]) for t in range(len(h))]
     z = []
     for t, row in enumerate(h):
         mix = [0.0] * D
@@ -186,7 +193,7 @@ def forward(x):
                 mix[i] += a[t][u] * v[u][i]
         z.append([e + mix[i] for i, e in enumerate(row)])
     logits = [times(row, model["out"]) for row in z]
-    return {"x": x, "h": h, "v": v, "a": a, "z": z, "logits": logits, "p": [softmax(row) for row in logits]}
+    return {"x": x, "h": h, "v": v, "q": q, "k": k, "a": a, "z": z, "logits": logits, "p": [softmax(row) for row in logits]}
 
 # The model's loss: the mean of -log(the chance it gave the character that came next).
 def loss_of(f, y):
@@ -216,11 +223,21 @@ def backward(f, y):
         dz.append([dot(row, dl) for row in model["out"]])
     dh = [list(row) for row in dz]  # z is h plus the mix, so h gets all of z's gradient, and the mix too
     dv = [[0.0] * D for _ in range(n)]
+    dq = [[0.0] * D for _ in range(n)]
+    dk = [[0.0] * D for _ in range(n)]
     for t in range(n):
+        da = [dot(dz[t], f["v"][u]) for u in range(t + 1)]
+        mean = 0.0
+        for u in range(t + 1):
+            mean += f["a"][t][u] * da[u]
         for u in range(t + 1):
             for i in range(D):
                 dv[u][i] += f["a"][t][u] * dz[t][i]
-    for name, d in (("wv", dv),):
+            ds = f["a"][t][u] * (da[u] - mean) * SCALE  # back through the softmax of the weights
+            for i in range(D):
+                dq[t][i] += ds * f["k"][u][i]
+                dk[u][i] += ds * f["q"][t][i]
+    for name, d in (("wv", dv), ("wq", dq), ("wk", dk)):
         for t in range(n):
             for i in range(D):
                 for j in range(D):
@@ -364,6 +381,12 @@ def run(words):
                 total += train_step()
             lines.append(f"step {steps}: loss {fmt(total / chunk)}")
         return "\n".join(lines)
+    if name == "attend":
+        start = clean(arg)
+        if not start or any(ch not in ALPHABET for ch in start):
+            return "usage: attend <text>, with characters of the alphabet"
+        f = forward(encode(start)[-T:])
+        return "\n".join(show(f["x"][t]) + " " + " ".join(fmt(w, 2) for w in row) for t, row in enumerate(f["a"]))
     if name == "help":
         return "\n".join(HELP)
     return f"unknown command: {name}. Type help for the list."
