@@ -212,6 +212,10 @@ edits = [call("edit_file", {"path": "notes.txt", "old_text": word, "new_text": c
 edits += [call("edit_file", {"path": "notes.txt", "old_text": pick(["nothing like this", "zebra"]), "new_text": "x"}), heard]
 edits += [call("edit_file", {"path": "../secret.txt", "old_text": "the", "new_text": "a"}), heard]
 session("edit-a-file", [f"change {word} to {changed}", "change something that is not there", "change the secret"], edits)
+made = pick(["plans/next.txt", "docs/ideas.md", "todo/today.txt"])
+makes = [call("edit_file", {"path": made, "old_text": "", "new_text": "run a command\n"}), call("list_files"), heard]
+makes += [call("edit_file", {"path": made, "old_text": "", "new_text": "again\n"}), heard]
+session("make-a-file", [f"make {made}", "make it again"], makes)
 server.shutdown()
 shutil.rmtree(top, ignore_errors=True)
 
