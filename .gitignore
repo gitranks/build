@@ -1,2 +1,4 @@
 .gitranks/build.json
 __pycache__/
+store.json
+store.json.new

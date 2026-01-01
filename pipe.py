@@ -3,6 +3,7 @@
 # Start it with: python pipe.py
 from collections import namedtuple
 from datetime import datetime, timezone
+import json
 import os
 import re
 import sys
@@ -14,8 +15,8 @@ sys.stdout.reconfigure(encoding="utf-8", newline="\n")
 
 # The commands pipe knows, as help shows them.
 HELP = [
-    "files                         list the CSV files in the inbox folder",
-    "run                           read every file in the inbox",
+    "files                         list the CSV files in the inbox folder, and how many lines of each are loaded",
+    "run                           load the new lines of every file in the inbox",
     "rows                          show the rows the last run kept, 10 at most",
     "bad                           show the lines the last run dropped and why, 10 at most",
     "query <metric> [host]         a metric's numbers, minute by minute",
@@ -32,7 +33,20 @@ Row = namedtuple("Row", "time host metric value")
 # the rows of one metric on one host in one minute: their count, sum, smallest and largest value.
 store = {
     "windows": {},
+    "files": {},  # how many lines of each file are loaded
 }
+
+# The store is kept in store.json, so it is still there when pipe starts again.
+if os.path.exists("store.json"):
+    with open("store.json", encoding="utf-8") as file:
+        store.update(json.load(file))
+
+
+# Save the store: write a new file, then put it in the old one's place. A crash leaves one whole file or the other.
+def save():
+    with open("store.json.new", "w", encoding="utf-8") as file:
+        json.dump(store, file)
+    os.replace("store.json.new", "store.json")
 
 rows = []  # the rows the last run kept
 BLANKS = " \t\r"  # spaces, tabs and the \r of a Windows line end: what strip takes off, as in TypeScript
@@ -151,8 +165,11 @@ def query(metric, host=None):
 # Read one file's lines and keep their rows.
 def load(name):
     every = lines(name)
+    start = store["files"].get(name, 0)  # the lines loaded before are skipped
+    if start >= len(every):
+        return f"{name}: no new lines"
     kept, dropped = len(rows), len(bad)
-    for i in range(len(every)):
+    for i in range(start, len(every)):
         fields = split(every[i])
         if not fields:
             continue
@@ -162,7 +179,9 @@ def load(name):
         else:
             rows.append(row)
             add(row)
-    return f"{name}: lines {len(every)}, kept {len(rows) - kept}, dropped {len(bad) - dropped}"
+    store["files"][name] = len(every)
+    save()
+    return f"{name}: lines {start + 1} to {len(every)}, kept {len(rows) - kept}, dropped {len(bad) - dropped}"
 
 
 def run():
@@ -170,7 +189,6 @@ def run():
     rows.clear()
     bad.clear()
     seen.clear()
-    store["windows"] = {}  # each run counts every file again
     for name in names:
         print(load(name))
     return f"run: files {len(names)}, kept {len(rows)}, dropped {len(bad)}, windows {len(store['windows'])}"
@@ -183,7 +201,7 @@ def command(words):
         names = inbox()
         if not names:
             return "(no CSV files in the inbox folder)"
-        return "\n".join(f"{name}: lines {len(lines(name))}" for name in names)
+        return "\n".join(f"{name}: lines {len(lines(name))}, loaded {store['files'].get(name, 0)}" for name in names)
     if name == "run":
         return run()
     if name == "rows":

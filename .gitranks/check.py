@@ -155,6 +155,12 @@ minute = [row(at("10:00:05"), host, metric, "10"), row(at("10:00:59"), host, met
 session("count-by-minute", box("minute", {"a.csv": csv(minute)}), ["run", "run"])
 asked = [row(at("10:00:05"), host, metric, "0.01"), row(at("10:00:35"), host, metric, "0.04"), row(at("10:01:05"), host, metric, pick(["1", "2.5", "99.99"])), row(at("09:59:59"), other, metric, "50"), row(at("10:00:00"), other, metric, "70")]
 session("answer-a-query", box("query", {"a.csv": csv(asked)}), ["run", f"query {metric}", f"query {metric} {other}", "query disk", "query"])
+keep = box("keep", {"a.csv": csv([row(at("10:00:05"), host, metric, "10"), row(at("10:00:15"), host, metric, "20")]) + row(at("10:00:25"), host, metric, "3")})
+session("save-the-store", keep, ["run"])
+with open(os.path.join(keep, "inbox", "a.csv"), "a", encoding="utf-8", newline="") as out:
+    out.write("0\n" + csv([row(at("10:01:05"), host, metric, "40")]))
+session("save-the-store", keep, ["files", "run", f"query {metric}"])
+said.append(("save-the-store", "store.json.new is there: " + ("yes" if os.path.exists(os.path.join(keep, "store.json.new")) else "no")))
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
