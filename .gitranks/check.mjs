@@ -75,6 +75,8 @@ const cut = size();
 session("survive-a-crash", [`set ${saved} ${pick(["ship it", "buy milk", "call home"])}`, `crash ${saved}2 ${pick(["lost", "gone"])}`]);
 logFrom("survive-a-crash", cut);
 session("survive-a-crash", [`get ${saved}`, `get ${saved}2`, `set ${saved}2 back`, `get ${saved}2`]);
+fs.appendFileSync(FILE, pick(['{"set": "oops"}', "this line is not JSON", '["set","half"]']) + "\n");
+session("skip-a-damaged-record", [`set ${saved} ${pick(["done", "later"])}`, `get ${saved}`, "stats"]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

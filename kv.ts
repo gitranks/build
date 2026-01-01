@@ -49,14 +49,27 @@ function load(): void {
       console.log("kv: dropped a record cut short at the end of the log");
       break;
     }
-    note(JSON.parse(log.toString("utf8", end, stop)), stop - end);
+    const record = parse(log.toString("utf8", end, stop));
+    if (!record) console.log(`kv: line ${records + 1} of the log is damaged, so it is skipped`);
+    note(record, stop - end);
+  }
+}
+
+// A record is ["set", key, value] or ["del", key]. Anything else is damaged: null.
+function parse(line: string): string[] | null {
+  try {
+    const r = JSON.parse(line);
+    const set = r[0] === "set" && r.length === 3 && typeof r[2] === "string";
+    return Array.isArray(r) && typeof r[1] === "string" && (set || (r[0] === "del" && r.length === 2)) ? r : null;
+  } catch {
+    return null;
   }
 }
 
 // Note one record that was just read or written, and the bytes it takes.
-function note(record: string[], size: number): void {
-  if (record[0] === "set") index.set(record[1], { start: end, size });
-  else index.delete(record[1]);
+function note(record: string[] | null, size: number): void {
+  if (record?.[0] === "set") index.set(record[1], { start: end, size });
+  else if (record) index.delete(record[1]);
   records += 1;
   end += size;
 }
