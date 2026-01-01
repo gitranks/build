@@ -36,6 +36,8 @@ def handle(msg: dict) -> dict:
                 "serverInfo": {"name": "my-server", "version": "0.1.0"},
             }
         }
+    if msg["method"] == "ping":
+        return {"result": {}}
     return fail(-32601, f"Method not found: {msg['method']}")
 
 
