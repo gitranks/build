@@ -71,6 +71,8 @@ const csv = (lines, end = "\n") => lines.map((line) => line + end).join("");
 const v = () => pick(["12", "40.5", "7", "93.25", "61"]);
 const first = csv([`# ${metric} of ${host}`, "time,host,metric,value", row(at("10:00:05"), host, metric, v()), "", row(at("10:00:35"), host, metric, v())], "\r\n");
 session("read-the-rows", box("rows", { "a.csv": first, "b.csv": csv([row(at("10:01:05"), other, metric, v())]) }), ["run", "run"]);
+const shown = csv(["TIME,HOST,METRIC,VALUE", row(at("10:02:05"), host, metric, v()) + ", "]);
+session("show-the-rows", box("show", { "a.csv": first + shown }), ["rows", "run", "rows"]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

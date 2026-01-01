@@ -1,0 +1,9 @@
+time,host,metric,value
+2026-11-27T10:00:12Z,api-1,latency_ms,120
+2026-11-27T10:00:31Z, API-1 ,Latency_ms,185
+
+2026-11-27 11:00:59+01:00,api-1,latency_ms,1500
+2026-11-27T10:01:02Z,api-1,latency_ms
+2026-11-27T10:01:40,api-1,latency_ms,140
+2026-11-27T10:00:12Z,api-1,latency_ms,120
+1970-01-01T00:00:00Z,api-1,latency_ms,0

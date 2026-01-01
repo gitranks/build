@@ -8,6 +8,7 @@ import { createInterface } from "node:readline";
 const HELP = [
   "files                         list the CSV files in the inbox folder",
   "run                           read every file in the inbox",
+  "rows                          show the rows the last run kept, 10 at most",
   "help                          this list",
   "exit                          stop pipe",
 ];
@@ -30,9 +31,17 @@ function lines(name: string): string[] {
 // Spaces, tabs and the \r of a Windows line end, taken off both ends: the same characters in both languages.
 const trim = (text: string) => text.replace(/^[ \t\r]+|[ \t\r]+$/g, "");
 
-// The fields of a line: the pieces of text between its commas.
-function split(line: string): string[] {
-  return trim(line).split(",");
+// The fields of a line, or null for a line with no row in it: a blank line, a # comment or the header.
+function split(line: string): string[] | null {
+  const text = trim(line);
+  if (!text || text.startsWith("#") || text.toLowerCase().startsWith("time,")) return null;
+  return text.split(",");
+}
+
+// At most 10 lines of a list, and how many more there are.
+function some(list: string[], none: string): string {
+  if (!list.length) return none;
+  return [...list.slice(0, 10), ...(list.length > 10 ? [`and ${list.length - 10} more`] : [])].join("\n");
 }
 
 // Read one file's lines and keep their rows.
@@ -41,6 +50,7 @@ function load(name: string): string {
   const kept = rows.length;
   for (let i = 0; i < all.length; i++) {
     const fields = split(all[i]);
+    if (!fields) continue;
     rows.push(fields);
   }
   return `${name}: lines ${all.length}, rows ${rows.length - kept}`;
@@ -67,6 +77,7 @@ function command(words: string[]): string {
     return names.map((name) => `${name}: lines ${lines(name).length}`).join("\n");
   }
   if (name === "run") return run();
+  if (name === "rows") return some(rows.map((fields) => fields.join(" | ")), "(no rows)");
   if (name === "help") return HELP.join("\n");
   return `unknown command: ${name}. Type help for the list.`;
 }
