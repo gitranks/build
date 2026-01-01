@@ -39,6 +39,12 @@ function page(title: string, ...lines: string[]): Answer {
   return { status: 200, type: "text/html; charset=utf-8", body: [...top, ...lines, ""].join("\n") };
 }
 
+// Text made safe to put in a page: a note such as <b>hi</b> is shown as it was typed, never read as HTML.
+function escape(note: string): string {
+  const signs: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#x27;" };
+  return note.replace(/[&<>"']/g, (sign) => signs[sign]);
+}
+
 // The notes people send from the form on /notes, kept in memory while the server runs.
 const notes: string[] = [];
 
@@ -64,7 +70,7 @@ const ROUTES: Record<string, (request: Request) => Answer> = {
   "GET /notes": () =>
     page(
       "Notes",
-      ...notes.map((note) => `<p>${note}</p>`),
+      ...notes.map((note) => `<p>${escape(note)}</p>`),
       '<form method="post" action="/notes"><input name="note" autofocus> <button>Add a note</button></form>',
     ),
   "POST /notes": (request) => {

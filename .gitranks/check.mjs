@@ -202,6 +202,11 @@ await session("read-a-body", async (port) => {
   await ask(port, "read-a-body", [head + "\r\n\r\n", body], { label: `POST /notes with the body note=${note}, in two pieces` });
   await ask(port, "read-a-body", [get("/notes")], { show: (line) => line.startsWith("<p>") });
 });
+await session("show-notes-safely", async (port) => {
+  const sly = pick(["%3Cb%3Ebold%3C%2Fb%3E", "%3Cscript%3Ealert(1)%3C%2Fscript%3E", "Tom+%26+%22Jerry%22"]);
+  await ask(port, "show-notes-safely", [post("/notes", `note=${sly}`)], { label: `POST /notes with the body note=${sly}`, brief: true });
+  await ask(port, "show-notes-safely", [get("/notes")], { show: (line) => line.startsWith("<p>") });
+});
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
