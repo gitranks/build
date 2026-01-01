@@ -234,6 +234,8 @@ def ends(ask):
 
 
 session("keep-it-short", ["read big.txt"], [call("read_file", {"path": "big.txt"}), ends])
+pages = [call("read_file", {"path": f"page{i + 1}.txt"}) for i in range(11)]
+session("a-limit-on-rounds", ["read every " + pick(["page", "chapter", "part"])], [*pages, heard])
 server.shutdown()
 shutil.rmtree(top, ignore_errors=True)
 
