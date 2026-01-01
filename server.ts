@@ -140,40 +140,51 @@ function parse(head: string): Request {
 }
 
 // Write an answer: the status line, one header a line, a blank line, then the body.
-function send(socket: net.Socket, answer: Answer): void {
+function send(socket: net.Socket, answer: Answer, keep: boolean): void {
   const bytes = typeof answer.body === "string" ? Buffer.from(answer.body) : answer.body;
   const head = [
     `HTTP/1.1 ${answer.status} ${REASONS[answer.status]}`,
     `Content-Type: ${answer.type}`,
     `Content-Length: ${bytes.length}`,
-    "Connection: close",
+    `Connection: ${keep ? "keep-alive" : "close"}`,
   ];
   for (const [name, value] of Object.entries(answer.headers ?? {})) head.push(`${name}: ${value}`);
   socket.write(head.join("\r\n") + "\r\n\r\n");
-  socket.end(bytes);
+  socket.write(bytes);
+  if (!keep) socket.end();
 }
 
 // Answer one request, and say so in the log.
-async function respond(socket: net.Socket, request: Request): Promise<void> {
+async function respond(socket: net.Socket, request: Request, keep: boolean, number: number): Promise<void> {
   const answer = await handle(request);
-  console.log(`web: ${request.method} ${request.target} ${answer.status}`);
-  send(socket, answer);
+  console.log(`web: ${request.method} ${request.target} ${answer.status}, request ${number} on its connection`);
+  send(socket, answer, keep);
 }
 
-// One connection. Its bytes come in pieces of any size: they wait in `bytes` until the head ends, at a blank line.
+// One connection, and every request on it. Their bytes come in pieces of any size: they wait in `bytes` until
+// a whole request is there, its head up to the blank line, then its body.
 function serve(socket: net.Socket): void {
   let bytes = Buffer.alloc(0);
+  let count = 0;
+  let answered = Promise.resolve(); // the answers go out in the order the requests came in
+  socket.setTimeout(5000, () => socket.destroy()); // a connection with nothing to do closes after 5 seconds
   socket.on("data", (piece) => {
     bytes = Buffer.concat([bytes, piece]);
-    const end = bytes.indexOf("\r\n\r\n");
-    if (end < 0) return; // the head is not all here yet
-    const request = parse(bytes.subarray(0, end).toString("latin1"));
-    // The Content-Length header says how many bytes of body come after the head.
-    const size = Math.max(Number(request.headers.get("content-length")) || 0, 0);
-    if (bytes.length < end + 4 + size) return; // the body is not all here yet
-    request.body = bytes.subarray(end + 4, end + 4 + size);
-    bytes = bytes.subarray(end + 4 + size);
-    respond(socket, request);
+    for (let end = bytes.indexOf("\r\n\r\n"); end >= 0; end = bytes.indexOf("\r\n\r\n")) {
+      const request = parse(bytes.subarray(0, end).toString("latin1"));
+      const size = Math.max(Number(request.headers.get("content-length")) || 0, 0);
+      if (bytes.length < end + 4 + size) return; // the body is not all here yet
+      request.body = bytes.subarray(end + 4, end + 4 + size);
+      bytes = bytes.subarray(end + 4 + size);
+      // HTTP/1.1 keeps a connection open for the next request, unless the browser asks to close it.
+      const keep = request.version === "HTTP/1.1" && request.headers.get("connection")?.toLowerCase() !== "close";
+      const number = ++count;
+      answered = answered.then(() => respond(socket, request, keep, number));
+      if (!keep) {
+        socket.removeAllListeners("data"); // nothing after this request is read
+        return;
+      }
+    }
   });
 }
 

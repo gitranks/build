@@ -242,6 +242,20 @@ await session("many-at-once", async (port) => {
   slow.socket.destroy();
   quick.socket.destroy();
 });
+await session("keep-alive", async (port) => {
+  const names = [pick(["Ada", "Alan"]), pick(["Grace", "Linus"])];
+  const open = (target) => get(target).replace("Connection: close\r\n", "");
+  said.push(["keep-alive", `sent: GET /hello?name=${names[0]} and GET /hello?name=${names[1]} at once, on one connection`]);
+  const link = await connect(port);
+  link.socket.write(open(`/hello?name=${names[0]}`) + open(`/hello?name=${names[1]}`));
+  await wait(link, () => whole(answersIn(link.got)) >= 2);
+  said.push(["keep-alive", "sent: GET /hello on the same connection, with Connection: close"]);
+  link.socket.write(get("/hello"));
+  await wait(link, () => false);
+  for (const answer of answersIn(link.got)) tell("keep-alive", answer, (line, i) => i < 1);
+  said.push(["keep-alive", link.closed ? "then the server closed the connection" : "the server did not close the connection within 3 seconds"]);
+  link.socket.destroy();
+});
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
