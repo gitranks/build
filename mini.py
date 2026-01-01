@@ -87,7 +87,7 @@ SYMBOLS = [  # the symbols mini knows
     "{", "}",
     ",",
 ]
-WORDS = ["let", "true", "false", "print", "if", "else", "while", "fn"]  # mini's own words: not names of variables
+WORDS = ["let", "true", "false", "print", "if", "else", "while", "fn", "return"]  # mini's own words
 
 
 # The tokenizer cuts the source into pieces: a run of spaces, a number, a name and more, or any other one
@@ -122,6 +122,7 @@ def tokenize(source):
 # Each level of operators has its own function, the loosest first: in 2 + 3 * 4, 3 * 4 is one operand of the +.
 # tokens[0] is the token at hand, and tokens.pop(0) takes it off the list.
 def parse(tokens):
+    inside = 0  # how many functions the parser is inside: a return is only for inside one
     def accept(kind):
         if tokens[0].kind != kind:
             return False
@@ -149,6 +150,7 @@ def parse(tokens):
         expect("{")
         return statements("}")
     def statement():
+        nonlocal inside
         if accept("let"):
             name = expect("name").text
             expect("=")
@@ -173,7 +175,14 @@ def parse(tokens):
                 if params:
                     expect(",")
                 params.append(expect("name").text)
-            return Node(kind="fn", name=name, params=params, body=block())
+            inside += 1
+            body = block()
+            inside -= 1
+            return Node(kind="fn", name=name, params=params, body=body)
+        if accept("return"):
+            if not inside:
+                raise MiniError("return is only for inside a function")
+            return Node(kind="return", value=None if tokens[0].kind in [";", "}", "end"] else expression())
         return Node(kind="expr", value=expression())
     def binary(ops, operand):
         left = operand()
@@ -230,6 +239,12 @@ def find(scope, name):
     raise MiniError(f"{name} is not defined")
 
 
+# A return statement raises this, and the call it is in catches it, with the value.
+class Return(Exception):
+    def __init__(self, value):
+        self.value = value
+
+
 # Work out the value of a node of the tree.
 def evaluate(node, scope):
     if node.kind == "value":
@@ -245,8 +260,12 @@ def evaluate(node, scope):
             raise MiniError(f"{quote(fn)} is not a function")
         if len(args) != len(fn.params):
             raise MiniError(f"{fn.name} takes ({', '.join(fn.params)})")
-        run(fn.body, dict(zip(fn.params, args)))
-        return None
+        value = None
+        try:
+            run(fn.body, dict(zip(fn.params, args)))
+        except Return as signal:
+            value = signal.value
+        return value
     return operate(node.op, evaluate(node.left, scope), evaluate(node.right, scope))
 
 
@@ -266,6 +285,8 @@ def execute(node, scope):
             run(node.body, scope)
     elif node.kind == "fn":
         scope[node.name] = node
+    elif node.kind == "return":
+        raise Return(evaluate(node.value, scope) if node.value else None)
     else:
         return evaluate(node.value, scope)
 

@@ -102,6 +102,7 @@ session("text-values", [f'"{pick(["hello", "mini", "Ada"])}"', f'"n = " + {a}', 
 fn = pick(["hello", "greet", "say_hi"])
 session("functions", [f'fn {fn}() {{ print "hi from {fn}" }}', f"{fn}()", fn, f"{a}()", f"{fn}(); {fn}()"])
 session("parameters-and-scope", ["fn add(a, b) { print a + b }", f"add({a}, {b})", "add(1)", "a", f"let k = {b}; fn use_k(n) {{ print n + k }} use_k(1); fn own_k() {{ let k = 100; print k }} own_k(); k", "let c = 0; fn inc() { c = c + 1 } inc(); inc(); c"])
+session("return-a-value", ["fn square(n) { return n * n }", f"square({a})", "square(square(2))", "fn sign(n) { if n < 0 { return -1 } return 1 }", f"sign(-{b})", f"sign({b})", "return 1"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
