@@ -99,6 +99,30 @@ session("list-the-inbox", box("no-inbox", None), ["files"])
 name = pick(["web", "api", "db"])
 listed = {f"{name}.csv": "one\ntwo\nthree\n", "2026-11-27.csv": "first\r\nsecond, with no line end yet", "notes.txt": "not a CSV file\n"}
 session("list-the-inbox", box("listed", listed), ["files"])
+day = pick(["2026-11-27", "2026-03-01", "2025-12-31"])
+host = pick(["web-1", "web-2", "db-1"])
+other = "web-1" if host == "db-1" else "db-1"
+metric = pick(["cpu", "mem"])
+
+
+def at(clock):
+    return f"{day}T{clock}Z"
+
+
+def row(*fields):
+    return ",".join(fields)
+
+
+def csv(lines, end="\n"):
+    return "".join(line + end for line in lines)
+
+
+def v():
+    return pick(["12", "40.5", "7", "93.25", "61"])
+
+
+first = csv([f"# {metric} of {host}", "time,host,metric,value", row(at("10:00:05"), host, metric, v()), "", row(at("10:00:35"), host, metric, v())], "\r\n")
+session("read-the-rows", box("rows", {"a.csv": first, "b.csv": csv([row(at("10:01:05"), other, metric, v())])}), ["run", "run"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the

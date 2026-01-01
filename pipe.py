@@ -11,9 +11,13 @@ sys.stdout.reconfigure(encoding="utf-8", newline="\n")
 # The commands pipe knows, as help shows them.
 HELP = [
     "files                         list the CSV files in the inbox folder",
+    "run                           read every file in the inbox",
     "help                          this list",
     "exit                          stop pipe",
 ]
+
+rows = []  # the rows the last run kept
+BLANKS = " \t\r"  # spaces, tabs and the \r of a Windows line end: what strip takes off, as in TypeScript
 
 
 # The names of the CSV files in the inbox folder, in order.
@@ -29,6 +33,29 @@ def lines(name):
         return file.read().split("\n")[:-1]
 
 
+# The fields of a line: the pieces of text between its commas.
+def split(line):
+    return line.strip(BLANKS).split(",")
+
+
+# Read one file's lines and keep their rows.
+def load(name):
+    every = lines(name)
+    kept = len(rows)
+    for i in range(len(every)):
+        fields = split(every[i])
+        rows.append(fields)
+    return f"{name}: lines {len(every)}, rows {len(rows) - kept}"
+
+
+def run():
+    names = inbox()
+    rows.clear()
+    for name in names:
+        print(load(name))
+    return f"run: files {len(names)}, rows {len(rows)}"
+
+
 # Do one command, its name and then its words, and give back the answer.
 def command(words):
     name = words[0]
@@ -37,6 +64,8 @@ def command(words):
         if not names:
             return "(no CSV files in the inbox folder)"
         return "\n".join(f"{name}: lines {len(lines(name))}" for name in names)
+    if name == "run":
+        return run()
     if name == "help":
         return "\n".join(HELP)
     return f"unknown command: {name}. Type help for the list."
