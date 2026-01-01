@@ -9,12 +9,13 @@ server = subprocess.Popen(
 )
 
 
-def send(message: str) -> None:
+def send(message: str, wait: bool) -> None:
     print("-> " + message, flush=True)
     server.stdin.write(message + "\n")
     server.stdin.flush()
-    answer = server.stdout.readline()
-    print("<- " + answer.strip() if answer else "(the server stopped)", flush=True)
+    if wait:
+        answer = server.stdout.readline()
+        print("<- " + answer.strip() if answer else "(the server stopped)", flush=True)
 
 
 next_id = 0
@@ -22,9 +23,12 @@ for line in sys.stdin:
     method, _, params = line.strip().partition(" ")
     if not method:
         continue
-    next_id += 1
-    request = {"jsonrpc": "2.0", "id": next_id, "method": method}
-    if params:
-        request["params"] = json.loads(params)
-    send(json.dumps(request, separators=(",", ":")))
+    params = json.loads(params) if params else None
+    request = {"jsonrpc": "2.0", "method": method}
+    if not method.startswith("notifications/"):  # a notification has no id and gets no answer
+        next_id += 1
+        request = {"jsonrpc": "2.0", "id": next_id, "method": method}
+    if params is not None:
+        request["params"] = params
+    send(json.dumps(request, separators=(",", ":")), "id" in request)
 server.communicate()  # closes the server's input, so it stops, and waits for it
