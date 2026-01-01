@@ -77,6 +77,8 @@ session("parameters-and-scope", ["fn add(a, b) { print a + b }", `add(${a}, ${b}
 session("return-a-value", ["fn square(n) { return n * n }", `square(${a})`, "square(square(2))", "fn sign(n) { if n < 0 { return -1 } return 1 }", `sign(-${b})`, `sign(${b})`, "return 1"]);
 const deep = pick([5, 10, 12]);
 session("limit-the-depth", ["fn fact(n) { if n < 2 { return 1 } return n * fact(n - 1) }", `fact(${deep})`, "fn down(n) { return down(n + 1) }", "down(1)", "fact(3)"]);
+const bad = pick(["c", "missing", "z"]);
+session("errors-name-the-line", ["let a = 1", "let b = a +", `print ${bad}`, `fn f() { return ${bad} }`, "f()", "fn g() { return a }", `print g() + ${bad}`]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

@@ -2,10 +2,12 @@
 // You type a line of mini, such as 1 + 2 * 3, and it answers 7. Start it with: node mini.ts
 import { createInterface } from "node:readline";
 
+let where = 1; // the line mini is at: the line it reads, or the line of the statement it runs
+
 // A mistake in the program mini runs, such as 1 / 0: mini says what it is and goes on. It is not a crash of mini.
 class MiniError extends Error {}
 type Value = number | boolean | string | Node | null; // a function's value is its own node of the tree
-type Token = { kind: string; text: string };
+type Token = { kind: string; text: string; line: number };
 type Node = { kind: string; [field: string]: any };
 
 // Every number is whole and between -LIMIT and LIMIT, so mini gives the same answers in every language.
@@ -67,10 +69,11 @@ const WORDS = ["let", "true", "false", "print", "if", "else", "while", "fn", "re
 // The tokenizer cuts the source into pieces: a run of spaces, a number, a name and more, or any other one
 // character. It turns each piece into a token, the words of mini, and leaves the spaces out.
 const PIECES = /[ \t\r]+|[0-9]+|[A-Za-z_][A-Za-z_0-9]*|"[^"\n]*"?|[=!<>]=|[\s\S]/gu;
-function tokenize(source: string): Token[] {
+function tokenize(source: string, line = 1): Token[] {
   const tokens: Token[] = [];
-  const add = (kind: string, text: string) => tokens.push({ kind, text });
+  const add = (kind: string, text: string) => tokens.push({ kind, text, line });
   for (const piece of source.match(PIECES) ?? []) {
+    where = line;
     if (/^[0-9]/.test(piece)) add("number", piece);
     else if (/^[A-Za-z_]/.test(piece)) add(WORDS.includes(piece) ? piece : "name", piece);
     else if (piece[0] === '"') {
@@ -107,11 +110,16 @@ function parse(tokens: Token[]): Node[] {
       while (accept(";"));
       if (accept(end)) return list;
       if (peek().kind === "end") throw new MiniError("a { has no } to close it");
-      const node = statement();
+      const node = lined();
       list.push(node);
       const ok = [";", end, "end"].includes(peek().kind) || ["if", "while", "fn"].includes(node.kind); // these end in }
       if (!ok) throw new MiniError(`expected ; but found ${peek().text}`);
     }
+  }
+  // A statement, with the line it starts on, for an error to name.
+  function lined(): Node {
+    where = peek().line;
+    return { line: where, ...statement() };
   }
   function block(): Node[] {
     expect("{");
@@ -132,7 +140,7 @@ function parse(tokens: Token[]): Node[] {
     if (accept("if")) {
       const test = expression();
       const then = block();
-      const otherwise = !accept("else") ? [] : peek().kind === "if" ? [statement()] : block();
+      const otherwise = !accept("else") ? [] : peek().kind === "if" ? [lined()] : block();
       return { kind: "if", test, then, otherwise };
     }
     if (accept("while")) return { kind: "while", test: expression(), body: block() };
@@ -228,6 +236,7 @@ function evaluate(node: Node, scope: Scope): Value {
     if (args.length !== fn.params.length) throw new MiniError(`${fn.name} takes (${fn.params.join(", ")})`);
     if (depth === DEEPEST) throw new MiniError(`too deep: more than ${DEEPEST} calls inside each other`);
     const locals: Scope = new Map(fn.params.map((param, i) => [param, args[i]]));
+    const back = where;
     depth++;
     let value: Value = null;
     try {
@@ -238,6 +247,7 @@ function evaluate(node: Node, scope: Scope): Value {
     } finally {
       depth--;
     }
+    where = back; // back to the line of the call, now that the call is done
     return value;
   }
   return operate(node.op, evaluate(node.left, scope), evaluate(node.right, scope));
@@ -245,6 +255,7 @@ function evaluate(node: Node, scope: Scope): Value {
 
 // Carry out one statement in a scope. The value of a statement that is only an expression is given back.
 function execute(node: Node, scope: Scope): Value | undefined {
+  where = node.line;
   if (node.kind === "let") scope.set(node.name, evaluate(node.value, scope));
   else if (node.kind === "set") {
     const value = evaluate(node.value, scope);
@@ -252,7 +263,12 @@ function execute(node: Node, scope: Scope): Value | undefined {
   }
   else if (node.kind === "print") console.log(show(evaluate(node.value, scope)));
   else if (node.kind === "if") run(truth(evaluate(node.test, scope), "if") ? node.then : node.otherwise, scope);
-  else if (node.kind === "while") while (truth(evaluate(node.test, scope), "while")) run(node.body, scope);
+  else if (node.kind === "while") {
+    while (truth(evaluate(node.test, scope), "while")) {
+      run(node.body, scope);
+      where = node.line; // back to the while's line, for its test
+    }
+  }
   else if (node.kind === "fn") scope.set(node.name, node);
   else if (node.kind === "return") throw new Return(node.value ? evaluate(node.value, scope) : null);
   else return evaluate(node.value, scope);
@@ -274,7 +290,7 @@ function report(error: unknown): void {
   // A program can nest too deep for the language mini is written in too, with no call: 1 + (1 + (1 + ...)).
   const deep = error instanceof RangeError && error.message.includes("call stack");
   if (!(error instanceof MiniError) && !deep) throw error;
-  console.log(`error: ${deep ? "too deep" : (error as Error).message}`);
+  console.log(`error: line ${where}: ${deep ? "too deep" : (error as Error).message}`);
 }
 
 // The prompt mini> shows only when you type at a terminal, not when another program sends the lines.
@@ -283,9 +299,9 @@ function ask(): void {
 }
 
 // Run a line that was typed, and say what went wrong if anything did: a mistake does not stop mini.
-function attempt(line: string): void {
+function attempt(text: string, line: number): void {
   try {
-    for (const node of parse(tokenize(line))) {
+    for (const node of parse(tokenize(text, line))) {
       const value = execute(node, top);
       if (node.kind === "expr" && value !== null) console.log(show(value as Value));
     }
@@ -297,11 +313,13 @@ function attempt(line: string): void {
 // The prompt: read a line, run it, say the answer, and again, until exit or the end of the input.
 function repl(): void {
   if (process.stdin.isTTY) console.log("mini: type a line, then Enter. exit stops mini.");
+  let count = 0; // the lines read so far: an error names its line by this count
   ask();
   const input = createInterface({ input: process.stdin });
   input.on("line", (line) => {
+    count++;
     if (line.trim() === "exit") process.exit(0);
-    if (line.trim()) attempt(line);
+    if (line.trim()) attempt(line, count);
     ask();
   });
 }
