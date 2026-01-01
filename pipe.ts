@@ -12,6 +12,7 @@ const HELP = [
   "rows                          show the rows the last run kept, 10 at most",
   "bad                           show the lines the last run dropped and why, 10 at most",
   "query <metric> [host] [<n>m]  a metric's numbers, minute by minute, or n minutes at a time",
+  "alert <metric> <limit>        say ALERT for each minute whose average is above the limit",
   "help                          this list",
   "exit                          stop pipe",
 ];
@@ -28,6 +29,8 @@ const store = {
   windows: {} as Record<string, Window>,
   files: {} as Record<string, number>, // how many lines of each file are loaded
   seen: [] as string[], // the rows this run kept so far: after a crash, the next run still finds their duplicates
+  alerts: {} as Record<string, number>, // each metric's limit, in hundredths
+  fired: [] as string[], // the windows that have had their ALERT
 };
 
 // The store is kept in store.json, so it is still there when pipe starts again.
@@ -146,6 +149,19 @@ function query(metric: string, host: string | undefined, minutes: number): strin
   return some(shown, `(no rows of ${metric})`);
 }
 
+// Say ALERT once for each window whose average is above its metric's limit.
+function alarms(): string[] {
+  const said: string[] = [];
+  for (const [key, w] of Object.entries(store.windows)) {
+    const [metric, host, start] = key.split(" ");
+    const limit = Object.hasOwn(store.alerts, metric) ? store.alerts[metric] : undefined;
+    if (limit === undefined || average(w) <= limit || store.fired.includes(key)) continue;
+    store.fired.push(key);
+    said.push(`ALERT ${metric} on ${host} at ${when(Number(start)).slice(0, 16)}: average ${number(average(w))}, above ${number(limit)}`);
+  }
+  return said;
+}
+
 // Flush the buffer: add its rows to their windows and save the store.
 // The same write saves how many lines of the file are done, so a run after a crash starts after them.
 function flush(name: string, done: number): void {
@@ -188,6 +204,7 @@ function run(crash: number): string {
   crashAt = crash;
   for (const name of names) console.log(load(name));
   store.seen = []; // the run is whole: its rows' keys are no longer needed
+  for (const line of alarms()) console.log(line);
   save();
   return `run: files ${names.length}, kept ${rows.length}, dropped ${bad.length}, windows ${Object.keys(store.windows).length}, flushes ${flushes}`;
 }
@@ -214,6 +231,14 @@ function command(words: string[]): string {
     const [metric, host] = words.slice(1).filter((word) => word !== size);
     if (!metric) return "usage: query <metric> [host] [<n>m]";
     return query(metric, host, size ? Number(size.slice(0, -1)) : 1);
+  }
+  if (name === "alert") {
+    const limit = hundredths(words[2] ?? "");
+    if (!arg || limit === null || words.length > 3) return "usage: alert <metric> <limit>";
+    store.alerts[arg] = limit;
+    const said = [`OK: ALERT when a minute's average of ${arg} is above ${number(limit)}`, ...alarms()];
+    save();
+    return said.join("\n");
   }
   if (name === "help") return HELP.join("\n");
   return `unknown command: ${name}. Type help for the list.`;
