@@ -163,6 +163,12 @@ session("what-you-will-build", [])
 session("read-messages", ["/help", "", pick(["hello", "hi there", "good morning"]), "/exit", "/help"])
 question = pick(["what is 6 times 7?", "what is the capital of France?", "is water wet?"])
 session("ask-the-model", [pick(["hello", "hi there", "good morning"]), question], [heard, heard])
+# A free port with nothing on it: no model server answers there.
+with socket.socket() as spare:
+    spare.bind(("127.0.0.1", 0))
+    nowhere = f"http://127.0.0.1:{spare.getsockname()[1]}/v1"
+session("when-the-model-fails", ["are you there?"], [], url_given=nowhere)
+session("when-the-model-fails", ["hello"], [heard], model=pick(["llama9", "qwen-huge", "gpt-local"]))
 server.shutdown()
 shutil.rmtree(top, ignore_errors=True)
 
