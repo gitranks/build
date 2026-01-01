@@ -86,6 +86,8 @@ groups.append(("characters-to-numbers", [f"encode {word}", "decode " + pick(["3 
 groups.append(("count-the-pairs", ["counts " + pick(["t", "a", "o"]), "counts " + pick(["q", "z", "?"]), "counts"]))
 start = pick(["the", "a d", "my f", "old"])
 groups.append(("write-the-likeliest", [f"write {start}", "write " + pick(["sa", "ri", "mo"]), "write Zebra"]))
+seed = pick(["7", "42", "1000"])
+groups.append(("pick-at-random", [f"seed {seed}", f"write {start}", f"write {start}", f"seed {seed}", f"write {start}", "seed x"]))
 groups.append(("read-commands", ["help", "", pick(["fly", "hello", "learn"]) + " away", "exit", "help"]))
 session(groups)
 shutil.rmtree(folder, ignore_errors=True)

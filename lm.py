@@ -15,6 +15,7 @@ HELP = [
     "decode <numbers>      turn numbers back into text",
     "counts <character>    the characters that came after this one, and how often",
     "write <start>         go on from the start, one character at a time",
+    "seed <number>         start the random numbers again from this number",
     "help                  this list",
     "exit                  stop lm",
 ]
@@ -65,15 +66,35 @@ ids = encode(text)
 pairs = [[0] * V for _ in range(V)]
 for i in range(len(ids) - 1):
     pairs[ids[i]][ids[i + 1]] += 1
+SMOOTH = 0.1  # a pair never seen still gets a small count, so it is unlikely, not impossible
 
-# Go on from the start, one character at a time: each time, the character that came next most often.
+# Random numbers from a seed: the same seed gives the same numbers, on every computer and in both languages.
+state = 1
+
+def random():
+    global state
+    state = state * 48271 % 2147483647
+    return state / 2147483647
+
+# Pick a place at random, each as likely as its weight.
+def pick(weights):
+    total = 0
+    for w in weights:
+        total += w
+    r = random() * total
+    for i, w in enumerate(weights):
+        r -= w
+        if r < 0:
+            return i
+    return len(weights) - 1
+
+# Go on from the start, one character at a time, each picked at random by how often it came next.
 LENGTH = 60
 
 def write(start):
     out = list(start)
     while len(out) < len(start) + LENGTH:
-        row = pairs[out[-1]]
-        out.append(row.index(max(row)))
+        out.append(pick([count + SMOOTH for count in pairs[out[-1]]]))
     return decode(out)
 
 # A whole number, such as 42.
@@ -82,6 +103,7 @@ def is_number(word):
 
 # Run one command, its name and then its words, and give back the answer.
 def run(words):
+    global state
     name, rest = words[0], words[1:]
     arg = " ".join(rest)
     if name == "text":
@@ -110,6 +132,11 @@ def run(words):
             return f'nothing came after "{arg}"'
         top = ", ".join(f"{show(b)} {count}" for count, b in order[:5])
         return f'after "{arg}": {top}' + (f" and {len(order) - 5} more" if len(order) > 5 else "") + f", {total} in all"
+    if name == "seed":
+        if not is_number(arg):
+            return "usage: seed <number>"
+        state = int(arg) % 2147483646 + 1
+        return f"seed {int(arg)}"
     if name == "write":
         if not arg:
             return "usage: write <start>"
