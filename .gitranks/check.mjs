@@ -63,6 +63,13 @@ session("let-and-names", [`let ${name} = ${a} * 2`, `${name} + 1`, pick(["y", "s
 session("change-a-variable", [`let ${name} = ${a}`, `${name} = ${name} + ${b}`, `${name}`, `${pick(["y", "size"])} = 1`]);
 session("true-and-false", [`${a} < ${b}`, `${a} + 1 == ${a + 1}`, `${b} <= ${b}`, `${a} >= ${a + 1}`, "true != false", "1 == true", "true + 1", "1 < 2 < 3"]);
 session("many-statements", [`let x = ${a}; print x; x = x * ${b}; print x`, "print 1 2", ";;", "print"]);
+const top = pick([3, 4, 5]);
+session("if-and-while", [
+  `let n = ${a}; if n % 2 == 0 { print 0 } else { print 1 } print n`,
+  `let i = 0; while i < ${top} { i = i + 1; if i == 2 { print 20 } else if i > 2 { print i * 100 } }`,
+  "if 1 { print 1 }",
+  "if true { print 1",
+]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

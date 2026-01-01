@@ -51,8 +51,9 @@ const SYMBOLS = [ // the symbols mini knows
   "(", ")",
   "=",
   ";",
+  "{", "}",
 ];
-const WORDS = ["let", "true", "false", "print"]; // mini's own words: they can not name a variable
+const WORDS = ["let", "true", "false", "print", "if", "else", "while"]; // mini's own words: they can not name a variable
 
 // The tokenizer cuts the source into pieces: a run of spaces, a number, a name and more, or any other one
 // character. It turns each piece into a token, the words of mini, and leaves the spaces out.
@@ -91,10 +92,16 @@ function parse(tokens: Token[]): Node[] {
     for (;;) {
       while (accept(";"));
       if (accept(end)) return list;
+      if (peek().kind === "end") throw new MiniError("a { has no } to close it");
       const node = statement();
       list.push(node);
-      if (![";", end].includes(peek().kind)) throw new MiniError(`expected ; but found ${peek().text}`);
+      const ok = [";", end, "end"].includes(peek().kind) || ["if", "while"].includes(node.kind); // these end in }
+      if (!ok) throw new MiniError(`expected ; but found ${peek().text}`);
     }
+  }
+  function block(): Node[] {
+    expect("{");
+    return statements("}");
   }
   function statement(): Node {
     if (accept("let")) {
@@ -108,6 +115,13 @@ function parse(tokens: Token[]): Node[] {
       return { kind: "set", name, value: expression() };
     }
     if (accept("print")) return { kind: "print", value: expression() };
+    if (accept("if")) {
+      const test = expression();
+      const then = block();
+      const otherwise = !accept("else") ? [] : peek().kind === "if" ? [statement()] : block();
+      return { kind: "if", test, then, otherwise };
+    }
+    if (accept("while")) return { kind: "while", test: expression(), body: block() };
     return { kind: "expr", value: expression() };
   }
   function binary(ops: string[], operand: () => Node): Node {
@@ -160,7 +174,20 @@ function execute(node: Node, scope: Scope): Value | undefined {
     find(scope, node.name).set(node.name, value);
   }
   else if (node.kind === "print") console.log(show(evaluate(node.value, scope)));
+  else if (node.kind === "if") run(truth(evaluate(node.test, scope), "if") ? node.then : node.otherwise, scope);
+  else if (node.kind === "while") while (truth(evaluate(node.test, scope), "while")) run(node.body, scope);
   else return evaluate(node.value, scope);
+}
+
+// The statements of a block, one after another.
+function run(list: Node[], scope: Scope): void {
+  for (const node of list) execute(node, scope);
+}
+
+// The answer to an if or a while must be true or false.
+function truth(value: Value, word: string): boolean {
+  if (typeof value !== "boolean") throw new MiniError(`${word} needs true or false, not ${show(value)}`);
+  return value;
 }
 
 // Say what went wrong. A mistake in the program is not a crash of mini: anything else is.
