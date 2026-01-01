@@ -22,6 +22,9 @@ HELP = [
 # The log: a file where every change is written down, one line of JSON each. --file picks another file.
 at = sys.argv.index("--file") if "--file" in sys.argv else 0
 FILE = sys.argv[at + 1] if 0 < at < len(sys.argv) - 1 and sys.argv[at + 1] else "data.log"
+# The index: for each key, where its latest record starts in the log and how long it is, in bytes.
+index = {}
+end = 0  # the log's length in bytes: where the next record goes
 
 
 # Write records at the end of the log, one line each. The file is opened as bytes, so Windows adds no \r.
@@ -29,6 +32,8 @@ def write(batch):
     lines = [(to_json(record) + "\n").encode() for record in batch]
     with open(FILE, "ab") as log:
         log.write(b"".join(lines))
+    for record, line in zip(batch, lines):
+        note(record, len(line))
 
 
 def to_json(value):
@@ -50,6 +55,27 @@ def scan():
     return now
 
 
+# Read the log once, at start, and note where each key's latest record is.
+def load():
+    if not os.path.exists(FILE):
+        return
+    with open(FILE, "rb") as file:
+        log = file.read()
+    while end < len(log):
+        stop = log.find(b"\n", end) + 1 or len(log)
+        note(json.loads(log[end:stop]), stop - end)
+
+
+# Note one record that was just read or written, and the bytes it takes.
+def note(record, size):
+    global end
+    if record[0] == "set":
+        index[record[1]] = (end, size)
+    else:
+        index.pop(record[1], None)
+    end += size
+
+
 # Run one command, its name and then its words, and give back the answer.
 def run(words):
     name = words[0]
@@ -67,12 +93,12 @@ def run(words):
     if name == "del":
         if not key:
             return "usage: del <key>"
-        if key not in scan():
+        if key not in index:
             return "(not found)"
         write([["del", key]])
         return "deleted"
     if name == "keys":
-        every = sorted(scan())
+        every = sorted(index)
         return "\n".join(every) if every else "(no keys)"
     if name == "fill":
         count = int(key) if key.isascii() and key.isdigit() else 0
@@ -85,7 +111,8 @@ def run(words):
     return f"unknown command: {name}. Type help for the list."
 
 
-print("kv: ready. Type help for the commands.")
+load()
+print(f"kv: ready, keys {len(index)}. Type help for the commands.")
 while True:
     try:
         # The prompt kv> shows only when you type at a terminal, not when another program sends the commands.

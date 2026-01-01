@@ -101,6 +101,9 @@ log_from("write-it-down", before)
 session("read-it-back", [f"get {key}", "keys"])
 many = pick([3, 4, 5])
 session("fill-it-up", [f"fill {many}", f"get key{many}", f"get key{many + 1}", "fill " + pick(["0", "lots", "2000000"])])
+greeting = pick(["hello", "greeting", "word"])
+session("an-index", [f"set {greeting} " + pick(["привіт", "こんにちは", "olá"]), "set after " + pick(["one", "two"]), "del after"])
+session("an-index", ["del after"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
