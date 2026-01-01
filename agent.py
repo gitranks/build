@@ -1,6 +1,7 @@
 # agent: a coding agent, written from nothing, with no library. You chat with it, it asks a model, and the model may
 # use tools on the files of this folder. Start it: python3 agent.py on macOS and Linux, py agent.py on Windows.
 import json
+import os
 import sys
 import urllib.error
 import urllib.request
@@ -18,6 +19,7 @@ def option(name, fallback):
 
 SERVER = option("--url", "http://127.0.0.1:11434/v1")
 MODEL = option("--model", "qwen2.5:3b")
+ROOT = os.getcwd()  # the folder the agent works in: the one you start it in
 
 # The commands you can type, as /help shows them.
 HELP = "\n".join([
@@ -79,15 +81,34 @@ def failed(error):
 # One message from you, and the model's answer to it.
 def turn(text):
     messages.append({"role": "user", "content": text})
-    answer = ask()
-    calls = answer.get("tool_calls") or []
-    if calls:
+    while True:
+        answer = ask()
+        calls = answer.get("tool_calls") or []
+        if not calls:
+            messages.append({"role": "assistant", "content": answer.get("content")})
+            print(answer.get("content") or "")
+            return
+        messages.append({"role": "assistant", "content": answer.get("content"), "tool_calls": calls})
         for call in calls:
-            print("tool: " + call["function"]["name"] + " " + call["function"]["arguments"])
-        print("agent: the model asked for a tool. The next step runs it.")
-        return
-    messages.append({"role": "assistant", "content": answer.get("content")})
-    print(answer.get("content") or "")
+            messages.append({"role": "tool", "tool_call_id": call["id"], "content": use(call)})
+
+
+# Run one tool the model asked for, and give back what to send the model.
+def use(call):
+    name, given = call["function"]["name"], call["function"]["arguments"]
+    print(f"tool: {name} {given}")
+    if name == "list_files":
+        return list_files()
+    return f"error: there is no tool named {name}"
+
+
+# Every file in the folder, one path a line, but not git's own files or what tools install.
+def list_files():
+    found = []
+    for folder, folders, files in os.walk(ROOT):
+        folders[:] = [name for name in folders if name not in (".git", "node_modules", "__pycache__", ".venv")]
+        found += [os.path.relpath(os.path.join(folder, name), ROOT).replace(os.sep, "/") for name in files]
+    return "\n".join(sorted(found)) or "(the folder is empty)"
 
 
 # Read your lines one at a time. The prompt shows only when you type at a terminal, not when a program sends them.
