@@ -6,10 +6,10 @@ import { createInterface } from "node:readline";
 class MiniError extends Error {}
 type Value = number;
 type Token = { kind: string; text: string };
+type Node = { kind: string; [field: string]: any };
 
 // A number, from its digits.
 function number(text: string): number {
-  if (!/^[0-9]+$/.test(text)) throw new MiniError(`${text} is not a number`);
   return Number(text);
 }
 
@@ -20,18 +20,6 @@ function operate(op: string, a: Value, b: Value): Value {
   if (op === "*") return a * b;
   if (b === 0) throw new MiniError("division by zero");
   return Math.floor(a / b); // a whole number, rounded down: 7 / 2 is 3
-}
-
-// Work out words such as 12 + 30 - 2: a number, then an operator and a number, again and again, from left to right.
-function calculate(words: string[]): Value {
-  let total = number(words[0]);
-  for (let i = 1; i < words.length; i += 2) {
-    const op = words[i];
-    if (!["+", "-", "*", "/"].includes(op)) throw new MiniError(`${op} is not an operator`);
-    if (i + 1 === words.length) throw new MiniError(`${op} needs a number after it`);
-    total = operate(op, total, number(words[i + 1]));
-  }
-  return total;
 }
 
 const SYMBOLS = [ // the symbols mini knows
@@ -49,7 +37,34 @@ function tokenize(source: string): Token[] {
     else if (SYMBOLS.includes(piece)) add(piece, piece);
     else if (!" \t\r".includes(piece[0])) throw new MiniError(`unexpected character ${piece}`);
   }
+  add("end", "the end");
   return tokens;
+}
+
+// The parser reads the tokens into a tree. binary reads an operand, then each operator with the operand after it.
+// Each level of operators has its own function, the loosest first: in 2 + 3 * 4, 3 * 4 is one operand of the +.
+function parse(tokens: Token[]): Node {
+  const peek = (): Token => tokens[0];
+  const advance = (): Token => tokens.shift() as Token; // the next token, taken off the list
+  function binary(ops: string[], operand: () => Node): Node {
+    let left = operand();
+    while (ops.includes(peek().kind)) left = { kind: "binary", op: advance().kind, left, right: operand() };
+    return left;
+  }
+  const expression = (): Node => binary(["+", "-"], factor);
+  const factor = (): Node => binary(["*", "/"], primary);
+  function primary(): Node {
+    const token = advance();
+    if (token.kind === "number") return { kind: "value", value: number(token.text) };
+    throw new MiniError(`expected a value but found ${token.text}`);
+  }
+  return expression();
+}
+
+// Work out the value of a node of the tree.
+function evaluate(node: Node): Value {
+  if (node.kind === "value") return node.value;
+  return operate(node.op, evaluate(node.left), evaluate(node.right));
 }
 
 // Say what went wrong. A mistake in the program is not a crash of mini: anything else is.
@@ -66,7 +81,7 @@ function ask(): void {
 // Run a line that was typed, and say what went wrong if anything did: a mistake does not stop mini.
 function attempt(line: string): void {
   try {
-    console.log(String(calculate(tokenize(line).map((token) => token.text))));
+    console.log(String(evaluate(parse(tokenize(line)))));
   } catch (error) {
     report(error);
   }
