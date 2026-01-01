@@ -10,6 +10,7 @@ sys.stdout.reconfigure(encoding="utf-8", newline="\n")
 HELP = [
     "set <key> <value>     keep the value under the key",
     "get <key>             say the value of the key",
+    "del <key>             delete the key",
     "help                  this list",
     "exit                  stop kv",
 ]
@@ -32,6 +33,13 @@ def run(words):
         if not key:
             return "usage: get <key>"
         return data.get(key, "(not found)")
+    if name == "del":
+        if not key:
+            return "usage: del <key>"
+        if key not in data:
+            return "(not found)"
+        del data[key]
+        return "deleted"
     if name == "help":
         return "\n".join(HELP)
     return f"unknown command: {name}. Type help for the list."
