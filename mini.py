@@ -72,8 +72,9 @@ SYMBOLS = [  # the symbols mini knows
     "%",
     "(", ")",
     "=",
+    ";",
 ]
-WORDS = ["let", "true", "false"]  # mini's own words: they can not name a variable
+WORDS = ["let", "true", "false", "print"]  # mini's own words: they can not name a variable
 
 
 # The tokenizer cuts the source into pieces: a run of spaces, a number, a name and more, or any other one
@@ -113,6 +114,18 @@ def parse(tokens):
         if tokens[0].kind != kind:
             raise MiniError(f"expected {kind} but found {tokens[0].text}")
         return tokens.pop(0)
+    # Statements, with ; between them, up to the end, or up to the } of a block.
+    def statements(end):
+        found = []
+        while True:
+            while accept(";"):
+                pass
+            if accept(end):
+                return found
+            node = statement()
+            found.append(node)
+            if tokens[0].kind not in [";", end]:
+                raise MiniError(f"expected ; but found {tokens[0].text}")
     def statement():
         if accept("let"):
             name = expect("name").text
@@ -122,6 +135,8 @@ def parse(tokens):
             name = tokens.pop(0).text
             tokens.pop(0)
             return Node(kind="set", name=name, value=expression())
+        if accept("print"):
+            return Node(kind="print", value=expression())
         return Node(kind="expr", value=expression())
     def binary(ops, operand):
         left = operand()
@@ -149,10 +164,7 @@ def parse(tokens):
             expect(")")
             return node
         raise MiniError(f"expected a value but found {token.text}")
-    tree = statement()
-    if tokens[0].kind != "end":
-        raise MiniError(f"expected an operator but found {tokens[0].text}")
-    return tree
+    return statements("end")
 
 
 # The variables, by name. top is the program's own scope: its variables, at the top level, outside any function.
@@ -184,6 +196,8 @@ def execute(node, scope):
     elif node.kind == "set":
         value = evaluate(node.value, scope)
         find(scope, node.name)[node.name] = value
+    elif node.kind == "print":
+        print(show(evaluate(node.value, scope)))
     else:
         return evaluate(node.value, scope)
 
@@ -198,10 +212,10 @@ def report(error):
 # Run a line that was typed, and say what went wrong if anything did: a mistake does not stop mini.
 def attempt(line):
     try:
-        node = parse(tokenize(line))
-        value = execute(node, top)
-        if node.kind == "expr":
-            print(show(value))
+        for node in parse(tokenize(line)):
+            value = execute(node, top)
+            if node.kind == "expr":
+                print(show(value))
     except Exception as error:
         report(error)
 
