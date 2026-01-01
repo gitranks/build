@@ -79,6 +79,9 @@ const deep = pick([5, 10, 12]);
 session("limit-the-depth", ["fn fact(n) { if n < 2 { return 1 } return n * fact(n - 1) }", `fact(${deep})`, "fn down(n) { return down(n + 1) }", "down(1)", "fact(3)"]);
 const bad = pick(["c", "missing", "z"]);
 session("errors-name-the-line", ["let a = 1", "let b = a +", `print ${bad}`, `fn f() { return ${bad} }`, "f()", "fn g() { return a }", `print g() + ${bad}`]);
+const upto = pick([5, 6, 7]);
+session("run-a-file", ["# counts with a while loop", "let i = 1", `while i <= ${upto} {`, "  if i % 3 == 0 { print \"fizz\" } else { print i }", "  i = i + 1", "}", "i"], true);
+session("run-a-file", ["let a = 1", "print a", `print a + ${bad}`, "print 3"], true);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

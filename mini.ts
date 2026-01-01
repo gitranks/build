@@ -1,5 +1,6 @@
 // mini: a small programming language and its interpreter, written from nothing, with no library.
 // You type a line of mini, such as 1 + 2 * 3, and it answers 7. Start it with: node mini.ts
+import * as fs from "node:fs";
 import { createInterface } from "node:readline";
 
 let where = 1; // the line mini is at: the line it reads, or the line of the statement it runs
@@ -68,20 +69,23 @@ const WORDS = ["let", "true", "false", "print", "if", "else", "while", "fn", "re
 
 // The tokenizer cuts the source into pieces: a run of spaces, a number, a name and more, or any other one
 // character. It turns each piece into a token, the words of mini, and leaves the spaces out.
-const PIECES = /[ \t\r]+|[0-9]+|[A-Za-z_][A-Za-z_0-9]*|"[^"\n]*"?|[=!<>]=|[\s\S]/gu;
+const PIECES = /[ \t\r]+|#[^\n]*|\n|[0-9]+|[A-Za-z_][A-Za-z_0-9]*|"[^"\n]*"?|[=!<>]=|[\s\S]/gu;
 function tokenize(source: string, line = 1): Token[] {
   const tokens: Token[] = [];
   const add = (kind: string, text: string) => tokens.push({ kind, text, line });
   for (const piece of source.match(PIECES) ?? []) {
     where = line;
-    if (/^[0-9]/.test(piece)) add("number", piece);
+    if (piece === "\n") {
+      add(";", "the end of the line"); // a line end ends a statement, as ; does
+      line++;
+    } else if (/^[0-9]/.test(piece)) add("number", piece);
     else if (/^[A-Za-z_]/.test(piece)) add(WORDS.includes(piece) ? piece : "name", piece);
     else if (piece[0] === '"') {
       if (piece.length < 2 || !piece.endsWith('"')) throw new MiniError("this text has no closing \"");
       add("text", piece.slice(1, -1));
     }
     else if (SYMBOLS.includes(piece)) add(piece, piece);
-    else if (!" \t\r".includes(piece[0])) throw new MiniError(`unexpected character ${piece}`);
+    else if (!" \t\r#".includes(piece[0])) throw new MiniError(`unexpected character ${piece}`); // # starts a comment
   }
   add("end", "the end");
   return tokens;
@@ -293,6 +297,14 @@ function report(error: unknown): void {
   console.log(`error: line ${where}: ${deep ? "too deep" : (error as Error).message}`);
 }
 
+// Run some source: a line typed at the prompt, or a whole file. At the prompt, an expression's value is said.
+function runSource(source: string, line: number, prompt: boolean): void {
+  for (const node of parse(tokenize(source, line))) {
+    const value = execute(node, top);
+    if (prompt && node.kind === "expr" && value !== null) console.log(show(value as Value));
+  }
+}
+
 // The prompt mini> shows only when you type at a terminal, not when another program sends the lines.
 function ask(): void {
   if (process.stdin.isTTY) process.stdout.write("mini> ");
@@ -301,10 +313,7 @@ function ask(): void {
 // Run a line that was typed, and say what went wrong if anything did: a mistake does not stop mini.
 function attempt(text: string, line: number): void {
   try {
-    for (const node of parse(tokenize(text, line))) {
-      const value = execute(node, top);
-      if (node.kind === "expr" && value !== null) console.log(show(value as Value));
-    }
+    runSource(text, line, true);
   } catch (error) {
     report(error);
   }
@@ -324,4 +333,14 @@ function repl(): void {
   });
 }
 
-repl();
+// node mini.ts hello.mini runs the file: no prompt, nothing said but what print says, and an error stops it.
+const file = process.argv[2];
+if (!file) repl();
+else {
+  try {
+    runSource(fs.readFileSync(file, "utf8"), 1, false);
+  } catch (error) {
+    report(error);
+    process.exitCode = 1;
+  }
+}
