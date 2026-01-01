@@ -2,6 +2,7 @@
 # While it runs, open http://localhost:8080 in your browser. Start it with: python3 server.py (python on Windows)
 import socket
 import sys
+import urllib.parse
 
 # Print UTF-8 with plain line ends on every system, each line as soon as it is printed.
 sys.stdout.reconfigure(encoding="utf-8", newline="\n", line_buffering=True)
@@ -20,6 +21,32 @@ REASONS = {
 # An answer of plain text: its status code, the type of its body, and the body.
 def text(body, status=200):
     return {"status": status, "type": "text/plain; charset=utf-8", "body": body}
+
+
+# The routes: each function below answers one method and path, as ROUTES says.
+def home(request):
+    return text("Hello from web. Try /hello?name=Ada and /headers.")
+
+
+def hello(request):
+    name = urllib.parse.parse_qs(request["target"].partition("?")[2]).get("name", [""])[0]
+    return text(f"Hello, {name or 'stranger'}!")
+
+
+ROUTES = {
+    "GET /": home,
+    "GET /hello": hello,
+    "GET /headers": lambda request: text("\n".join(f"{name}: {value}" for name, value in request["headers"].items())),
+}
+
+
+# Find the route for a request. A path with no route gets 404 Not Found.
+def handle(request):
+    pathname = request["target"].partition("?")[0]
+    route = ROUTES.get(f"{request['method']} {pathname}")
+    if route:
+        return route(request)
+    return text(f"no page at {pathname}", 404)
 
 
 # Read a request's head: its first line, then one header a line.
@@ -48,9 +75,7 @@ def send(conn, answer):
 
 # Answer one request, and say so in the log.
 def respond(conn, request):
-    lines = [f"{name}: {value}" for name, value in request["headers"].items()]
-    listing = "\n".join([f"You asked for {request['target']} with {request['method']}. The headers:", *lines])
-    answer = text(listing) if request["target"] == "/" else text(f"no page at {request['target']}", 404)
+    answer = handle(request)
     print(f"web: {request['method']} {request['target']} {answer['status']}")
     send(conn, answer)
 

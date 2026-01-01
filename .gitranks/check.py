@@ -269,6 +269,15 @@ def not_found(port):
 
 
 session("not-found", not_found)
+
+
+def routes(port):
+    ask(port, "routes", [get("/")])
+    ask(port, "routes", [get("/hello?name=" + pick(["Ada", "Grace+Hopper", "Zo%C3%AB"]))])
+    ask(port, "routes", [get("/hello")])
+
+
+session("routes", routes)
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
