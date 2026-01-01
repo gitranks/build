@@ -26,6 +26,7 @@ const REASONS: Record<number, string> = {
   404: "Not Found",
   405: "Method Not Allowed",
   413: "Content Too Large",
+  500: "Internal Server Error",
 };
 
 // A request, as the browser sent it. Its first line is three words, such as: GET /hello HTTP/1.1
@@ -75,6 +76,7 @@ const ROUTES: Record<string, (request: Request) => Answer | Promise<Answer>> = {
       '  <li><a href="/notes">/notes</a> keeps the notes you send</li>',
       '  <li><a href="/about.html">/about.html</a> is a file from the public folder</li>',
       '  <li><a href="/slow">/slow</a> takes a second to answer</li>',
+      '  <li><a href="/crash">/crash</a> fails every time</li>',
       "</ul>",
     ),
   "GET /hello": (request) => {
@@ -99,6 +101,9 @@ const ROUTES: Record<string, (request: Request) => Answer | Promise<Answer>> = {
   "GET /slow": async () => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
     return text("That took a second.");
+  },
+  "GET /crash": () => {
+    throw new Error("this route always fails");
   },
 };
 
@@ -164,7 +169,14 @@ function send(socket: net.Socket, answer: Answer, keep: boolean): void {
 
 // Answer one request, and say so in the log.
 async function respond(socket: net.Socket, request: Request, keep: boolean, number: number): Promise<void> {
-  const answer = await handle(request);
+  // An error in a route is the server's own fault: the browser gets 500, and the server goes on.
+  let answer: Answer;
+  try {
+    answer = await handle(request);
+  } catch (error) {
+    console.log(`web: ${request.method} ${request.target} failed: ${(error as Error).message}`);
+    answer = text("Something went wrong on the server.", 500);
+  }
   console.log(`web: ${request.method} ${request.target} ${answer.status}, request ${number} on its connection`);
   send(socket, answer, keep);
 }

@@ -268,6 +268,10 @@ await session("a-bad-request", async (port) => {
   await ask(port, "a-bad-request", [get("/notes", "POST").replace("Host: localhost", `Host: localhost\r\nContent-Length: ${big}`)], { ...brief, label: `POST /notes with Content-Length: ${big}` });
   await ask(port, "a-bad-request", [get(`/hello?name=${pick(["again", "still+here"])}`)], brief);
 });
+await session("an-error-in-a-route", async (port) => {
+  await ask(port, "an-error-in-a-route", [get("/crash")]);
+  await ask(port, "an-error-in-a-route", [get(`/hello?name=${pick(["after", "still+here"])}`)]);
+});
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
