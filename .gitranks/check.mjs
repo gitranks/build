@@ -14,6 +14,8 @@ const pick = (list) => list[(n = (n * 48271) % 2147483647 || 1) % list.length];
 const version = pick(["2025-11-25", "2025-06-18", "2024-11-05"]);
 const asks = [["initialize", { protocolVersion: version, capabilities: {}, clientInfo: { name: "check", version: "1" } }]];
 asks.push(["notifications/initialized"], ["ping"], ["tools/list"], [pick(["hello", "say/hi", "what/now"])]);
+asks.push(["tools/call", { name: "roll_dice", arguments: { sides: pick([6, 8, 12, 20]) } }]);
+asks.push(["tools/call", { name: pick(["fly", "roll_die", "dice"]), arguments: {} }]);
 
 const compact = (value) => JSON.stringify(value);
 
@@ -135,8 +137,7 @@ await talk("sdk/server.ts", ["--seed", seed], asks);
 // What this step adds is printed whole: the answers it is about (by id), the logs or the prompt. Every other
 // line goes into one line with a fingerprint (a hash), so the print stays short. With --all, every line is printed,
 // after a first line that says this print is only to look at.
-// On the SDK: request 1 is the hello, 3 ping, 4 tools/list, 5 a method it lacks, 6 and later the tool calls.
-const focus = [1, 3, 4, 5, "logged"];
+const focus = [4, 6, 7];
 const every = process.argv[4] === "--all";
 const shown = ([key]) => every || key === "always" || focus.includes(key);
 if (every) console.log("all lines, printed with --all: never send this print, send the one without --all");
