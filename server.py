@@ -2,6 +2,7 @@
 # Your agent starts this program and talks to it in JSON-RPC messages, one message
 # on each line: they come in on standard input and go out on standard output.
 import json
+import secrets
 import sys
 
 # Read and write UTF-8 with plain line ends on every system, Windows too.
@@ -15,6 +16,17 @@ VERSIONS = ["2025-11-25", "2025-06-18"]
 # Logs go to standard error. Standard output is kept for messages alone.
 def log(text: str) -> None:
     print(f"my-server: {text}", file=sys.stderr)
+
+
+# Dice need random numbers. Started with --seed 42 (1 to 2147483646), the numbers are the same on every run.
+seed_text = sys.argv[sys.argv.index("--seed") + 1] if "--seed" in sys.argv[1:-1] else ""
+state = int(seed_text) if seed_text.isdecimal() and 0 < int(seed_text) < 2147483647 else secrets.randbelow(2147483646) + 1
+
+
+def random_below(n: int) -> int:
+    global state
+    state = (state * 48271) % 2147483647
+    return state % n
 
 
 # JSON has one kind of number, so 6.0 is the whole number 6, as JavaScript reads it.
@@ -36,6 +48,19 @@ ROLL_DICE = {
     },
 }
 TOOLS = [ROLL_DICE]
+
+
+# A tool's result is a list of content. Ours is one piece of text.
+def text(words: str) -> dict:
+    return {"content": [{"type": "text", "text": words}]}
+
+
+def roll_dice(args: dict) -> dict:
+    sides = 6 if args.get("sides") is None else args["sides"]
+    return text(f"You rolled {random_below(sides) + 1}.")
+
+
+RUN = {"roll_dice": roll_dice}
 
 
 def fail(code: int, message: str) -> dict:
@@ -61,6 +86,11 @@ def handle(msg: dict) -> dict:
         return {"result": {}}
     if msg["method"] == "tools/list":
         return {"result": {"tools": TOOLS}}
+    if msg["method"] == "tools/call":
+        run = RUN.get(params["name"]) if isinstance(params.get("name"), str) else None
+        if run is None:
+            return fail(-32602, f"Unknown tool: {to_json(params.get('name'))}")
+        return {"result": run({} if params.get("arguments") is None else params["arguments"])}
     return fail(-32601, f"Method not found: {msg['method']}")
 
 

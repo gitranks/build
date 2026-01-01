@@ -34,6 +34,8 @@ lines += [call(2, "initialize", {"protocolVersion": version, "capabilities": {},
 lines += [call("odd", pick(["initialize", "ping", "tools/list"]), pick(["oops", [1, 2], 7]))]
 lines += [call(3, "ping")]
 lines += [call(4, "tools/list")]
+lines += [call(5, "tools/call", {"name": "roll_dice", "arguments": {"sides": pick([6, 8, 12, 20, None])}})]
+lines += [call(6, "tools/call", {"name": pick(["fly", "roll_die", "dice"]), "arguments": {}})]
 
 
 def show(name, file, args, sent):
@@ -78,7 +80,7 @@ show("prompt", "prompt.py", [], [pick(["tools/list", "ping", "hello/again"])])
 # What this step adds is printed whole: the answers it is about (by id, None for id null), the logs or the prompt.
 # Every other line goes into one line with a fingerprint (a hash), so the print stays short. With --all, every line
 # is printed, after a first line that says this print is only to look at.
-focus = {4}
+focus = {5, 6}
 every = sys.argv[3:4] == ["--all"]
 other = [text for key, text in said if not (every or key in focus or key == "always")]
 if every:
