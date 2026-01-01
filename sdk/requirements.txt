@@ -1,0 +1,2 @@
+# The official MCP SDK for Python, at one exact version. pip brings what it needs with it.
+mcp==2.3.0
