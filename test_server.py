@@ -28,3 +28,13 @@ class TasksTest(unittest.TestCase):
         status, body = self.call("POST", "/api/tasks", {"title": "Buy milk"})
         self.assertEqual(status, 201)
         self.assertEqual(body, {"id": 1, "title": "Buy milk", "done": False})
+
+    def test_refuse_a_task_with_no_title(self):
+        status, body = self.call("POST", "/api/tasks", {"done": True})
+        self.assertEqual(status, 400)
+        self.assertEqual(body["field"], "title")
+
+    def test_answer_404_for_a_task_that_is_not_there(self):
+        status, body = self.call("GET", "/api/tasks/7")
+        self.assertEqual(status, 404)
+        self.assertEqual(body["error"], "no task with id 7")

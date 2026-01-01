@@ -297,7 +297,7 @@ def tests(about):
         said.append((about, f"{result}: {name}"))
 
 
-tests("a-first-test")
+tests("test-the-errors")
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
