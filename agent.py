@@ -124,9 +124,26 @@ def list_files():
     return "\n".join(sorted(found)) or "(the folder is empty)"
 
 
+# The full path of a path the model gave, or None when it is outside the folder. A model makes mistakes, and a file
+# it reads may hold words that steer it, so the tools never reach past the folder, where git shows all they changed.
+# Nor into .git: git runs commands its settings there name, and that would get past the question before a command.
+def inside(given):
+    full = os.path.abspath(os.path.join(ROOT, given)) if isinstance(given, str) and given else ""
+    first = full[len(ROOT) + 1:].split(os.sep)[0].lower()
+    return full if full.startswith(ROOT + os.sep) and first != ".git" else None
+
+
+def outside(given):
+    if not isinstance(given, str) or not given:
+        return "error: give the file's path"
+    return f"error: {given} is outside the folder or in its .git, and the tools work only in the folder"
+
+
 # Read a file of the folder.
 def read(given):
-    file = os.path.abspath(os.path.join(ROOT, str(given)))
+    file = inside(given)
+    if not file:
+        return outside(given)
     if not os.path.isfile(file):
         return f"error: there is no file {given}"
     with open(file, encoding="utf-8", errors="replace", newline="") as f:
