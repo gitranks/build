@@ -211,6 +211,17 @@ def check_the_fields(port):
 
 
 session("check-the-fields", check_the_fields)
+
+
+def change_and_delete(port):
+    call(port, "change-and-delete", "POST", "/api/tasks", compact({"title": pick(titles)}))
+    call(port, "change-and-delete", "PATCH", "/api/tasks/1", pick(['{"done":true}', '{"title":"Buy oat milk"}', '{"title":"Call Ada","done":true}']))
+    call(port, "change-and-delete", "PATCH", "/api/tasks/1", pick(['{"title":""}', '{"done":"no"}', '{"title":7}']))
+    call(port, "change-and-delete", "DELETE", "/api/tasks/1")
+    call(port, "change-and-delete", pick(["GET", "DELETE"]), "/api/tasks/1")
+
+
+session("change-and-delete", change_and_delete)
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the

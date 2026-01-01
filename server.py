@@ -30,6 +30,7 @@ TYPES = {
 REASONS = {
     200: "OK",
     201: "Created",
+    204: "No Content",
     301: "Moved Permanently",
     303: "See Other",
     400: "Bad Request",
@@ -174,6 +175,23 @@ def get_task(request):
     return json(task) if task else missing(request)
 
 
+def change_task(request):
+    task = tasks.get(id_of(request))
+    if not task:
+        return missing(request)
+    given = fields(request, False)
+    if "status" in given:
+        return given
+    task.update(given)  # only the fields the body gave
+    return json(task)
+
+
+def delete_task(request):
+    if tasks.pop(id_of(request), None) is None:
+        return missing(request)
+    return {"status": 204, "type": "", "body": ""}
+
+
 ROUTES = {
     "GET /": home,
     "GET /hello": hello,
@@ -186,6 +204,8 @@ ROUTES = {
     "GET /api/tasks": list_tasks,
     "POST /api/tasks": add_task,
     "GET /api/tasks/:id": get_task,
+    "PATCH /api/tasks/:id": change_task,
+    "DELETE /api/tasks/:id": delete_task,
 }
 
 
@@ -247,6 +267,8 @@ def send(conn, answer, keep):
         f"Content-Length: {len(data)}",
         f"Connection: {'keep-alive' if keep else 'close'}",
     ]
+    if answer["status"] == 204:
+        del head[1:3]  # 204 No Content has no body: no Content-Type, no Content-Length
     head += [f"{name}: {value}" for name, value in answer.get("headers", {}).items()]
     conn.sendall(("\r\n".join(head) + "\r\n\r\n").encode() + data)
 
