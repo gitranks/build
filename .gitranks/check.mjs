@@ -189,6 +189,10 @@ await session("routes", async (port) => {
   await ask(port, "routes", [get(`/hello?name=${pick(["Ada", "Grace+Hopper", "Zo%C3%AB"])}`)]);
   await ask(port, "routes", [get("/hello")]);
 });
+await session("moved-and-not-allowed", async (port) => {
+  await ask(port, "moved-and-not-allowed", [get(pick(["/hello", "/", "/headers"]), pick(["POST", "PUT", "DELETE"]))]);
+  await ask(port, "moved-and-not-allowed", [get("/old")]);
+});
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

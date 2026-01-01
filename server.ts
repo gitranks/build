@@ -9,7 +9,9 @@ const PORT = at > 0 ? Number(process.argv[at + 1]) : 8080;
 // The words that go with each status code on an answer's first line.
 const REASONS: Record<number, string> = {
   200: "OK",
+  301: "Moved Permanently",
   404: "Not Found",
+  405: "Method Not Allowed",
 };
 
 // A request, as the browser sent it. Its first line is three words, such as: GET /hello HTTP/1.1
@@ -33,6 +35,7 @@ const ROUTES: Record<string, (request: Request) => Answer> = {
     return text(`Hello, ${name || "stranger"}!`);
   },
   "GET /headers": (request) => text([...request.headers].map(([name, value]) => `${name}: ${value}`).join("\n")),
+  "GET /old": () => ({ ...text("This page has moved to /hello.", 301), headers: { Location: "/hello" } }),
 };
 
 // Find the route for a request. A path with no route gets 404 Not Found.
@@ -40,6 +43,9 @@ function handle(request: Request): Answer {
   const [pathname] = request.target.split("?");
   const route = ROUTES[`${request.method} ${pathname}`];
   if (route) return route(request);
+  // The path has routes, but for other methods: 405, and the Allow header names them.
+  const methods = Object.keys(ROUTES).filter((key) => key.split(" ")[1] === pathname).map((key) => key.split(" ")[0]);
+  if (methods.length) return { ...text(`${request.method} is not allowed at ${pathname}`, 405), headers: { Allow: methods.join(", ") } };
   return text(`no page at ${pathname}`, 404);
 }
 
@@ -65,6 +71,7 @@ function send(socket: net.Socket, answer: Answer): void {
     `Content-Length: ${bytes.length}`,
     "Connection: close",
   ];
+  for (const [name, value] of Object.entries(answer.headers ?? {})) head.push(`${name}: ${value}`);
   socket.write(head.join("\r\n") + "\r\n\r\n");
   socket.end(bytes);
 }
