@@ -9,11 +9,13 @@ const HELP = [
   "files                         list the CSV files in the inbox folder",
   "run                           read every file in the inbox",
   "rows                          show the rows the last run kept, 10 at most",
+  "bad                           show the lines the last run dropped and why, 10 at most",
   "help                          this list",
   "exit                          stop pipe",
 ];
 
 let rows: string[][] = []; // the rows the last run kept
+let bad: string[] = []; // the lines it dropped, and why
 
 // The names of the CSV files in the inbox folder, in order.
 function inbox(): string[] {
@@ -44,6 +46,20 @@ function some(list: string[], none: string): string {
   return [...list.slice(0, 10), ...(list.length > 10 ? [`and ${list.length - 10} more`] : [])].join("\n");
 }
 
+// A number with at most two decimals, such as 42 or 42.5, in hundredths: 4200, 4250. null for anything else.
+function hundredths(text: string): number | null {
+  if (!/^[0-9]{1,9}(\.[0-9]{1,2})?$/.test(text)) return null;
+  const [whole, part = ""] = text.split(".");
+  return Number(whole) * 100 + Number(part.padEnd(2, "0"));
+}
+
+// Why a line's fields can not be trusted, or null when they look right: a time, a host, a metric and a value.
+function problem(fields: string[]): string | null {
+  if (fields.length !== 4) return "not 4 fields";
+  if (hundredths(fields[3]) === null) return "bad value";
+  return null;
+}
+
 // Read one file's lines and keep their rows.
 function load(name: string): string {
   const all = lines(name);
@@ -51,7 +67,9 @@ function load(name: string): string {
   for (let i = 0; i < all.length; i++) {
     const fields = split(all[i]);
     if (!fields) continue;
-    rows.push(fields);
+    const why = problem(fields);
+    if (why) bad.push(`${name} line ${i + 1}: ${why}: ${trim(all[i])}`);
+    else rows.push(fields);
   }
   return `${name}: lines ${all.length}, rows ${rows.length - kept}`;
 }
@@ -59,6 +77,7 @@ function load(name: string): string {
 function run(): string {
   const names = inbox();
   rows = [];
+  bad = [];
   for (const name of names) console.log(load(name));
   return `run: files ${names.length}, rows ${rows.length}`;
 }
@@ -78,6 +97,7 @@ function command(words: string[]): string {
   }
   if (name === "run") return run();
   if (name === "rows") return some(rows.map((fields) => fields.join(" | ")), "(no rows)");
+  if (name === "bad") return some(bad, "(no bad lines)");
   if (name === "help") return HELP.join("\n");
   return `unknown command: ${name}. Type help for the list.`;
 }
