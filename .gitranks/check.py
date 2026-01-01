@@ -93,6 +93,29 @@ def session(about, path, commands):
         said.append((about if code == 3 else "always", f"pipe stopped with code {code}"))
 
 
+# Run the build's own tests with the runner that comes with Python, and keep how many passed and which failed.
+def tests(about):
+    if stopped:
+        return
+    timeout = min(15, deadline - time.monotonic())
+    if timeout < 0.5:
+        said.append(("always", "the check ran out of time: the tests took too long"))
+        return
+    said.append((about, "ran the tests"))
+    code, _, stderr = start([sys.executable, "-m", "unittest", "-v"], ".", "", timeout)
+    # A test that was skipped did not pass: it counts as failed.
+    results = [m for m in (re.match(r"(\w+) \(.*\)\s*\.\.\. (\w+)", line) for line in stderr.splitlines()) if m]
+    failed = [m[1] for m in results if m[2] != "ok"]
+    if code is None:
+        said.append(("always", "the tests did not end within 15 seconds"))
+    elif not results:
+        said.append((about, "no test ran: is test_pipe.py there?"))
+    else:
+        said.append((about, f"tests: {len(results) - len(failed)} passed, {len(failed)} failed"))
+    for name in failed[:5]:
+        said.append((about, f"failed: {name}"))
+
+
 session("what-you-will-build", box("start", {}), [])
 session("read-commands", box("commands", {}), ["help", "", pick(["fly", "hello", "remember"]) + " away", "exit", "help"])
 session("list-the-inbox", box("no-inbox", None), ["files"])
@@ -180,6 +203,7 @@ session("alert-on-a-limit", hot, [f"alert {metric}", f"alert {metric} " + pick([
 with open(os.path.join(hot, "inbox", "b.csv"), "w", encoding="utf-8", newline="") as out:
     out.write(csv([row(at(t), h, metric, x) for t, h, x in [("10:01:35", host, "99.5"), ("10:02:05", other, "100")]]))
 session("alert-on-a-limit", hot, ["run", f"alert {metric} 50"])
+tests("test-the-cleaning")
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
