@@ -11,6 +11,13 @@ at = sys.argv.index("--port") if "--port" in sys.argv else 0
 PORT = int(sys.argv[at + 1]) if 0 < at < len(sys.argv) - 1 else 8080
 
 
+# Read a request's head: its first line, then one header a line.
+def parse(head):
+    first, *lines = head.split("\r\n")
+    method, target, version = first.split(" ")
+    return {"method": method, "target": target, "version": version}
+
+
 # Write an answer: the status line, one header a line, a blank line, then the body.
 def send(conn, body):
     data = body.encode()
@@ -37,10 +44,9 @@ def serve(conn):
     while b"\r\n\r\n" not in data:
         data = more(conn, data)
     end = data.index(b"\r\n\r\n")
-    # Print the head as it came, one line at a time.
-    for line in data[:end].decode("latin-1").split("\r\n"):
-        print(f"web: > {line}")
-    send(conn, "Hello from your web server!")
+    request = parse(data[:end].decode("latin-1"))
+    print(f"web: {request['method']} {request['target']}")
+    send(conn, f"You asked for {request['target']} with {request['method']}.")
 
 
 # One connection, closed at the end. A browser may hang up at any time: that ends its connection, never the server.

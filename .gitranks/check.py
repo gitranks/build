@@ -244,6 +244,15 @@ def read_the_request(port):
 
 session("read-the-request", read_the_request)
 session("answer-by-hand", lambda port: ask(port, "answer-by-hand", [get(pick(["/", "/index.html", "/dogs"]))]))
+
+
+def read_the_request_line(port):
+    ask(port, "read-the-request-line", [get(pick(["/hello?name=Ada", "/cats/1", "/a/b/c"]))])
+    target = pick(["/notes", "/x?y=z", "/"])
+    ask(port, "read-the-request-line", [get(target, pick(["DELETE", "PUT", "POST"]))])
+
+
+session("read-the-request-line", read_the_request_line)
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
