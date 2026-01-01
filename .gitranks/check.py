@@ -307,6 +307,15 @@ def show_notes_safely(port):
 
 
 session("show-notes-safely", show_notes_safely)
+
+
+def serve_files(port):
+    ask(port, "serve-files", [get("/style.css")], show=lambda line, i: i < 1)
+    ask(port, "serve-files", [get("/about.html")], show=lambda line, i: line.startswith("<h1>"))
+    ask(port, "serve-files", [get(pick(["/logo.png", "/missing.html", "/style.css.old"]))])
+
+
+session("serve-files", serve_files)
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the

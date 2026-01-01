@@ -1,6 +1,7 @@
 # web: a web server, written from nothing on a plain socket, with no library.
 # While it runs, open http://localhost:8080 in your browser. Start it with: python3 server.py (python on Windows)
 import html
+import os
 import socket
 import sys
 import urllib.parse
@@ -11,6 +12,15 @@ sys.stdout.reconfigure(encoding="utf-8", newline="\n", line_buffering=True)
 # The port: 8080, or the number after --port. With --port 0 the system picks a free one.
 at = sys.argv.index("--port") if "--port" in sys.argv else 0
 PORT = int(sys.argv[at + 1]) if 0 < at < len(sys.argv) - 1 else 8080
+# The folder whose files anyone may ask for: public, beside this file.
+PUBLIC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "public")
+# The type of each kind of file, for the Content-Type header: the browser reads it to know what it got.
+TYPES = {
+    ".html": "text/html; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
+    ".js": "text/javascript; charset=utf-8",
+    ".png": "image/png",
+}
 
 # The words that go with each status code on an answer's first line.
 REASONS = {
@@ -32,6 +42,7 @@ def page(title, *lines):
     top = [
         "<!doctype html>",
         f"<title>{title}</title>",
+        '<link rel="stylesheet" href="/style.css">',
         f"<h1>{title}</h1>",
     ]
     return {"status": 200, "type": "text/html; charset=utf-8", "body": "\n".join([*top, *lines, ""])}
@@ -51,6 +62,7 @@ def home(request):
         '  <li><a href="/headers">/headers</a> lists what your browser sent</li>',
         '  <li><a href="/old">/old</a> has moved to /hello</li>',
         '  <li><a href="/notes">/notes</a> keeps the notes you send</li>',
+        '  <li><a href="/about.html">/about.html</a> is a file from the public folder</li>',
         "</ul>",
     )
 
@@ -91,6 +103,15 @@ ROUTES = {
 }
 
 
+# A file from the public folder, such as /style.css. Its type comes from the end of its name.
+def file(pathname):
+    name = os.path.normpath(os.path.join(PUBLIC, urllib.parse.unquote(pathname).lstrip("/")))
+    if not os.path.isfile(name):
+        return text(f"no page at {pathname}", 404)
+    with open(name, "rb") as found:
+        return {"status": 200, "type": TYPES.get(os.path.splitext(name)[1], "application/octet-stream"), "body": found.read()}
+
+
 # Find the route for a request. A path with no route gets 404 Not Found.
 def handle(request):
     pathname = request["target"].partition("?")[0]
@@ -101,6 +122,8 @@ def handle(request):
     methods = [key.split(" ")[0] for key in ROUTES if key.split(" ")[1] == pathname]
     if methods:
         return {**text(f"{request['method']} is not allowed at {pathname}", 405), "headers": {"Allow": ", ".join(methods)}}
+    if request["method"] == "GET":
+        return file(pathname)
     return text(f"no page at {pathname}", 404)
 
 
