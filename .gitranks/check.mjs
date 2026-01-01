@@ -48,6 +48,7 @@ function session(about, lines, file) {
 }
 
 session("what-you-will-build", []);
+session("read-lines", [pick(["hello", "good morning", "hi there"]), "", "   " + pick(["mini", "one  two", "x"]) + "  ", "exit", "after exit"]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
