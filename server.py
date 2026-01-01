@@ -15,6 +15,7 @@ PORT = int(sys.argv[at + 1]) if 0 < at < len(sys.argv) - 1 else 8080
 REASONS = {
     200: "OK",
     301: "Moved Permanently",
+    303: "See Other",
     404: "Not Found",
     405: "Method Not Allowed",
 }
@@ -35,6 +36,10 @@ def page(title, *lines):
     return {"status": 200, "type": "text/html; charset=utf-8", "body": "\n".join([*top, *lines, ""])}
 
 
+# The notes people send from the form on /notes, kept in memory while the server runs.
+notes = []
+
+
 # The routes: each function below answers one method and path, as ROUTES says.
 def home(request):
     return page(
@@ -44,6 +49,7 @@ def home(request):
         '  <li><a href="/hello?name=Ada">/hello?name=Ada</a> says hello</li>',
         '  <li><a href="/headers">/headers</a> lists what your browser sent</li>',
         '  <li><a href="/old">/old</a> has moved to /hello</li>',
+        '  <li><a href="/notes">/notes</a> keeps the notes you send</li>',
         "</ul>",
     )
 
@@ -57,11 +63,29 @@ def old(request):
     return {**text("This page has moved to /hello.", 301), "headers": {"Location": "/hello"}}
 
 
+def notes_page(request):
+    shown = [f"<p>{note}</p>" for note in notes]
+    form = '<form method="post" action="/notes"><input name="note" autofocus> <button>Add a note</button></form>'
+    return page("Notes", *shown, form)
+
+
+def add_note(request):
+    # A form sends its fields as a body such as note=Buy+milk%21: a space as +, other signs as % and two digits.
+    form = urllib.parse.parse_qs(request["body"].decode("utf-8", "replace"))
+    note = form.get("note", [""])[0].strip()
+    if note:
+        notes.append(note)
+    # 303 sends the browser on to /notes, so a reload asks for that page, and never sends the form twice.
+    return {**text("Saved. See /notes.", 303), "headers": {"Location": "/notes"}}
+
+
 ROUTES = {
     "GET /": home,
     "GET /hello": hello,
     "GET /headers": lambda request: text("\n".join(f"{name}: {value}" for name, value in request["headers"].items())),
     "GET /old": old,
+    "GET /notes": notes_page,
+    "POST /notes": add_note,
 }
 
 
@@ -87,7 +111,7 @@ def parse(head):
     for line in lines:
         name, colon, value = line.partition(":")
         headers[name.strip().lower()] = value.strip()
-    return {"method": method, "target": target, "version": version, "headers": headers}
+    return {"method": method, "target": target, "version": version, "headers": headers, "body": b""}
 
 
 # Write an answer: the status line, one header a line, a blank line, then the body.
@@ -125,6 +149,11 @@ def serve(conn):
         data = more(conn, data)
     end = data.index(b"\r\n\r\n")
     request = parse(data[:end].decode("latin-1"))
+    # The Content-Length header says how many bytes of body come after the head.
+    size = int(request["headers"].get("content-length", "0"))
+    while len(data) < end + 4 + size:
+        data = more(conn, data)
+    request["body"] = data[end + 4 : end + 4 + size]
     respond(conn, request)
 
 

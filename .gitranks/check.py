@@ -288,6 +288,16 @@ def status_codes(port):
 
 session("moved-and-not-allowed", status_codes)
 session("send-html", lambda port: ask(port, "send-html", [get("/")], show=lambda line, i: re.search(r"<title>|<p>", line)))
+note = pick(["Buy+milk%21", "Call+Grace", "Caf%C3%A9+at+3"])
+
+
+def read_a_body(port):
+    head, body = post("/notes", f"note={note}").split("\r\n\r\n")
+    ask(port, "read-a-body", [head + "\r\n\r\n", body], label=f"POST /notes with the body note={note}, in two pieces")
+    ask(port, "read-a-body", [get("/notes")], show=lambda line, i: line.startswith("<p>"))
+
+
+session("read-a-body", read_a_body)
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
