@@ -184,6 +184,11 @@ await session("not-found", async (port) => {
   await ask(port, "not-found", [get("/")], { show: (line, i) => i < 1 });
   await ask(port, "not-found", [get(pick(["/cats", "/nothing/here", "/hello"]))]);
 });
+await session("routes", async (port) => {
+  await ask(port, "routes", [get("/")]);
+  await ask(port, "routes", [get(`/hello?name=${pick(["Ada", "Grace+Hopper", "Zo%C3%AB"])}`)]);
+  await ask(port, "routes", [get("/hello")]);
+});
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

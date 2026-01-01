@@ -25,6 +25,24 @@ type Answer = { status: number; type: string; body: string | Buffer; headers?: R
 // An answer of plain text.
 const text = (body: string, status = 200): Answer => ({ status, type: "text/plain; charset=utf-8", body });
 
+// The routes: a method and a path, each with the function that answers it.
+const ROUTES: Record<string, (request: Request) => Answer> = {
+  "GET /": () => text("Hello from web. Try /hello?name=Ada and /headers."),
+  "GET /hello": (request) => {
+    const name = new URLSearchParams(request.target.split("?")[1]).get("name");
+    return text(`Hello, ${name || "stranger"}!`);
+  },
+  "GET /headers": (request) => text([...request.headers].map(([name, value]) => `${name}: ${value}`).join("\n")),
+};
+
+// Find the route for a request. A path with no route gets 404 Not Found.
+function handle(request: Request): Answer {
+  const [pathname] = request.target.split("?");
+  const route = ROUTES[`${request.method} ${pathname}`];
+  if (route) return route(request);
+  return text(`no page at ${pathname}`, 404);
+}
+
 // Read a request's head: its first line, then one header a line.
 function parse(head: string): Request {
   const [first, ...lines] = head.split("\r\n");
@@ -53,9 +71,7 @@ function send(socket: net.Socket, answer: Answer): void {
 
 // Answer one request, and say so in the log.
 function respond(socket: net.Socket, request: Request): void {
-  const lines = [...request.headers].map(([name, value]) => `${name}: ${value}`);
-  const listing = [`You asked for ${request.target} with ${request.method}. The headers:`, ...lines].join("\n");
-  const answer = request.target === "/" ? text(listing) : text(`no page at ${request.target}`, 404);
+  const answer = handle(request);
   console.log(`web: ${request.method} ${request.target} ${answer.status}`);
   send(socket, answer);
 }
