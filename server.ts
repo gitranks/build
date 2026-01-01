@@ -14,6 +14,20 @@ function log(text: string): void {
   console.error(`my-server: ${text}`);
 }
 
+// The tools this server offers. The agent reads each description to decide when to use it.
+const ROLL_DICE = {
+  name: "roll_dice",
+  description: "Roll a die and say the number. Use it whenever the person asks for a dice roll.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      sides: { type: "integer", minimum: 2, maximum: 100, description: "How many sides the die has. 6 if not given." },
+    },
+    additionalProperties: false,
+  },
+};
+const TOOLS = [ROLL_DICE];
+
 function fail(code: number, message: string): Answer {
   return { error: { code, message } };
 }
@@ -28,12 +42,13 @@ function handle(msg: Message): Answer {
     return {
       result: {
         protocolVersion: VERSIONS.includes(asked) ? asked : VERSIONS[0],
-        capabilities: {},
+        capabilities: { tools: {} },
         serverInfo: { name: "my-server", version: "0.1.0" },
       },
     };
   }
   if (msg.method === "ping") return { result: {} };
+  if (msg.method === "tools/list") return { result: { tools: TOOLS } };
   return fail(-32601, `Method not found: ${msg.method}`);
 }
 
