@@ -14,6 +14,7 @@ HELP = [
     "get <key>             say the value of the key",
     "del <key>             delete the key",
     "keys                  list every key",
+    "fill <count>          set key1, key2 and on, up to the count",
     "help                  this list",
     "exit                  stop kv",
 ]
@@ -73,6 +74,12 @@ def run(words):
     if name == "keys":
         every = sorted(scan())
         return "\n".join(every) if every else "(no keys)"
+    if name == "fill":
+        count = int(key) if key.isascii() and key.isdigit() else 0
+        if count < 1 or count > 1000000:
+            return "usage: fill <count>, a whole number from 1 to 1000000"
+        write([["set", f"key{i}", f"value {i}"] for i in range(1, count + 1)])
+        return f"OK, set key1 to key{count}"
     if name == "help":
         return "\n".join(HELP)
     return f"unknown command: {name}. Type help for the list."
