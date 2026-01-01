@@ -26,8 +26,17 @@ async function ask(): Promise<Message> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ model: MODEL, messages }),
   });
-  const answer = await response.json();
+  // A server that failed may answer with no JSON, or with its reason as plain text.
+  const answer = (await response.json().catch(() => null)) ?? {};
+  const why = typeof answer.error === "string" ? answer.error : answer.error?.message;
+  if (!answer.choices) throw new Error(`the model server said: ${why || `status ${response.status}`}`);
   return answer.choices[0].message;
+}
+
+// What to tell you when a message got no answer.
+function failed(error: Error): string {
+  if (error.message !== "fetch failed") return error.message;
+  return "no answer from the model server. Is it running? README.md says how to start it.";
 }
 
 // One message from you, and the model's answer to it.
@@ -44,11 +53,17 @@ async function line(prompt: string): Promise<string | undefined> {
   return (await lines.next()).value;
 }
 
-console.log("agent: ready. Type a message, or /help for the commands.");
+console.log(`agent: ready, model ${MODEL}. Type a message, or /help for the commands.`);
 for (let said = await line("you> "); said !== undefined; said = await line("you> ")) {
   const text = said.trim();
   if (text === "/exit") break;
   if (text === "/help") console.log(HELP);
-  else if (text) await turn(text);
+  else if (text) {
+    try {
+      await turn(text);
+    } catch (error) {
+      console.log(`agent: ${failed(error as Error)}`);
+    }
+  }
 }
 process.exit(0);

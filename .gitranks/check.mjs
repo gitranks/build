@@ -121,6 +121,13 @@ await session("what-you-will-build", []);
 await session("read-messages", ["/help", "", pick(["hello", "hi there", "good morning"]), "/exit", "/help"]);
 const question = pick(["what is 6 times 7?", "what is the capital of France?", "is water wet?"]);
 await session("ask-the-model", [pick(["hello", "hi there", "good morning"]), question], [heard, heard]);
+// A free port with nothing on it: no model server answers there.
+const spare = createServer();
+await new Promise((done) => spare.listen(0, "127.0.0.1", done));
+const nowhere = `http://127.0.0.1:${spare.address().port}/v1`;
+await new Promise((done) => spare.close(done));
+await session("when-the-model-fails", ["are you there?"], [], { url: nowhere });
+await session("when-the-model-fails", ["hello"], [heard], { model: pick(["llama9", "qwen-huge", "gpt-local"]) });
 server.close();
 try {
   fs.rmSync(top, { recursive: true, force: true });
