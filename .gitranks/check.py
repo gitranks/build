@@ -89,6 +89,7 @@ session("exact-whole-numbers", [f"-{x} / {y}", f"-{x} % {y}", f"{x} % -{y}", pic
 name = pick(["x", "count", "total_2"])
 session("let-and-names", [f"let {name} = {a} * 2", f"{name} + 1", pick(["y", "size", "Count"]), "let = 5", f"let {pick(['7', '+'])} = 1"])
 session("change-a-variable", [f"let {name} = {a}", f"{name} = {name} + {b}", f"{name}", f"{pick(['y', 'size'])} = 1"])
+session("true-and-false", [f"{a} < {b}", f"{a} + 1 == {a + 1}", f"{b} <= {b}", f"{a} >= {a + 1}", "true != false", "1 == true", "true + 1", "1 < 2 < 3"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the

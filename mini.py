@@ -32,6 +32,20 @@ def number(text):
 
 # Work out one operator on two values.
 def operate(op, a, b):
+    if op == "==":
+        return type(a) is type(b) and a == b  # in mini, 1 and true are not the same
+    if op == "!=":
+        return not operate("==", a, b)
+    if type(a) is not int or type(b) is not int:
+        raise MiniError(f"{op} needs numbers, not {show(a)} and {show(b)}")
+    if op == "<":
+        return a < b
+    if op == "<=":
+        return a <= b
+    if op == ">":
+        return a > b
+    if op == ">=":
+        return a >= b
     if op == "+":
         return checked(a + b)
     if op == "-":
@@ -45,18 +59,26 @@ def operate(op, a, b):
     return a % b  # the remainder has the sign of b, so a is always (a / b) * b + a % b
 
 
+# How mini writes a value: true and false in small letters.
+def show(value):
+    if type(value) is bool:
+        return "true" if value else "false"
+    return str(value)
+
+
 SYMBOLS = [  # the symbols mini knows
+    "==", "!=", "<=", ">=", "<", ">",
     "+", "-", "*", "/",
     "%",
     "(", ")",
     "=",
 ]
-WORDS = ["let"]  # mini's own words: they can not name a variable
+WORDS = ["let", "true", "false"]  # mini's own words: they can not name a variable
 
 
 # The tokenizer cuts the source into pieces: a run of spaces, a number, a name and more, or any other one
 # character. It turns each piece into a token, the words of mini, and leaves the spaces out.
-PIECES = r"[ \t\r]+|[0-9]+|[A-Za-z_][A-Za-z_0-9]*|[\s\S]"
+PIECES = r"[ \t\r]+|[0-9]+|[A-Za-z_][A-Za-z_0-9]*|[=!<>]=|[\s\S]"
 
 
 def tokenize(source):
@@ -107,6 +129,8 @@ def parse(tokens):
             left = Node(kind="binary", op=tokens.pop(0).kind, left=left, right=operand())
         return left
     def expression():
+        return binary(["==", "!=", "<", "<=", ">", ">="], term)
+    def term():
         return binary(["+", "-"], factor)
     def factor():
         return binary(["*", "/", "%"], unary)
@@ -116,6 +140,8 @@ def parse(tokens):
         token = tokens.pop(0)
         if token.kind == "number":
             return Node(kind="value", value=number(token.text))
+        if token.kind in ["true", "false"]:
+            return Node(kind="value", value=token.kind == "true")
         if token.kind == "name":
             return Node(kind="name", name=token.text)
         if token.kind == "(":
@@ -175,7 +201,7 @@ def attempt(line):
         node = parse(tokenize(line))
         value = execute(node, top)
         if node.kind == "expr":
-            print(value)
+            print(show(value))
     except Exception as error:
         report(error)
 
