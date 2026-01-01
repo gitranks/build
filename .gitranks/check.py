@@ -125,6 +125,10 @@ first = csv([f"# {metric} of {host}", "time,host,metric,value", row(at("10:00:05
 session("read-the-rows", box("rows", {"a.csv": first, "b.csv": csv([row(at("10:01:05"), other, metric, v())])}), ["run", "run"])
 shown = csv(["TIME,HOST,METRIC,VALUE", row(at("10:02:05"), host, metric, v()) + ", "])
 session("show-the-rows", box("show", {"a.csv": first + shown}), ["rows", "run", "rows"])
+fields = pick(["web-1,cpu", "only one field", f"{host},{metric},1,2"])
+value = pick(["n/a", "-3", "12.345", "1e3", ""])
+checked = [row(at("10:00:05"), host, metric, v()), "", f"{at('10:00:15')},{fields}", row(at("10:00:25"), host, metric, value), row(at("10:00:35"), host, metric, pick(["0.5", "100", "3.10"]))]
+session("check-each-row", box("check", {"a.csv": csv(checked)}), ["bad", "run", "bad"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the

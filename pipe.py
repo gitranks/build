@@ -2,6 +2,7 @@
 # It reads the CSV files in its inbox, cleans their rows, counts them minute by minute and answers questions.
 # Start it with: python pipe.py
 import os
+import re
 import sys
 
 # Read and write UTF-8 with plain line ends on every system, Windows too.
@@ -13,12 +14,14 @@ HELP = [
     "files                         list the CSV files in the inbox folder",
     "run                           read every file in the inbox",
     "rows                          show the rows the last run kept, 10 at most",
+    "bad                           show the lines the last run dropped and why, 10 at most",
     "help                          this list",
     "exit                          stop pipe",
 ]
 
 rows = []  # the rows the last run kept
 BLANKS = " \t\r"  # spaces, tabs and the \r of a Windows line end: what strip takes off, as in TypeScript
+bad = []  # the lines it dropped, and why
 
 
 # The names of the CSV files in the inbox folder, in order.
@@ -49,6 +52,21 @@ def some(lines, none):
     return "\n".join(lines[:10] + ([f"and {len(lines) - 10} more"] if len(lines) > 10 else []))
 
 
+# A number with at most two decimals, such as 42 or 42.5, in hundredths: 4200, 4250. None for anything else.
+def hundredths(text):
+    if not re.fullmatch(r"[0-9]{1,9}(\.[0-9]{1,2})?", text):
+        return None
+    whole, _, part = text.partition(".")
+    return int(whole) * 100 + int(part.ljust(2, "0"))
+
+
+# Why a line's fields can not be trusted, or None when they look right: a time, a host, a metric and a value.
+def problem(fields):
+    if len(fields) != 4:
+        return "not 4 fields"
+    return "bad value" if hundredths(fields[3]) is None else None
+
+
 # Read one file's lines and keep their rows.
 def load(name):
     every = lines(name)
@@ -57,13 +75,18 @@ def load(name):
         fields = split(every[i])
         if not fields:
             continue
-        rows.append(fields)
+        why = problem(fields)
+        if why:
+            bad.append(f"{name} line {i + 1}: {why}: {every[i].strip(BLANKS)}")
+        else:
+            rows.append(fields)
     return f"{name}: lines {len(every)}, rows {len(rows) - kept}"
 
 
 def run():
     names = inbox()
     rows.clear()
+    bad.clear()
     for name in names:
         print(load(name))
     return f"run: files {len(names)}, rows {len(rows)}"
@@ -81,6 +104,8 @@ def command(words):
         return run()
     if name == "rows":
         return some([" | ".join(fields) for fields in rows], "(no rows)")
+    if name == "bad":
+        return some(bad, "(no bad lines)")
     if name == "help":
         return "\n".join(HELP)
     return f"unknown command: {name}. Type help for the list."
