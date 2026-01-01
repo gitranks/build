@@ -11,6 +11,7 @@ const typed = createInterface({ input: process.stdin });
 typed.on("line", (line) => {
   const [method, ...rest] = line.trim().split(" ");
   if (!method) return;
+  if (method.startsWith("{")) return send(line.trim()); // sent just as you typed it
   let params;
   try {
     params = rest.length ? JSON.parse(rest.join(" ")) : undefined;
