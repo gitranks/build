@@ -151,6 +151,8 @@ names = {
     "b.csv": csv([row(at("10:00:05"), host, metric, "99"), row(at("10:00:45"), host, metric, "44")]),
 }
 session("names-times-and-duplicates", box("names", names), ["run", "rows", "bad"])
+minute = [row(at("10:00:05"), host, metric, "10"), row(at("10:00:59"), host, metric, "20"), row(at("10:01:00"), host, metric, "30"), row(at("10:00:30"), other, metric, "40")]
+session("count-by-minute", box("minute", {"a.csv": csv(minute)}), ["run", "run"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the

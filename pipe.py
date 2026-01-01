@@ -26,6 +26,13 @@ HELP = [
 # A clean row: its time in seconds since 1970 in UTC, its host and metric, and its value in hundredths.
 Row = namedtuple("Row", "time host metric value")
 
+
+# The store: each window by its key, which is the metric, the host and the minute's first second. A window holds
+# the rows of one metric on one host in one minute: their count, sum, smallest and largest value.
+store = {
+    "windows": {},
+}
+
 rows = []  # the rows the last run kept
 BLANKS = " \t\r"  # spaces, tabs and the \r of a Windows line end: what strip takes off, as in TypeScript
 bad = []  # the lines it dropped, and why
@@ -113,6 +120,16 @@ def number(value):
     return re.sub(r"\.?0+$", "", f"{value // 100}.{value % 100:02d}")
 
 
+# Add a row to the window of its minute. The minute's first second is the row's time, rounded down to 60.
+def add(row):
+    key = f"{row.metric} {row.host} {row.time - row.time % 60}"
+    w = store["windows"].setdefault(key, {"count": 0, "sum": 0, "min": row.value, "max": row.value})
+    w["count"] += 1
+    w["sum"] += row.value
+    w["min"] = min(w["min"], row.value)
+    w["max"] = max(w["max"], row.value)
+
+
 # Read one file's lines and keep their rows.
 def load(name):
     every = lines(name)
@@ -126,6 +143,7 @@ def load(name):
             bad.append(f"{name} line {i + 1}: {row}: {every[i].strip(BLANKS)}")
         else:
             rows.append(row)
+            add(row)
     return f"{name}: lines {len(every)}, kept {len(rows) - kept}, dropped {len(bad) - dropped}"
 
 
@@ -134,9 +152,10 @@ def run():
     rows.clear()
     bad.clear()
     seen.clear()
+    store["windows"] = {}  # each run counts every file again
     for name in names:
         print(load(name))
-    return f"run: files {len(names)}, kept {len(rows)}, dropped {len(bad)}"
+    return f"run: files {len(names)}, kept {len(rows)}, dropped {len(bad)}, windows {len(store['windows'])}"
 
 
 # Do one command, its name and then its words, and give back the answer.
