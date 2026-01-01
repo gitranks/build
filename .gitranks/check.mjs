@@ -87,6 +87,18 @@ const times = [
 session("check-the-times", box("times", { "a.csv": csv(times.map((time) => row(time, host, metric, v()))) }), ["run", "bad"]);
 const values = [pick(["007", "0042.0"]), pick(["42.5", "0.05", "3.10"]), pick(["100.00", "999999999.99", "0"])];
 session("clean-the-values", box("clean", { "a.csv": csv(values.map((x, i) => row(at(`10:00:0${i + 5}`), host, metric, x))) }), ["run", "rows"]);
+const zone = pick(["12:00:20+02:00", "04:30:20-05:30", "15:45:20+05:45"]);
+const names = {
+  "a.csv": "\uFEFF" + csv([
+    "time,host,metric,value",
+    row(at("10:00:05"), ` ${host.toUpperCase()} `, ` ${metric.toUpperCase()}`, "41"),
+    row(`${day} ${zone}`, host, metric, "43"),
+    row(at("10:00:15"), pick(["web_1", "-web", "wéb-1"]), metric, "1"),
+    row(at("10:00:25"), host, pick(["cpu%", "1cpu", "c-p-u"]), "1"),
+  ]),
+  "b.csv": csv([row(at("10:00:05"), host, metric, "99"), row(at("10:00:45"), host, metric, "44")]),
+};
+session("names-times-and-duplicates", box("names", names), ["run", "rows", "bad"]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

@@ -19,6 +19,7 @@ type Row = { time: number; host: string; metric: string; value: number };
 
 let rows: Row[] = []; // the rows the last run kept
 let bad: string[] = []; // the lines it dropped, and why
+let seen = new Set<string>(); // the time, host and metric of each row it kept
 
 // The names of the CSV files in the inbox folder, in order.
 function inbox(): string[] {
@@ -28,7 +29,8 @@ function inbox(): string[] {
 
 // A file's whole lines. A last piece with no line end may still be being written, so it waits for a later run.
 function lines(name: string): string[] {
-  const all = fs.readFileSync(`inbox/${name}`, "utf8").split("\n");
+  // A file saved by Excel may start with an invisible byte order mark, U+FEFF: it is not part of the first line.
+  const all = fs.readFileSync(`inbox/${name}`, "utf8").replace(/^\uFEFF/, "").split("\n");
   all.pop();
   return all;
 }
@@ -40,7 +42,7 @@ const trim = (text: string) => text.replace(/^[ \t\r]+|[ \t\r]+$/g, "");
 function split(line: string): string[] | null {
   const text = trim(line);
   if (!text || text.startsWith("#") || text.toLowerCase().startsWith("time,")) return null;
-  return text.split(",");
+  return text.split(",").map(trim);
 }
 
 // At most 10 lines of a list, and how many more there are.
@@ -50,13 +52,16 @@ function some(list: string[], none: string): string {
 }
 
 // A time such as 2026-11-27T10:00:05Z in seconds since 1970, or null when it is not a real time from 2000 to 2099.
+// A time in another zone, such as 2026-11-27 12:00:05+02:00, is moved to UTC. A time with no zone is not trusted.
 function seconds(text: string): number | null {
-  const m = /^(20[0-9]{2})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})Z$/.exec(text);
+  const m = /^(20[0-9]{2})-([0-9]{2})-([0-9]{2})[T ]([0-9]{2}):([0-9]{2}):([0-9]{2})(Z|[+-][0-9]{2}:[0-9]{2})$/.exec(text);
   if (!m) return null;
   const [y, mo, d, h, mi, s] = m.slice(1, 7).map(Number);
   const date = new Date(Date.UTC(y, mo - 1, d, h, mi, s));
   if (date.getUTCMonth() !== mo - 1 || date.getUTCDate() !== d || h > 23 || mi > 59 || s > 59) return null;
-  return date.getTime() / 1000;
+  if (m[7] === "Z") return date.getTime() / 1000;
+  const shift = (Number(m[7].slice(1, 3)) * 60 + Number(m[7].slice(4))) * 60;
+  return date.getTime() / 1000 + (m[7][0] === "+" ? -shift : shift);
 }
 
 // A number with at most two decimals, such as 42 or 42.5, in hundredths: 4200, 4250. null for anything else.
@@ -69,9 +74,13 @@ function hundredths(text: string): number | null {
 // Check a line's fields and clean them: a clean row, or why the line is dropped.
 function clean(fields: string[]): Row | string {
   if (fields.length !== 4) return "not 4 fields";
-  const [time, host, metric, value] = [seconds(fields[0]), fields[1], fields[2], hundredths(fields[3])];
+  const [time, host, metric, value] = [seconds(fields[0]), fields[1].toLowerCase(), fields[2].toLowerCase(), hundredths(fields[3])];
   if (time === null) return "bad time";
+  if (!/^[a-z0-9][a-z0-9.-]*$/.test(host)) return "bad host";
+  if (!/^[a-z][a-z0-9_]*$/.test(metric)) return "bad metric";
   if (value === null) return "bad value";
+  if (seen.has(`${time} ${host} ${metric}`)) return "duplicate";
+  seen.add(`${time} ${host} ${metric}`);
   return { time, host, metric, value };
 }
 
@@ -99,6 +108,7 @@ function run(): string {
   const names = inbox();
   rows = [];
   bad = [];
+  seen = new Set();
   for (const name of names) console.log(load(name));
   return `run: files ${names.length}, kept ${rows.length}, dropped ${bad.length}`;
 }
