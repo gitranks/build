@@ -23,7 +23,11 @@ for line in sys.stdin:
     method, _, params = line.strip().partition(" ")
     if not method:
         continue
-    params = json.loads(params) if params else None
+    try:
+        params = json.loads(params) if params else None
+    except ValueError:
+        print('Those params are not JSON. Try: initialize {"protocolVersion": "2025-11-25"}')
+        continue
     request = {"jsonrpc": "2.0", "method": method}
     if not method.startswith("notifications/"):  # a notification has no id and gets no answer
         next_id += 1
