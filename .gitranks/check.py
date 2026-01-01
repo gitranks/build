@@ -202,6 +202,12 @@ session("the-agent-loop", ["what files are here?", "use another tool"], [call("l
 missing = pick(["todo.txt", "plan.md", "list.txt"])
 reads = [call("read_file", {"path": "notes.txt"}), heard, call("read_file", {"path": missing}), heard, lambda ask: [("read_file", '{"path": notes.txt}')], heard]
 session("read-a-file", ["what is in my notes?", f"read {missing}", "read it in a broken way"], reads)
+# A file next to the folder, outside it.
+with open(os.path.join(top, "secret.txt"), "wb") as f:
+    f.write(("the secret is " + pick(["owl", "kite", "moon"]) + "\n").encode())
+away = pick(["/secret.txt", "src/../../secret.txt"])
+in_git = [call("read_file", {"path": away}), heard, call("read_file", {"path": pick([".git/config", ".GIT/hooks/pre-commit"])}), heard]
+session("stay-in-the-folder", ["read the secret", "read it another way", "read git's settings"], [call("read_file", {"path": "../secret.txt"}), heard, *in_git])
 server.shutdown()
 shutil.rmtree(top, ignore_errors=True)
 
