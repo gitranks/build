@@ -2,6 +2,8 @@
 # You type a line of mini, such as 1 + 2 * 3, and it answers 7. Start it with: python mini.py
 import re
 import sys
+from types import SimpleNamespace as Token  # a token: Token(kind="number", text="12")
+Node = Token  # and a node of a tree is made the same way: Node(kind="binary", op="+", left=..., right=...)
 
 # Read and write UTF-8 with plain line ends on every system, Windows too.
 sys.stdin.reconfigure(encoding="utf-8")
@@ -46,6 +48,32 @@ def calculate(words):
     return total
 
 
+SYMBOLS = [  # the symbols mini knows
+    "+", "-", "*", "/",
+]
+
+
+# The tokenizer cuts the source into pieces: a run of spaces, a number, a name and more, or any other one
+# character. It turns each piece into a token, the words of mini, and leaves the spaces out.
+PIECES = r"[ \t\r]+|[0-9]+|[\s\S]"
+
+
+def tokenize(source):
+    tokens = []
+
+    def add(kind, text):
+        tokens.append(Token(kind=kind, text=text))
+
+    for piece in re.findall(PIECES, source):
+        if re.match("[0-9]", piece):
+            add("number", piece)
+        elif piece in SYMBOLS:
+            add(piece, piece)
+        elif piece[0] not in " \t\r":
+            raise MiniError(f"unexpected character {piece}")
+    return tokens
+
+
 # Say what went wrong. A mistake in the program is not a crash of mini: anything else is.
 def report(error):
     if not isinstance(error, MiniError):
@@ -56,7 +84,7 @@ def report(error):
 # Run a line that was typed, and say what went wrong if anything did: a mistake does not stop mini.
 def attempt(line):
     try:
-        print(calculate(line.split()))
+        print(calculate([token.text for token in tokenize(line)]))
     except Exception as error:
         report(error)
 
