@@ -177,6 +177,15 @@ def told(ask):
 
 name = pick(["Ada", "Grace", "Linus", "Margaret"])
 session("remember-the-conversation", [f"my name is {name}", "what is my name?", "/reset", "what is my name?"], [told, told, told])
+
+
+def first(ask):
+    m = ask["messages"][0] if ask["messages"] else {}
+    return f"I got messages: {len(ask['messages'])}. The first, from {m.get('role')}, says: {one_line(m.get('content'))}"
+
+
+who = pick(["who are you?", "what do you do?", "where do you work?"])
+session("a-system-prompt", [who, "/reset", who], [first, first])
 server.shutdown()
 shutil.rmtree(top, ignore_errors=True)
 
