@@ -141,6 +141,11 @@ function times(row: number[], m: Matrix): number[] {
   for (let i = 0; i < row.length; i++) for (let j = 0; j < out.length; j++) out[j] += row[i] * m[i][j];
   return out;
 }
+function dot(a: number[], b: number[]): number {
+  let sum = 0;
+  for (let i = 0; i < a.length; i++) sum += a[i] * b[i];
+  return sum;
+}
 
 // Scores to chances: each becomes positive, and together they add up to 1.
 function softmax(scores: number[]): number[] {
@@ -174,11 +179,27 @@ function surprise(part: number[]): number {
   return sum / (part.length - 1);
 }
 
+// The gradient: for each number of the model, how fast the loss grows when that number grows.
+function backward(f: Pass, y: number[]): Record<string, Matrix> {
+  const g: Record<string, Matrix> = {};
+  for (const name in model) g[name] = model[name].map((row) => row.map(() => 0));
+  const n = f.x.length;
+  const dz: number[][] = [];
+  for (let t = 0; t < n; t++) {
+    const dl = f.p[t].map((p, j) => (p - (j === y[t] ? 1 : 0)) / n); // the chances, less 1 for the right one
+    for (let i = 0; i < D; i++) for (let j = 0; j < V; j++) g.out[i][j] += f.z[t][i] * dl[j];
+    dz.push(model.out.map((row) => dot(row, dl)));
+  }
+  for (let t = 0; t < n; t++) for (let i = 0; i < D; i++) g.emb[f.x[t]][i] += dz[t][i];
+  return g;
+}
+
 // Nudge one number of each table up and down a little, and see how fast the loss moves: the gradient, measured.
 // It is the number in row 0, column 1; in emb, row 0 is the first character of the alphabet, most often the space.
 function gradcheck(): string {
   const x = train.slice(0, T);
   const y = train.slice(1, T + 1);
+  const g = backward(forward(x), y);
   const lines: string[] = [];
   for (const name in model) {
     const m = model[name];
@@ -188,7 +209,7 @@ function gradcheck(): string {
     m[0][1] = keep - 0.00001;
     const down = lossOf(forward(x), y);
     m[0][1] = keep;
-    lines.push(`${name}: ${fmt((up - down) / 0.00002, 6)} by a nudge`);
+    lines.push(`${name}: ${fmt(g[name][0][1], 6)} by the formula, ${fmt((up - down) / 0.00002, 6)} by a nudge`);
   }
   return lines.join("\n");
 }
