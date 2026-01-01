@@ -101,6 +101,7 @@ ROUNDS = 10
 # One message from you, and the model's answer to it.
 def turn(text):
     messages.append({"role": "user", "content": text})
+    last = ""
     for _ in range(ROUNDS):
         answer = ask()
         calls = answer.get("tool_calls") or []
@@ -108,6 +109,12 @@ def turn(text):
             messages.append({"role": "assistant", "content": answer.get("content")})
             print(answer.get("content") or "")
             return
+        # The same tools with the same arguments as the round before: the model is going round in circles.
+        asked = json.dumps([call["function"] for call in calls])
+        if asked == last:
+            print("agent: the model asked for the same thing twice in a row, so I stopped. Say how to go on.")
+            return
+        last = asked
         messages.append({"role": "assistant", "content": answer.get("content"), "tool_calls": calls})
         for call in calls:
             messages.append({"role": "tool", "tool_call_id": call["id"], "content": cut(use(call))})
