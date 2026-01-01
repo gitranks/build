@@ -9,6 +9,7 @@ const lines = [];
 const pick = (list) => list[(n = (n * 48271) % 2147483647 || 1) % list.length];
 const call = (id, method, params) => JSON.stringify({ jsonrpc: "2.0", id, method, params });
 lines.push(call(1, pick(["hello", "say/hi", "what/now", "roll/please"])), "this line is not JSON");
+lines.push(JSON.stringify({ jsonrpc: "2.0", method: pick(["notifications/hello", "notifications/ready"]) }));
 
 function show(name, file, args, input) {
   const run = spawnSync(process.execPath, [file, ...args], { input: input.map((l) => l + "\n").join(""), encoding: "utf8", timeout: 5000 });

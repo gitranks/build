@@ -4,10 +4,25 @@
 import { createInterface } from "node:readline";
 
 type Message = { jsonrpc?: unknown; id?: unknown; method?: unknown; params?: any };
+type Answer = { result: object } | { error: { code: number; message: string } };
 
 // Logs go to standard error. Standard output is kept for messages alone.
 function log(text: string): void {
   console.error(`my-server: ${text}`);
+}
+
+function fail(code: number, message: string): Answer {
+  return { error: { code, message } };
+}
+
+// Every request gets exactly one answer.
+function handle(msg: Message): Answer {
+  return fail(-32601, `Method not found: ${msg.method}`);
+}
+
+// One message is one line of JSON, so each answer is written as one line.
+function send(message: object): void {
+  process.stdout.write(JSON.stringify(message) + "\n");
 }
 
 log("started");
@@ -22,5 +37,7 @@ input.on("line", (line) => {
     return;
   }
   log(`got ${msg.method}`);
+  if (!("id" in msg)) return; // a notification: it gets no answer
+  send({ jsonrpc: "2.0", id: msg.id, ...handle(msg) });
 });
 input.on("close", () => log("standard input closed, stopping"));
