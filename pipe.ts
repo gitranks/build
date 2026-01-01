@@ -8,6 +8,7 @@ import { createInterface } from "node:readline";
 const HELP = [
   "files                         list the CSV files in the inbox folder, and how many lines of each are loaded",
   "run                           load the new lines of every file in the inbox",
+  "crash <flushes>               run, but stop after that many flushes, as a crash would",
   "rows                          show the rows the last run kept, 10 at most",
   "bad                           show the lines the last run dropped and why, 10 at most",
   "query <metric> [host]         a metric's numbers, minute by minute",
@@ -44,6 +45,7 @@ let seen = new Set<string>(); // the time, host and metric of each row it kept
 // Clean rows wait in the buffer. A flush adds them to their windows and saves the store, in one write.
 let buffer: Row[] = [];
 let flushes = 0;
+let crashAt = 0; // crash stops pipe right after this flush
 
 // The names of the CSV files in the inbox folder, in order.
 function inbox(): string[] {
@@ -143,6 +145,7 @@ function flush(): void {
   buffer = [];
   save();
   flushes += 1;
+  if (flushes === crashAt) process.exit(3);
 }
 
 // Read one file's lines and keep their rows.
@@ -168,12 +171,13 @@ function load(name: string): string {
   return `${name}: lines ${from + 1} to ${all.length}, kept ${rows.length - kept}, dropped ${bad.length - dropped}`;
 }
 
-function run(): string {
+function run(crash: number): string {
   const names = inbox();
   rows = [];
   bad = [];
   seen = new Set();
   flushes = 0;
+  crashAt = crash;
   for (const name of names) console.log(load(name));
   return `run: files ${names.length}, kept ${rows.length}, dropped ${bad.length}, windows ${Object.keys(store.windows).length}, flushes ${flushes}`;
 }
@@ -185,13 +189,14 @@ function ask(): void {
 
 // Do one command, its name and then its words, and give back the answer.
 function command(words: string[]): string {
-  const [name] = words;
+  const [name, arg] = words;
   if (name === "files") {
     const names = inbox();
     if (!names.length) return "(no CSV files in the inbox folder)";
     return names.map((name) => `${name}: lines ${lines(name).length}, loaded ${store.files[name] ?? 0}`).join("\n");
   }
-  if (name === "run") return run();
+  if (name === "run") return run(0);
+  if (name === "crash") return /^[1-9][0-9]{0,5}$/.test(arg ?? "") ? run(Number(arg)) : "usage: crash <flushes>, a whole number";
   if (name === "rows") return some(rows.map((r) => `${when(r.time)} ${r.host} ${r.metric} ${number(r.value)}`), "(no rows)");
   if (name === "bad") return some(bad, "(no bad lines)");
   if (name === "query") return words[1] ? query(words[1], words[2]) : "usage: query <metric> [host]";

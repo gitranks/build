@@ -111,6 +111,10 @@ said.push(["save-the-store", `store.json.new is there: ${fs.existsSync(join(keep
 const many = pick([5, 8, 9]);
 const batched = Array.from({ length: many }, (_, i) => row(at(`10:00:${String(i * 5).padStart(2, "0")}`), host, metric, String(i + 1)));
 session("write-in-batches", box("batch", { "a.csv": csv(batched), "b.csv": csv(["# nothing here yet"]) }), ["run", "run"]);
+const six = csv(["05", "15", "25", "35", "45", "55"].map((s) => row(at(`10:00:${s}`), host, metric, s)));
+const crashed = box("crash", { "a.csv": six });
+session("crash-in-the-middle", crashed, [pick(["crash 0", "crash x", "crash"]), "crash 1"]);
+session("crash-in-the-middle", crashed, ["run", `query ${metric}`]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
