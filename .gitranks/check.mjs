@@ -196,6 +196,12 @@ await session("moved-and-not-allowed", async (port) => {
 await session("send-html", async (port) => {
   await ask(port, "send-html", [get("/")], { show: (line) => /<title>|<p>/.test(line) });
 });
+const note = pick(["Buy+milk%21", "Call+Grace", "Caf%C3%A9+at+3"]);
+await session("read-a-body", async (port) => {
+  const [head, body] = post("/notes", `note=${note}`).split("\r\n\r\n");
+  await ask(port, "read-a-body", [head + "\r\n\r\n", body], { label: `POST /notes with the body note=${note}, in two pieces` });
+  await ask(port, "read-a-body", [get("/notes")], { show: (line) => line.startsWith("<p>") });
+});
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

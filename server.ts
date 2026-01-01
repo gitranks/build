@@ -10,6 +10,7 @@ const PORT = at > 0 ? Number(process.argv[at + 1]) : 8080;
 const REASONS: Record<number, string> = {
   200: "OK",
   301: "Moved Permanently",
+  303: "See Other",
   404: "Not Found",
   405: "Method Not Allowed",
 };
@@ -20,6 +21,7 @@ type Request = {
   target: string;
   version: string;
   headers: Map<string, string>;
+  body: Buffer;
 };
 // An answer: its status code, the type of its body, the body, and any other headers.
 type Answer = { status: number; type: string; body: string | Buffer; headers?: Record<string, string> };
@@ -37,6 +39,9 @@ function page(title: string, ...lines: string[]): Answer {
   return { status: 200, type: "text/html; charset=utf-8", body: [...top, ...lines, ""].join("\n") };
 }
 
+// The notes people send from the form on /notes, kept in memory while the server runs.
+const notes: string[] = [];
+
 // The routes: a method and a path, each with the function that answers it.
 const ROUTES: Record<string, (request: Request) => Answer> = {
   "GET /": () =>
@@ -47,6 +52,7 @@ const ROUTES: Record<string, (request: Request) => Answer> = {
       '  <li><a href="/hello?name=Ada">/hello?name=Ada</a> says hello</li>',
       '  <li><a href="/headers">/headers</a> lists what your browser sent</li>',
       '  <li><a href="/old">/old</a> has moved to /hello</li>',
+      '  <li><a href="/notes">/notes</a> keeps the notes you send</li>',
       "</ul>",
     ),
   "GET /hello": (request) => {
@@ -55,6 +61,19 @@ const ROUTES: Record<string, (request: Request) => Answer> = {
   },
   "GET /headers": (request) => text([...request.headers].map(([name, value]) => `${name}: ${value}`).join("\n")),
   "GET /old": () => ({ ...text("This page has moved to /hello.", 301), headers: { Location: "/hello" } }),
+  "GET /notes": () =>
+    page(
+      "Notes",
+      ...notes.map((note) => `<p>${note}</p>`),
+      '<form method="post" action="/notes"><input name="note" autofocus> <button>Add a note</button></form>',
+    ),
+  "POST /notes": (request) => {
+    // A form sends its fields as a body such as note=Buy+milk%21: a space as +, other signs as % and two digits.
+    const note = new URLSearchParams(request.body.toString("utf8")).get("note")?.trim();
+    if (note) notes.push(note);
+    // 303 sends the browser on to /notes, so a reload asks for that page, and never sends the form twice.
+    return { ...text("Saved. See /notes.", 303), headers: { Location: "/notes" } };
+  },
 };
 
 // Find the route for a request. A path with no route gets 404 Not Found.
@@ -78,7 +97,7 @@ function parse(head: string): Request {
     const colon = line.indexOf(":");
     headers.set(line.slice(0, colon).trim().toLowerCase(), line.slice(colon + 1).trim());
   }
-  return { method, target, version, headers };
+  return { method, target, version, headers, body: Buffer.alloc(0) };
 }
 
 // Write an answer: the status line, one header a line, a blank line, then the body.
@@ -110,7 +129,11 @@ function serve(socket: net.Socket): void {
     const end = bytes.indexOf("\r\n\r\n");
     if (end < 0) return; // the head is not all here yet
     const request = parse(bytes.subarray(0, end).toString("latin1"));
-    bytes = bytes.subarray(end + 4);
+    // The Content-Length header says how many bytes of body come after the head.
+    const size = Math.max(Number(request.headers.get("content-length")) || 0, 0);
+    if (bytes.length < end + 4 + size) return; // the body is not all here yet
+    request.body = bytes.subarray(end + 4, end + 4 + size);
+    bytes = bytes.subarray(end + 4 + size);
     respond(socket, request);
   });
 }
