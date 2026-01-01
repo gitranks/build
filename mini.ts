@@ -60,6 +60,7 @@ const SYMBOLS = [ // the symbols mini knows
   "=",
   ";",
   "{", "}",
+  ",",
 ];
 const WORDS = ["let", "true", "false", "print", "if", "else", "while", "fn"]; // mini's own words: not names of variables
 
@@ -137,8 +138,12 @@ function parse(tokens: Token[]): Node[] {
     if (accept("fn")) {
       const name = expect("name").text;
       expect("(");
-      expect(")");
-      return { kind: "fn", name, body: block() };
+      const params: string[] = [];
+      while (!accept(")")) {
+        if (params.length) expect(",");
+        params.push(expect("name").text);
+      }
+      return { kind: "fn", name, params, body: block() };
     }
     return { kind: "expr", value: expression() };
   }
@@ -155,8 +160,12 @@ function parse(tokens: Token[]): Node[] {
   function call(): Node {
     let node = primary();
     while (accept("(")) {
-      expect(")");
-      node = { kind: "call", callee: node };
+      const args: Node[] = [];
+      while (!accept(")")) {
+        if (args.length) expect(",");
+        args.push(expression());
+      }
+      node = { kind: "call", callee: node, args };
     }
     return node;
   }
@@ -183,6 +192,7 @@ const top: Scope = new Map();
 // The scope that holds a name. A scope is the variables a statement can see.
 function find(scope: Scope, name: string): Scope {
   if (scope.has(name)) return scope;
+  if (top.has(name)) return top; // a call's own variable first, then the program's
   throw new MiniError(`${name} is not defined`);
 }
 
@@ -193,8 +203,11 @@ function evaluate(node: Node, scope: Scope): Value {
   if (node.kind === "negate") return operate("-", 0, evaluate(node.value, scope));
   if (node.kind === "call") {
     const fn = evaluate(node.callee, scope);
+    const args = node.args.map((arg: Node) => evaluate(arg, scope));
     if (typeof fn !== "object" || fn === null) throw new MiniError(`${quote(fn)} is not a function`);
-    run(fn.body, top);
+    if (args.length !== fn.params.length) throw new MiniError(`${fn.name} takes (${fn.params.join(", ")})`);
+    const locals: Scope = new Map(fn.params.map((param, i) => [param, args[i]]));
+    run(fn.body, locals);
     return null;
   }
   return operate(node.op, evaluate(node.left, scope), evaluate(node.right, scope));
