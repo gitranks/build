@@ -261,6 +261,14 @@ def read_the_headers(port):
 
 
 session("read-the-headers", read_the_headers)
+
+
+def not_found(port):
+    ask(port, "not-found", [get("/")], show=lambda line, i: i < 1)
+    ask(port, "not-found", [get(pick(["/cats", "/nothing/here", "/hello"]))])
+
+
+session("not-found", not_found)
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the

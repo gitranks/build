@@ -10,6 +10,17 @@ sys.stdout.reconfigure(encoding="utf-8", newline="\n", line_buffering=True)
 at = sys.argv.index("--port") if "--port" in sys.argv else 0
 PORT = int(sys.argv[at + 1]) if 0 < at < len(sys.argv) - 1 else 8080
 
+# The words that go with each status code on an answer's first line.
+REASONS = {
+    200: "OK",
+    404: "Not Found",
+}
+
+
+# An answer of plain text: its status code, the type of its body, and the body.
+def text(body, status=200):
+    return {"status": status, "type": "text/plain; charset=utf-8", "body": body}
+
 
 # Read a request's head: its first line, then one header a line.
 def parse(head):
@@ -24,15 +35,24 @@ def parse(head):
 
 
 # Write an answer: the status line, one header a line, a blank line, then the body.
-def send(conn, body):
-    data = body.encode()
+def send(conn, answer):
+    data = answer["body"].encode() if isinstance(answer["body"], str) else answer["body"]
     head = [
-        "HTTP/1.1 200 OK",
-        "Content-Type: text/plain; charset=utf-8",
+        f"HTTP/1.1 {answer['status']} {REASONS[answer['status']]}",
+        f"Content-Type: {answer['type']}",
         f"Content-Length: {len(data)}",
         "Connection: close",
     ]
     conn.sendall(("\r\n".join(head) + "\r\n\r\n").encode() + data)
+
+
+# Answer one request, and say so in the log.
+def respond(conn, request):
+    lines = [f"{name}: {value}" for name, value in request["headers"].items()]
+    listing = "\n".join([f"You asked for {request['target']} with {request['method']}. The headers:", *lines])
+    answer = text(listing) if request["target"] == "/" else text(f"no page at {request['target']}", 404)
+    print(f"web: {request['method']} {request['target']} {answer['status']}")
+    send(conn, answer)
 
 
 # Add the next piece of the request's bytes. An empty piece: the browser closed the connection.
@@ -50,9 +70,7 @@ def serve(conn):
         data = more(conn, data)
     end = data.index(b"\r\n\r\n")
     request = parse(data[:end].decode("latin-1"))
-    lines = [f"{name}: {value}" for name, value in request["headers"].items()]
-    print(f"web: {request['method']} {request['target']}")
-    send(conn, "\n".join([f"You asked for {request['target']} with {request['method']}. The headers:", *lines]))
+    respond(conn, request)
 
 
 # One connection, closed at the end. A browser may hang up at any time: that ends its connection, never the server.
