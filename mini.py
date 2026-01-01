@@ -239,6 +239,12 @@ def find(scope, name):
     raise MiniError(f"{name} is not defined")
 
 
+# mini's own limit on calls inside calls. A recursion that never stops ends here, the same in every language.
+DEEPEST = 50
+depth = 0
+sys.setrecursionlimit(2000)  # room for 50 calls of mini, each several calls of Python with blocks inside
+
+
 # A return statement raises this, and the call it is in catches it, with the value.
 class Return(Exception):
     def __init__(self, value):
@@ -247,6 +253,7 @@ class Return(Exception):
 
 # Work out the value of a node of the tree.
 def evaluate(node, scope):
+    global depth
     if node.kind == "value":
         return node.value
     if node.kind == "name":
@@ -260,11 +267,16 @@ def evaluate(node, scope):
             raise MiniError(f"{quote(fn)} is not a function")
         if len(args) != len(fn.params):
             raise MiniError(f"{fn.name} takes ({', '.join(fn.params)})")
+        if depth == DEEPEST:
+            raise MiniError(f"too deep: more than {DEEPEST} calls inside each other")
+        depth += 1
         value = None
         try:
             run(fn.body, dict(zip(fn.params, args)))
         except Return as signal:
             value = signal.value
+        finally:
+            depth -= 1
         return value
     return operate(node.op, evaluate(node.left, scope), evaluate(node.right, scope))
 
@@ -304,9 +316,11 @@ def truth(value, word):  # the answer to an if or a while must be true or false
 
 # Say what went wrong. A mistake in the program is not a crash of mini: anything else is.
 def report(error):
-    if not isinstance(error, MiniError):
+    # A program can nest too deep for the language mini is written in too, with no call: 1 + (1 + (1 + ...)).
+    deep = isinstance(error, RecursionError)
+    if not isinstance(error, MiniError) and not deep:
         raise error
-    print(f"error: {error}")
+    print(f"error: {'too deep' if deep else error}")
 
 
 # Run a line that was typed, and say what went wrong if anything did: a mistake does not stop mini.
