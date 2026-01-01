@@ -77,6 +77,9 @@ logFrom("survive-a-crash", cut);
 session("survive-a-crash", [`get ${saved}`, `get ${saved}2`, `set ${saved}2 back`, `get ${saved}2`]);
 fs.appendFileSync(FILE, pick(['{"set": "oops"}', "this line is not JSON", '["set","half"]']) + "\n");
 session("skip-a-damaged-record", [`set ${saved} ${pick(["done", "later"])}`, `get ${saved}`, "stats"]);
+session("compact-safely", [`set ${pick(["mode", "theme"])} dark`, "crash compact"]);
+said.push(["compact-safely", `data.log.new is there: ${fs.existsSync(FILE + ".new") ? "yes" : "no"}`]);
+session("compact-safely", ["compact", "stats"]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

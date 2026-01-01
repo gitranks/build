@@ -13,6 +13,7 @@ const HELP = [
   "stats                 count the keys, the records and the bytes",
   "compact               keep only the latest record of each key",
   "crash <key> <value>   set, but stop halfway, as a power cut would",
+  "crash compact         compact, but stop halfway",
   "help                  this list",
   "exit                  stop kv",
 ];
@@ -86,11 +87,15 @@ function read(key: string): string | undefined {
 }
 
 // Copy the latest record of each key into a new file, then put the new file in the log's place.
-function compact(): string {
+function compact(crash: boolean): string {
   const was = `records ${records}, bytes ${end}`;
   const log = fs.readFileSync(FILE);
   const keep = Buffer.concat([...index.values()].map(({ start, size }) => log.subarray(start, start + size)));
-  fs.writeFileSync(FILE + ".new", keep);
+  const fd = fs.openSync(FILE + ".new", "w");
+  fs.writeSync(fd, crash ? keep.subarray(0, Math.floor(keep.length / 2)) : keep);
+  if (crash) process.exit(3);
+  fs.fsyncSync(fd); // the new file is whole on the disk before it takes the log's place
+  fs.closeSync(fd);
   fs.renameSync(FILE + ".new", FILE);
   index.clear();
   end = records = 0;
@@ -137,7 +142,8 @@ function run(words: string[]): string {
   if (name === "stats") {
     return `keys ${index.size}, records ${records}, old records ${records - index.size}, bytes ${end}`;
   }
-  if (name === "compact") return records ? compact() : "the log is empty";
+  if (name === "compact") return records ? compact(false) : "the log is empty";
+  if (name === "crash" && key === "compact" && !value) return records ? compact(true) : "the log is empty";
   if (name === "crash") {
     if (!key || !value) return "usage: crash <key> <value>";
     const line = JSON.stringify(["set", key, value]) + "\n";
@@ -148,6 +154,11 @@ function run(words: string[]): string {
   return `unknown command: ${name}. Type help for the list.`;
 }
 
+// A compaction that stopped before its rename left its new file behind. The log is whole, so the new file goes.
+if (fs.existsSync(FILE + ".new")) {
+  fs.rmSync(FILE + ".new");
+  console.log("kv: removed a compaction that did not finish. The log is as it was before it.");
+}
 load();
 console.log(`kv: ready, keys ${index.size}. Type help for the commands.`);
 ask();
