@@ -1,6 +1,7 @@
 # The quiet check of a step: it writes a short text of its own, made from the seed, starts lm on it, sends it
 # commands and prints what lm answered. It decides nothing: GitRanks compares the print with what it expects.
 import hashlib
+import json
 import os
 import re
 import shutil
@@ -99,8 +100,24 @@ groups.append(("look-back", ["train 50", "loss", f"seed {seed}", f"write {start}
 groups.append(("attention", ["attend " + pick(["the cat", "a dog", "my hat"]), "gradcheck"]))
 groups.append(("where-each-character-is", ["shapes", "gradcheck", "loss"]))
 groups.append(("temperature", [f"seed {seed}", "temp 0.5", f"write {start}", f"seed {seed}", "temp 2", f"write {start}", "temp 0", f"next {start}"]))
+groups.append(("save-and-load", ["load", "loss", "save"]))
 groups.append(("read-commands", ["help", "", pick(["fly", "hello", "learn"]) + " away", "exit", "help"]))
 session(groups)
+session([("what-you-will-build", []), ("save-and-load", ["load", "loss"])])
+# A model.json from another text, then one with a row of a table cut short: load must refuse both.
+MODEL = os.path.join(folder, "model.json")
+try:
+    with open(MODEL, encoding="utf-8") as file:
+        saved = json.load(file)
+    with open(MODEL, "w", encoding="utf-8") as file:
+        json.dump({**saved, "alphabet": saved["alphabet"] + "q"}, file)
+    session([("what-you-will-build", []), ("save-and-load", ["load"])])
+    saved["out"][1].pop()
+    with open(MODEL, "w", encoding="utf-8") as file:
+        json.dump(saved, file)
+    session([("what-you-will-build", []), ("save-and-load", ["load"])])
+except (OSError, ValueError, KeyError, TypeError, AttributeError, IndexError):
+    said.append(("save-and-load", "the check could not read a model.json with its tables after save"))
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the

@@ -1,5 +1,6 @@
 # lm: a tiny language model, written from nothing, with no library.
 # It reads a text, learns which character comes next, and writes text of its own. Start it with: python lm.py
+import json
 import math
 import os
 import re
@@ -25,12 +26,15 @@ HELP = [
     "train <steps>         learn from the text, one short piece at each step",
     "attend <text>         how much each character looks at the ones before it",
     "temp <number>         how bold write is: below 1 safer, above 1 wilder",
+    "save                  keep what the model learned in model.json",
+    "load                  read model.json back",
     "help                  this list",
     "exit                  stop lm",
 ]
 
 # The text lm learns from. --text picks another file.
 FILE = sys.argv[sys.argv.index("--text") + 1] if "--text" in sys.argv[1:-1] else "text.txt"
+MODEL = os.path.join(os.path.dirname(FILE), "model.json")
 
 # Clean a text: small letters, full stops and commas stay, each run of spaces and line ends becomes one space, and
 # every other character goes.
@@ -309,7 +313,7 @@ def shape(m):
 
 # Run one command, its name and then its words, and give back the answer.
 def run(words):
-    global state, temperature
+    global state, temperature, steps
     name, rest = words[0], words[1:]
     arg = " ".join(rest)
     if name == "text":
@@ -396,6 +400,29 @@ def run(words):
             return "usage: temp <number>, from 0.01 to 10, such as temp 0.5"
         temperature = float(arg)
         return f"temp {fmt(temperature, 2)}"
+    if name == "save":
+        with open(MODEL, "w", encoding="utf-8") as file:
+            file.write(json.dumps({"alphabet": ALPHABET, "steps": steps, **model}) + "\n")
+        return f"saved the model after {steps} steps in model.json"
+    if name == "load":
+        if not os.path.exists(MODEL):
+            return "there is no model.json yet: train, then save"
+        try:
+            with open(MODEL, encoding="utf-8") as file:
+                saved = json.load(file)
+        except ValueError:
+            return "model.json is not a model lm saved: train, then save"
+        if not isinstance(saved, dict) or saved.get("alphabet") != ALPHABET:
+            return "model.json learned from another text: train again, then save"
+        if type(saved.get("steps")) is not int:
+            return "model.json does not fit: it has no count of steps"
+        for key in model:
+            if shape(saved.get(key)) != shape(model[key]):
+                return f"model.json does not fit: {key} is {shape(saved.get(key))}, not {shape(model[key])}"
+        for key in model:
+            model[key] = saved[key]
+        steps = saved["steps"]
+        return f"loaded the model after {steps} steps"
     if name == "help":
         return "\n".join(HELP)
     return f"unknown command: {name}. Type help for the list."

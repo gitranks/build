@@ -1,2 +1,3 @@
 .gitranks/build.json
 __pycache__/
+model.json
