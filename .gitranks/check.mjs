@@ -128,6 +128,9 @@ const nowhere = `http://127.0.0.1:${spare.address().port}/v1`;
 await new Promise((done) => spare.close(done));
 await session("when-the-model-fails", ["are you there?"], [], { url: nowhere });
 await session("when-the-model-fails", ["hello"], [heard], { model: pick(["llama9", "qwen-huge", "gpt-local"]) });
+const told = (ask) => `I got messages: ${ask.messages.length}. You told me: ${ask.messages.filter((m) => m.role === "user").map((m) => m.content).join(" / ")}`;
+const name = pick(["Ada", "Grace", "Linus", "Margaret"]);
+await session("remember-the-conversation", [`my name is ${name}`, "what is my name?", "/reset", "what is my name?"], [told, told, told]);
 server.close();
 try {
   fs.rmSync(top, { recursive: true, force: true });

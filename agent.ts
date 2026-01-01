@@ -13,6 +13,7 @@ const MODEL = option("--model", "qwen2.5:3b");
 // The commands you can type, as /help shows them.
 const HELP = [
   "/help    this list",
+  "/reset   forget the conversation and start again",
   "/exit    stop the agent",
 ].join("\n");
 
@@ -41,8 +42,9 @@ function failed(error: Error): string {
 
 // One message from you, and the model's answer to it.
 async function turn(text: string): Promise<void> {
-  messages = [{ role: "user", content: text }];
+  messages.push({ role: "user", content: text });
   const answer = await ask();
+  messages.push({ role: "assistant", content: answer.content });
   console.log(answer.content ?? "");
 }
 
@@ -58,6 +60,10 @@ for (let said = await line("you> "); said !== undefined; said = await line("you>
   const text = said.trim();
   if (text === "/exit") break;
   if (text === "/help") console.log(HELP);
+  else if (text === "/reset") {
+    messages = [];
+    console.log("agent: the conversation is forgotten");
+  }
   else if (text) {
     try {
       await turn(text);
