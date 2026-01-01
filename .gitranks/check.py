@@ -202,6 +202,9 @@ with open(os.path.join(folder, "src", pick(["hello.js", "main.py", "app.ts"])), 
     f.write(b"print('hello')\n")
 other = pick(["delete_all", "search_web", "open_browser"])
 session("the-agent-loop", ["what files are here?", "use another tool"], [call("list_files"), heard, call(other), heard])
+missing = pick(["todo.txt", "plan.md", "list.txt"])
+reads = [call("read_file", {"path": "notes.txt"}), heard, call("read_file", {"path": missing}), heard, lambda ask: [("read_file", '{"path": notes.txt}')], heard]
+session("read-a-file", ["what is in my notes?", f"read {missing}", "read it in a broken way"], reads)
 server.shutdown()
 shutil.rmtree(top, ignore_errors=True)
 
