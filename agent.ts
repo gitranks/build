@@ -22,15 +22,25 @@ const SYSTEM =
   "You are a coding agent. You work in one folder, and every path you use is inside it. " +
   "Look with the tools before you answer. Keep your answers short, and say what you changed.";
 
-type Message = { role: string; content: string | null }; // a message, as the model server reads and writes it
+// A message of the conversation, as the model server reads and writes it.
+type Message = { role: string; content: string | null; tool_calls?: Call[]; tool_call_id?: string };
+type Call = { id: string; function: { name: string; arguments: string } };
 let messages: Message[] = [{ role: "system", content: SYSTEM }];
+
+// The tools the model may ask for: each one's name, what it does and its arguments, in JSON Schema.
+function tool(name: string, description: string, properties: object = {}, required = Object.keys(properties)) {
+  return { type: "function", function: { name, description, parameters: { type: "object", properties, required } } };
+}
+const TOOLS = [
+  tool("list_files", "List every file in the folder."),
+];
 
 // Send the model the conversation, and give back its answer.
 async function ask(): Promise<Message> {
   const response = await fetch(`${SERVER}/chat/completions`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ model: MODEL, messages }),
+    body: JSON.stringify({ model: MODEL, messages, tools: TOOLS }),
   });
   // A server that failed may answer with no JSON, or with its reason as plain text.
   const answer = (await response.json().catch(() => null)) ?? {};
@@ -49,6 +59,11 @@ function failed(error: Error): string {
 async function turn(text: string): Promise<void> {
   messages.push({ role: "user", content: text });
   const answer = await ask();
+  const calls = answer.tool_calls ?? [];
+  if (calls.length) {
+    for (const call of calls) console.log(`tool: ${call.function.name} ${call.function.arguments}`);
+    return console.log("agent: the model asked for a tool. The next step runs it.");
+  }
   messages.push({ role: "assistant", content: answer.content });
   console.log(answer.content ?? "");
 }

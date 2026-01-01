@@ -134,6 +134,8 @@ await session("remember-the-conversation", [`my name is ${name}`, "what is my na
 const first = (ask) => `I got messages: ${ask.messages.length}. The first, from ${ask.messages[0]?.role}, says: ${oneLine(ask.messages[0]?.content)}`;
 const who = pick(["who are you?", "what do you do?", "where do you work?"]);
 await session("a-system-prompt", [who, "/reset", who], [first, first]);
+const offered = (ask) => `I can use: ${(ask.tools ?? []).map((tool) => tool.function?.name).join(", ") || "no tools"}`;
+await session("offer-a-tool", ["which tools do you have?", "what files are here?"], [offered, call("list_files")]);
 server.close();
 try {
   fs.rmSync(top, { recursive: true, force: true });
