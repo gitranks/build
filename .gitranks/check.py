@@ -28,6 +28,7 @@ def call(id, method, params=None):
 
 
 lines += [call(1, pick(["hello", "say/hi", "what/now", "roll/please"])), "this line is not JSON"]
+lines += [json.dumps({"jsonrpc": "2.0", "method": pick(["notifications/hello", "notifications/ready"])})]
 
 
 def show(name, file, args, sent):
@@ -71,7 +72,7 @@ show("server", "server.py", ["--seed", seed], lines)
 # What this step adds is printed whole: the answers it is about (by id, None for id null), the logs or the prompt.
 # Every other line goes into one line with a fingerprint (a hash), so the print stays short. With --all, every line
 # is printed, after a first line that says this print is only to look at.
-focus = {"logged"}
+focus = {1, "logged"}
 every = sys.argv[3:4] == ["--all"]
 other = [text for key, text in said if not (every or key in focus or key == "always")]
 if every:
