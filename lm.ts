@@ -11,6 +11,7 @@ const HELP = [
   "counts <character>    the characters that came after this one, and how often",
   "write <start>         go on from the start, one character at a time",
   "seed <number>         start the random numbers again from this number",
+  "loss                  how surprised lm is by the text: lower is better",
   "help                  this list",
   "exit                  stop lm",
 ];
@@ -78,6 +79,33 @@ function pick(weights: number[]): number {
   return weights.length - 1;
 }
 
+// log from + - * / alone, so that every computer gets the very same numbers.
+const LN2 = 0.6931471805599453;
+function log(x: number): number {
+  let k = 0;
+  for (x = Math.max(x, 1e-300); x >= 2; x /= 2) k += 1;
+  for (; x < 1; x *= 2) k -= 1;
+  const y = (x - 1) / (x + 1); // x is 2 to the k, times a number from 1 to 2
+  let sum = 0;
+  for (let i = 39; i >= 1; i -= 2) sum = sum * y * y + 1 / i;
+  return k * LN2 + 2 * y * sum;
+}
+// A number with a fixed count of places after the point, rounded the same way in both languages.
+function fmt(x: number, places = 3): string {
+  const n = Math.floor(Math.abs(x) * 10 ** places + 0.5);
+  const digits = String(n).padStart(places + 1, "0");
+  return (x < 0 && n > 0 ? "-" : "") + digits.slice(0, -places) + "." + digits.slice(-places);
+}
+// The loss: the mean of -log(the chance the counts gave the character that came next). Lower is better.
+function countsLoss(part: number[]): number {
+  let sum = 0;
+  for (let i = 0; i + 1 < part.length; i++) {
+    const row = pairs[part[i]];
+    sum -= log((row[part[i + 1]] + SMOOTH) / (row.reduce((all, count) => all + count, 0) + SMOOTH * V));
+  }
+  return sum / (part.length - 1);
+}
+
 // Go on from the start, one character at a time, each picked at random by how often it came next.
 const LENGTH = 60;
 function write(start: number[]): string {
@@ -134,6 +162,7 @@ function run(words: string[]): string {
     if (!start || missing) return `not in the alphabet: "${missing ?? arg}"`;
     return write(encode(start));
   }
+  if (name === "loss") return `counts: ${fmt(countsLoss(ids))}, a blind guess ${fmt(log(V))}`;
   if (name === "help") return HELP.join("\n");
   return `unknown command: ${name}. Type help for the list.`;
 }
