@@ -22,6 +22,7 @@ MODEL = option("--model", "qwen2.5:3b")
 # The commands you can type, as /help shows them.
 HELP = "\n".join([
     "/help    this list",
+    "/reset   forget the conversation and start again",
     "/exit    stop the agent",
 ])
 
@@ -58,8 +59,9 @@ def failed(error):
 
 # One message from you, and the model's answer to it.
 def turn(text):
-    messages[:] = [{"role": "user", "content": text}]
+    messages.append({"role": "user", "content": text})
     answer = ask()
+    messages.append({"role": "assistant", "content": answer.get("content")})
     print(answer.get("content") or "")
 
 
@@ -77,6 +79,9 @@ while (said := line("you> ")) is not None:
         break
     if text == "/help":
         print(HELP)
+    elif text == "/reset":
+        messages = []
+        print("agent: the conversation is forgotten")
     elif text:
         try:
             turn(text)
