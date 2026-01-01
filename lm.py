@@ -149,6 +149,7 @@ model = {
     "wv": matrix(D, D, 0.25),  # what a character passes on to the ones after it
     "wq": matrix(D, D, 0.25),  # what a character looks for
     "wk": matrix(D, D, 0.25),  # what a character offers to the ones that look
+    "pos": matrix(T, D, 0.5),  # a row of numbers for each place in the window
 }
 steps = 0  # how many training steps the model has taken
 
@@ -179,7 +180,7 @@ SCALE = 1 / math.sqrt(D)
 
 # Run the model over a window of characters: after each one, a score for every character that may come next.
 def forward(x):
-    h = [model["emb"][n] for n in x]
+    h = [[e + model["pos"][t][i] for i, e in enumerate(model["emb"][n])] for t, n in enumerate(x)]
     v = [times(row, model["wv"]) for row in h]
     q = [times(row, model["wq"]) for row in h]
     k = [times(row, model["wk"]) for row in h]
@@ -247,6 +248,7 @@ def backward(f, y):
     for t in range(n):
         for i in range(D):
             g["emb"][f["x"][t]][i] += dh[t][i]
+            g["pos"][t][i] += dh[t][i]
     return g
 
 # One step of training: a random window of the text, then each number moves a little against its gradient.
