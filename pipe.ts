@@ -46,6 +46,16 @@ function some(list: string[], none: string): string {
   return [...list.slice(0, 10), ...(list.length > 10 ? [`and ${list.length - 10} more`] : [])].join("\n");
 }
 
+// A time such as 2026-11-27T10:00:05Z in seconds since 1970, or null when it is not a real time from 2000 to 2099.
+function seconds(text: string): number | null {
+  const m = /^(20[0-9]{2})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})Z$/.exec(text);
+  if (!m) return null;
+  const [y, mo, d, h, mi, s] = m.slice(1, 7).map(Number);
+  const date = new Date(Date.UTC(y, mo - 1, d, h, mi, s));
+  if (date.getUTCMonth() !== mo - 1 || date.getUTCDate() !== d || h > 23 || mi > 59 || s > 59) return null;
+  return date.getTime() / 1000;
+}
+
 // A number with at most two decimals, such as 42 or 42.5, in hundredths: 4200, 4250. null for anything else.
 function hundredths(text: string): number | null {
   if (!/^[0-9]{1,9}(\.[0-9]{1,2})?$/.test(text)) return null;
@@ -56,6 +66,7 @@ function hundredths(text: string): number | null {
 // Why a line's fields can not be trusted, or null when they look right: a time, a host, a metric and a value.
 function problem(fields: string[]): string | null {
   if (fields.length !== 4) return "not 4 fields";
+  if (seconds(fields[0]) === null) return "bad time";
   if (hundredths(fields[3]) === null) return "bad value";
   return null;
 }
@@ -63,7 +74,7 @@ function problem(fields: string[]): string | null {
 // Read one file's lines and keep their rows.
 function load(name: string): string {
   const all = lines(name);
-  const kept = rows.length;
+  const [kept, dropped] = [rows.length, bad.length];
   for (let i = 0; i < all.length; i++) {
     const fields = split(all[i]);
     if (!fields) continue;
@@ -71,7 +82,7 @@ function load(name: string): string {
     if (why) bad.push(`${name} line ${i + 1}: ${why}: ${trim(all[i])}`);
     else rows.push(fields);
   }
-  return `${name}: lines ${all.length}, rows ${rows.length - kept}`;
+  return `${name}: lines ${all.length}, kept ${rows.length - kept}, dropped ${bad.length - dropped}`;
 }
 
 function run(): string {
@@ -79,7 +90,7 @@ function run(): string {
   rows = [];
   bad = [];
   for (const name of names) console.log(load(name));
-  return `run: files ${names.length}, rows ${rows.length}`;
+  return `run: files ${names.length}, kept ${rows.length}, dropped ${bad.length}`;
 }
 
 // The prompt pipe> shows only when you type at a terminal, not when another program sends the commands.
