@@ -21,6 +21,7 @@ HELP = [
     "shapes                the size of each table of numbers in the model",
     "softmax <numbers>     turn scores into chances that add up to 1",
     "next <text>           the model's guess for the character after the text",
+    "gradcheck             nudge a number of each table and see the loss move",
     "help                  this list",
     "exit                  stop lm",
 ]
@@ -183,6 +184,22 @@ def surprise(part):
         total += loss_of(forward(x), part[s + 1 : s + 1 + len(x)]) * len(x)
     return total / (len(part) - 1)
 
+# Nudge one number of each table up and down a little, and see how fast the loss moves: the gradient, measured.
+# It is the number in row 0, column 1; in emb, row 0 is the first character of the alphabet, most often the space.
+def gradcheck():
+    x = train[:T]
+    y = train[1 : T + 1]
+    lines = []
+    for name, m in model.items():
+        keep = m[0][1]
+        m[0][1] = keep + 0.00001
+        up = loss_of(forward(x), y)
+        m[0][1] = keep - 0.00001
+        down = loss_of(forward(x), y)
+        m[0][1] = keep
+        lines.append(f"{name}: {fmt((up - down) / 0.00002, 6)} by a nudge")
+    return "\n".join(lines)
+
 # Go on from the start, one character at a time, each picked at random by how often it came next.
 LENGTH = 60
 
@@ -271,6 +288,8 @@ def run(words):
         p = forward(encode(start)[-T:])["p"][-1]
         order = sorted(([c, b] for b, c in enumerate(p)), key=lambda each: -each[0])
         return f'after "{start}": ' + ", ".join(f"{show(b)} {fmt(c)}" for c, b in order[:5])
+    if name == "gradcheck":
+        return gradcheck()
     if name == "help":
         return "\n".join(HELP)
     return f"unknown command: {name}. Type help for the list."
