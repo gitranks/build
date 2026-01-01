@@ -36,16 +36,19 @@ const SYMBOLS = [ // the symbols mini knows
   "+", "-", "*", "/",
   "%",
   "(", ")",
+  "=",
 ];
+const WORDS = ["let"]; // mini's own words: they can not name a variable
 
 // The tokenizer cuts the source into pieces: a run of spaces, a number, a name and more, or any other one
 // character. It turns each piece into a token, the words of mini, and leaves the spaces out.
-const PIECES = /[ \t\r]+|[0-9]+|[\s\S]/gu;
+const PIECES = /[ \t\r]+|[0-9]+|[A-Za-z_][A-Za-z_0-9]*|[\s\S]/gu;
 function tokenize(source: string): Token[] {
   const tokens: Token[] = [];
   const add = (kind: string, text: string) => tokens.push({ kind, text });
   for (const piece of source.match(PIECES) ?? []) {
     if (/^[0-9]/.test(piece)) add("number", piece);
+    else if (/^[A-Za-z_]/.test(piece)) add(WORDS.includes(piece) ? piece : "name", piece);
     else if (SYMBOLS.includes(piece)) add(piece, piece);
     else if (!" \t\r".includes(piece[0])) throw new MiniError(`unexpected character ${piece}`);
   }
@@ -67,6 +70,14 @@ function parse(tokens: Token[]): Node {
     if (peek().kind !== kind) throw new MiniError(`expected ${kind} but found ${peek().text}`);
     return advance();
   }
+  function statement(): Node {
+    if (accept("let")) {
+      const name = expect("name").text;
+      expect("=");
+      return { kind: "let", name, value: expression() };
+    }
+    return { kind: "expr", value: expression() };
+  }
   function binary(ops: string[], operand: () => Node): Node {
     let left = operand();
     while (ops.includes(peek().kind)) left = { kind: "binary", op: advance().kind, left, right: operand() };
@@ -78,6 +89,7 @@ function parse(tokens: Token[]): Node {
   function primary(): Node {
     const token = advance();
     if (token.kind === "number") return { kind: "value", value: number(token.text) };
+    if (token.kind === "name") return { kind: "name", name: token.text };
     if (token.kind === "(") {
       const node = expression();
       expect(")");
@@ -85,14 +97,22 @@ function parse(tokens: Token[]): Node {
     }
     throw new MiniError(`expected a value but found ${token.text}`);
   }
-  const tree = expression();
+  const tree = statement();
   if (peek().kind !== "end") throw new MiniError(`expected an operator but found ${peek().text}`);
   return tree;
 }
 
+// The variables, by name. top is the program's own scope: its variables, at the top level, outside any function.
+type Scope = Map<string, Value>;
+const top: Scope = new Map();
+
 // Work out the value of a node of the tree.
 function evaluate(node: Node): Value {
   if (node.kind === "value") return node.value;
+  if (node.kind === "name") {
+    if (!top.has(node.name)) throw new MiniError(`${node.name} is not defined`);
+    return top.get(node.name) as Value;
+  }
   if (node.kind === "negate") return operate("-", 0, evaluate(node.value));
   return operate(node.op, evaluate(node.left), evaluate(node.right));
 }
@@ -111,7 +131,9 @@ function ask(): void {
 // Run a line that was typed, and say what went wrong if anything did: a mistake does not stop mini.
 function attempt(line: string): void {
   try {
-    console.log(String(evaluate(parse(tokenize(line)))));
+    const node = parse(tokenize(line));
+    if (node.kind === "let") top.set(node.name, evaluate(node.value));
+    else console.log(String(evaluate(node.value)));
   } catch (error) {
     report(error);
   }
