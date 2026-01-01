@@ -21,3 +21,4 @@ function show(name, file, args, input) {
 }
 
 show("server", "server.ts", ["--seed", seed], lines);
+show("prompt", "prompt.ts", [], [pick(["tools/list", "ping", "hello/again"])]);
