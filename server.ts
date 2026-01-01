@@ -14,6 +14,15 @@ function log(text: string): void {
   console.error(`my-server: ${text}`);
 }
 
+// Dice need random numbers. Started with --seed 42 (1 to 2147483646), the numbers are the same on every run.
+const seedAt = process.argv.indexOf("--seed");
+const seed = seedAt > 0 && /^[0-9]+$/.test(process.argv[seedAt + 1] ?? "") ? Number(process.argv[seedAt + 1]) : 0;
+let state = seed > 0 && seed < 2147483647 ? seed : Math.floor(Math.random() * 2147483646) + 1;
+function randomBelow(n: number): number {
+  state = (state * 48271) % 2147483647;
+  return state % n;
+}
+
 // The tools this server offers. The agent reads each description to decide when to use it.
 const ROLL_DICE = {
   name: "roll_dice",
@@ -27,6 +36,18 @@ const ROLL_DICE = {
   },
 };
 const TOOLS = [ROLL_DICE];
+
+// A tool's result is a list of content. Ours is one piece of text.
+function text(words: string): object {
+  return { content: [{ type: "text", text: words }] };
+}
+
+function rollDice(args: any): object {
+  const sides = args.sides ?? 6;
+  return text(`You rolled ${randomBelow(sides) + 1}.`);
+}
+
+const RUN = new Map<string, (args: any) => object>([["roll_dice", rollDice]]);
 
 function fail(code: number, message: string): Answer {
   return { error: { code, message } };
@@ -49,6 +70,11 @@ function handle(msg: Message): Answer {
   }
   if (msg.method === "ping") return { result: {} };
   if (msg.method === "tools/list") return { result: { tools: TOOLS } };
+  if (msg.method === "tools/call") {
+    const run = typeof params.name === "string" ? RUN.get(params.name) : undefined;
+    if (!run) return fail(-32602, `Unknown tool: ${JSON.stringify(params.name ?? null)}`);
+    return { result: run(params.arguments ?? {}) };
+  }
   return fail(-32601, `Method not found: ${msg.method}`);
 }
 

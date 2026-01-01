@@ -15,6 +15,8 @@ lines.push(call(2, "initialize", { protocolVersion: version, capabilities: {}, c
 lines.push(call("odd", pick(["initialize", "ping", "tools/list"]), pick(["oops", [1, 2], 7])));
 lines.push(call(3, "ping"));
 lines.push(call(4, "tools/list"));
+lines.push(call(5, "tools/call", { name: "roll_dice", arguments: { sides: pick([6, 8, 12, 20, null]) } }));
+lines.push(call(6, "tools/call", { name: pick(["fly", "roll_die", "dice"]), arguments: {} }));
 
 function show(name, file, args, input) {
   const run = spawnSync(process.execPath, [file, ...args], { input: input.map((l) => l + "\n").join(""), encoding: "utf8", timeout: 5000 });
