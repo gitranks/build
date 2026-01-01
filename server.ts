@@ -8,6 +8,9 @@ type Answer = { result: object } | { error: { code: number; message: string } };
 
 // The versions of MCP this server speaks, newest first.
 const VERSIONS = ["2025-11-25", "2025-06-18"];
+const INSTRUCTIONS =
+  "my-server rolls dice and picks one of a few options at random. Use roll_dice for any dice roll " +
+  "and pick_one when the person cannot decide. Say the result in plain words.";
 
 // Logs go to standard error. Standard output is kept for messages alone.
 function log(text: string): void {
@@ -105,7 +108,8 @@ function handle(msg: Message): Answer {
       result: {
         protocolVersion: VERSIONS.includes(asked) ? asked : VERSIONS[0],
         capabilities: { tools: {} },
-        serverInfo: { name: "my-server", version: "0.1.0" },
+        serverInfo: { name: "my-server", version: "1.0.0" },
+        instructions: INSTRUCTIONS,
       },
     };
   }
