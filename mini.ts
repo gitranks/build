@@ -4,7 +4,7 @@ import { createInterface } from "node:readline";
 
 // A mistake in the program mini runs, such as 1 / 0: mini says what it is and goes on. It is not a crash of mini.
 class MiniError extends Error {}
-type Value = number | boolean;
+type Value = number | boolean | string;
 type Token = { kind: string; text: string };
 type Node = { kind: string; [field: string]: any };
 
@@ -24,7 +24,8 @@ function number(text: string): number {
 function operate(op: string, a: Value, b: Value): Value {
   if (op === "==") return a === b;
   if (op === "!=") return a !== b;
-  if (typeof a !== "number" || typeof b !== "number") throw new MiniError(`${op} needs numbers, not ${show(a)} and ${show(b)}`);
+  if (op === "+" && (typeof a === "string" || typeof b === "string")) return show(a) + show(b);
+  if (typeof a !== "number" || typeof b !== "number") throw new MiniError(`${op} needs numbers, not ${quote(a)} and ${quote(b)}`);
   if (op === "<") return a < b;
   if (op === "<=") return a <= b;
   if (op === ">") return a > b;
@@ -44,6 +45,11 @@ function show(value: Value): string {
   return String(value);
 }
 
+// A value as an error shows it: text in quotes, so "5" and 5 look different.
+function quote(value: Value): string {
+  return typeof value === "string" ? `"${value}"` : show(value);
+}
+
 const SYMBOLS = [ // the symbols mini knows
   "==", "!=", "<=", ">=", "<", ">",
   "+", "-", "*", "/",
@@ -57,13 +63,17 @@ const WORDS = ["let", "true", "false", "print", "if", "else", "while"]; // mini'
 
 // The tokenizer cuts the source into pieces: a run of spaces, a number, a name and more, or any other one
 // character. It turns each piece into a token, the words of mini, and leaves the spaces out.
-const PIECES = /[ \t\r]+|[0-9]+|[A-Za-z_][A-Za-z_0-9]*|[=!<>]=|[\s\S]/gu;
+const PIECES = /[ \t\r]+|[0-9]+|[A-Za-z_][A-Za-z_0-9]*|"[^"\n]*"?|[=!<>]=|[\s\S]/gu;
 function tokenize(source: string): Token[] {
   const tokens: Token[] = [];
   const add = (kind: string, text: string) => tokens.push({ kind, text });
   for (const piece of source.match(PIECES) ?? []) {
     if (/^[0-9]/.test(piece)) add("number", piece);
     else if (/^[A-Za-z_]/.test(piece)) add(WORDS.includes(piece) ? piece : "name", piece);
+    else if (piece[0] === '"') {
+      if (piece.length < 2 || !piece.endsWith('"')) throw new MiniError("this text has no closing \"");
+      add("text", piece.slice(1, -1));
+    }
     else if (SYMBOLS.includes(piece)) add(piece, piece);
     else if (!" \t\r".includes(piece[0])) throw new MiniError(`unexpected character ${piece}`);
   }
@@ -137,6 +147,7 @@ function parse(tokens: Token[]): Node[] {
     const token = advance();
     if (token.kind === "number") return { kind: "value", value: number(token.text) };
     if (token.kind === "true" || token.kind === "false") return { kind: "value", value: token.kind === "true" };
+    if (token.kind === "text") return { kind: "value", value: token.text };
     if (token.kind === "name") return { kind: "name", name: token.text };
     if (token.kind === "(") {
       const node = expression();
@@ -186,7 +197,7 @@ function run(list: Node[], scope: Scope): void {
 
 // The answer to an if or a while must be true or false.
 function truth(value: Value, word: string): boolean {
-  if (typeof value !== "boolean") throw new MiniError(`${word} needs true or false, not ${show(value)}`);
+  if (typeof value !== "boolean") throw new MiniError(`${word} needs true or false, not ${quote(value)}`);
   return value;
 }
 

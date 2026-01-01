@@ -70,6 +70,7 @@ session("if-and-while", [
   "if 1 { print 1 }",
   "if true { print 1",
 ]);
+session("text-values", [`"${pick(["hello", "mini", "Ada"])}"`, `"n = " + ${a}`, `"ab" == "a" + "b"`, '"a" * 2', `"${pick(["no end", "half"])}`, `let s = ""; let i = 0; while i < ${b} { s = s + "*"; i = i + 1 } s`]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
