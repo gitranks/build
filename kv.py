@@ -22,9 +22,6 @@ HELP = [
 at = sys.argv.index("--file") if "--file" in sys.argv else 0
 FILE = sys.argv[at + 1] if 0 < at < len(sys.argv) - 1 and sys.argv[at + 1] else "data.log"
 
-# What you set, kept in memory while kv runs.
-data = {}
-
 
 # Write records at the end of the log, one line each. The file is opened as bytes, so Windows adds no \r.
 def write(batch):
@@ -37,6 +34,21 @@ def to_json(value):
     return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
 
 
+# Read the whole log from the start: the latest record of each key says what it holds now.
+def scan():
+    now = {}
+    if not os.path.exists(FILE):
+        return now
+    with open(FILE, "rb") as log:
+        for line in log:
+            op, key, *value = json.loads(line)
+            if op == "set":
+                now[key] = value[0]
+            else:
+                now.pop(key, None)
+    return now
+
+
 # Run one command, its name and then its words, and give back the answer.
 def run(words):
     name = words[0]
@@ -46,22 +58,20 @@ def run(words):
         if not key or not value:
             return "usage: set <key> <value>"
         write([["set", key, value]])
-        data[key] = value
         return "OK"
     if name == "get":
         if not key:
             return "usage: get <key>"
-        return data.get(key, "(not found)")
+        return scan().get(key, "(not found)")
     if name == "del":
         if not key:
             return "usage: del <key>"
-        if key not in data:
+        if key not in scan():
             return "(not found)"
         write([["del", key]])
-        del data[key]
         return "deleted"
     if name == "keys":
-        every = sorted(data)
+        every = sorted(scan())
         return "\n".join(every) if every else "(no keys)"
     if name == "help":
         return "\n".join(HELP)

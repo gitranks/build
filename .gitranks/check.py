@@ -98,6 +98,7 @@ before = size()
 word = pick(["sky", "tea", "song"])
 session("write-it-down", [f"set {word} " + pick(["grey", "green", "loud"]), f"set {word} " + pick(["blue", "black", "soft"]), f"del {word}"])
 log_from("write-it-down", before)
+session("read-it-back", [f"get {key}", "keys"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
