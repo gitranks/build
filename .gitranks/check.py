@@ -35,6 +35,8 @@ lines += [call(4, "tools/list")]
 lines += [call(5, "tools/call", {"name": "roll_dice", "arguments": {"sides": pick([6, 8, 12, 20, None])}})]
 lines += [call(6, "tools/call", {"name": pick(["fly", "roll_die", "dice"]), "arguments": {}})]
 lines += [call(7, "tools/call", {"name": "roll_dice", "arguments": {"sides": pick([1, 1000, "six", 2.5])}})]
+lines += [call(8, "tools/call", {"name": "roll_dice", "arguments": {"count": pick([2, 3, 5])}})]
+lines += [call(9, "tools/call", {"name": "roll_dice", "arguments": {"sides": 6, "count": pick([0, 11, "two"])}})]
 
 
 def show(name, file, args, sent):
