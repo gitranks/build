@@ -158,6 +158,8 @@ def session(about, lines, replies=(), url_given=None, model="stand-in"):
 
 session("what-you-will-build", [])
 session("read-messages", ["/help", "", pick(["hello", "hi there", "good morning"]), "/exit", "/help"])
+question = pick(["what is 6 times 7?", "what is the capital of France?", "is water wet?"])
+session("ask-the-model", [pick(["hello", "hi there", "good morning"]), question], [heard, heard])
 server.shutdown()
 shutil.rmtree(top, ignore_errors=True)
 
