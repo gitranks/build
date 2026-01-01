@@ -49,6 +49,9 @@ function session(about, lines, file) {
 
 session("what-you-will-build", []);
 session("read-lines", [pick(["hello", "good morning", "hi there"]), "", "   " + pick(["mini", "one  two", "x"]) + "  ", "exit", "after exit"]);
+const a = pick([12, 30, 45, 7]);
+const b = pick([3, 4, 5]);
+session("whole-numbers", [`${a}`, " 00" + b, pick(["twelve", "4x", "1.5", "-3"]), `${a} ${b}`]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
