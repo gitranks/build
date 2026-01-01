@@ -7,9 +7,12 @@ import { createInterface } from "node:readline";
 // The commands pipe knows, as help shows them.
 const HELP = [
   "files                         list the CSV files in the inbox folder",
+  "run                           read every file in the inbox",
   "help                          this list",
   "exit                          stop pipe",
 ];
+
+let rows: string[][] = []; // the rows the last run kept
 
 // The names of the CSV files in the inbox folder, in order.
 function inbox(): string[] {
@@ -22,6 +25,32 @@ function lines(name: string): string[] {
   const all = fs.readFileSync(`inbox/${name}`, "utf8").split("\n");
   all.pop();
   return all;
+}
+
+// Spaces, tabs and the \r of a Windows line end, taken off both ends: the same characters in both languages.
+const trim = (text: string) => text.replace(/^[ \t\r]+|[ \t\r]+$/g, "");
+
+// The fields of a line: the pieces of text between its commas.
+function split(line: string): string[] {
+  return trim(line).split(",");
+}
+
+// Read one file's lines and keep their rows.
+function load(name: string): string {
+  const all = lines(name);
+  const kept = rows.length;
+  for (let i = 0; i < all.length; i++) {
+    const fields = split(all[i]);
+    rows.push(fields);
+  }
+  return `${name}: lines ${all.length}, rows ${rows.length - kept}`;
+}
+
+function run(): string {
+  const names = inbox();
+  rows = [];
+  for (const name of names) console.log(load(name));
+  return `run: files ${names.length}, rows ${rows.length}`;
 }
 
 // The prompt pipe> shows only when you type at a terminal, not when another program sends the commands.
@@ -37,6 +66,7 @@ function command(words: string[]): string {
     if (!names.length) return "(no CSV files in the inbox folder)";
     return names.map((name) => `${name}: lines ${lines(name).length}`).join("\n");
   }
+  if (name === "run") return run();
   if (name === "help") return HELP.join("\n");
   return `unknown command: ${name}. Type help for the list.`;
 }
