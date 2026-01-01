@@ -180,6 +180,10 @@ await session("read-the-headers", async (port) => {
     show: (line, i) => i < 7,
   });
 });
+await session("not-found", async (port) => {
+  await ask(port, "not-found", [get("/")], { show: (line, i) => i < 1 });
+  await ask(port, "not-found", [get(pick(["/cats", "/nothing/here", "/hello"]))]);
+});
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

@@ -6,6 +6,12 @@ import * as net from "node:net";
 const at = process.argv.indexOf("--port");
 const PORT = at > 0 ? Number(process.argv[at + 1]) : 8080;
 
+// The words that go with each status code on an answer's first line.
+const REASONS: Record<number, string> = {
+  200: "OK",
+  404: "Not Found",
+};
+
 // A request, as the browser sent it. Its first line is three words, such as: GET /hello HTTP/1.1
 type Request = {
   method: string;
@@ -13,6 +19,11 @@ type Request = {
   version: string;
   headers: Map<string, string>;
 };
+// An answer: its status code, the type of its body, the body, and any other headers.
+type Answer = { status: number; type: string; body: string | Buffer; headers?: Record<string, string> };
+
+// An answer of plain text.
+const text = (body: string, status = 200): Answer => ({ status, type: "text/plain; charset=utf-8", body });
 
 // Read a request's head: its first line, then one header a line.
 function parse(head: string): Request {
@@ -28,16 +39,25 @@ function parse(head: string): Request {
 }
 
 // Write an answer: the status line, one header a line, a blank line, then the body.
-function send(socket: net.Socket, body: string): void {
-  const bytes = Buffer.from(body);
+function send(socket: net.Socket, answer: Answer): void {
+  const bytes = typeof answer.body === "string" ? Buffer.from(answer.body) : answer.body;
   const head = [
-    "HTTP/1.1 200 OK",
-    "Content-Type: text/plain; charset=utf-8",
+    `HTTP/1.1 ${answer.status} ${REASONS[answer.status]}`,
+    `Content-Type: ${answer.type}`,
     `Content-Length: ${bytes.length}`,
     "Connection: close",
   ];
   socket.write(head.join("\r\n") + "\r\n\r\n");
   socket.end(bytes);
+}
+
+// Answer one request, and say so in the log.
+function respond(socket: net.Socket, request: Request): void {
+  const lines = [...request.headers].map(([name, value]) => `${name}: ${value}`);
+  const listing = [`You asked for ${request.target} with ${request.method}. The headers:`, ...lines].join("\n");
+  const answer = request.target === "/" ? text(listing) : text(`no page at ${request.target}`, 404);
+  console.log(`web: ${request.method} ${request.target} ${answer.status}`);
+  send(socket, answer);
 }
 
 // One connection. Its bytes come in pieces of any size: they wait in `bytes` until the head ends, at a blank line.
@@ -49,9 +69,7 @@ function serve(socket: net.Socket): void {
     if (end < 0) return; // the head is not all here yet
     const request = parse(bytes.subarray(0, end).toString("latin1"));
     bytes = bytes.subarray(end + 4);
-    const lines = [...request.headers].map(([name, value]) => `${name}: ${value}`);
-    console.log(`web: ${request.method} ${request.target}`);
-    send(socket, [`You asked for ${request.target} with ${request.method}. The headers:`, ...lines].join("\n"));
+    respond(socket, request);
   });
 }
 
