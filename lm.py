@@ -19,6 +19,7 @@ HELP = [
     "seed <number>         start the random numbers again from this number",
     "loss                  how surprised lm is by the text: lower is better",
     "shapes                the size of each table of numbers in the model",
+    "softmax <numbers>     turn scores into chances that add up to 1",
     "help                  this list",
     "exit                  stop lm",
 ]
@@ -91,8 +92,18 @@ def pick(weights):
             return i
     return len(weights) - 1
 
-# log from + - * / alone, so that every computer gets the very same numbers.
+# exp and log from + - * / alone, so that every computer gets the very same numbers.
 LN2 = 0.6931471805599453
+
+def exp(x):
+    k = math.floor(x / LN2 + 0.5)
+    r = x - k * LN2  # e to the x is 2 to the k, times e to the r, and r is small
+    total = 1.0
+    for i in range(14, 0, -1):
+        total = 1 + total * r / i
+    for _ in range(abs(k)):
+        total = total * 2 if k > 0 else total / 2
+    return total
 
 def log(x):
     x, k = max(x, 1e-300), 0
@@ -130,6 +141,15 @@ model = {
     "out": matrix(D, V, 0.5),  # from those numbers to a score for each character
 }
 
+# Scores to chances: each becomes positive, and together they add up to 1.
+def softmax(scores):
+    top = max(scores)
+    e = [exp(s - top) for s in scores]
+    total = 0.0
+    for x in e:
+        total += x
+    return [x / total for x in e]
+
 # Go on from the start, one character at a time, each picked at random by how often it came next.
 LENGTH = 60
 
@@ -142,6 +162,10 @@ def write(start):
 # A whole number, such as 42.
 def is_number(word):
     return re.fullmatch(r"[0-9]{1,9}", word) is not None
+
+# A number that may have a point and a minus, such as -1.5.
+def is_decimal(word):
+    return re.fullmatch(r"-?[0-9]{1,4}(\.[0-9]{1,4})?", word) is not None
 
 # A table's rows by columns, or "broken" when it is not a table whose rows all have the same length.
 def shape(m):
@@ -200,6 +224,10 @@ def run(words):
         for m in model.values():
             total += len(m) * len(m[0])
         return ", ".join(f"{key} {shape(m)}" for key, m in model.items()) + f": {total} numbers"
+    if name == "softmax":
+        if not rest or len(rest) > 12 or not all(is_decimal(w) for w in rest):
+            return "usage: softmax <numbers>, such as softmax 2 1 0.5"
+        return " ".join(fmt(p) for p in softmax([float(w) for w in rest]))
     if name == "help":
         return "\n".join(HELP)
     return f"unknown command: {name}. Type help for the list."
