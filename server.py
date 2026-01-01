@@ -14,7 +14,9 @@ PORT = int(sys.argv[at + 1]) if 0 < at < len(sys.argv) - 1 else 8080
 # The words that go with each status code on an answer's first line.
 REASONS = {
     200: "OK",
+    301: "Moved Permanently",
     404: "Not Found",
+    405: "Method Not Allowed",
 }
 
 
@@ -33,10 +35,15 @@ def hello(request):
     return text(f"Hello, {name or 'stranger'}!")
 
 
+def old(request):
+    return {**text("This page has moved to /hello.", 301), "headers": {"Location": "/hello"}}
+
+
 ROUTES = {
     "GET /": home,
     "GET /hello": hello,
     "GET /headers": lambda request: text("\n".join(f"{name}: {value}" for name, value in request["headers"].items())),
+    "GET /old": old,
 }
 
 
@@ -46,6 +53,10 @@ def handle(request):
     route = ROUTES.get(f"{request['method']} {pathname}")
     if route:
         return route(request)
+    # The path has routes, but for other methods: 405, and the Allow header names them.
+    methods = [key.split(" ")[0] for key in ROUTES if key.split(" ")[1] == pathname]
+    if methods:
+        return {**text(f"{request['method']} is not allowed at {pathname}", 405), "headers": {"Allow": ", ".join(methods)}}
     return text(f"no page at {pathname}", 404)
 
 
@@ -70,6 +81,7 @@ def send(conn, answer):
         f"Content-Length: {len(data)}",
         "Connection: close",
     ]
+    head += [f"{name}: {value}" for name, value in answer.get("headers", {}).items()]
     conn.sendall(("\r\n".join(head) + "\r\n\r\n").encode() + data)
 
 

@@ -278,6 +278,15 @@ def routes(port):
 
 
 session("routes", routes)
+
+
+def status_codes(port):
+    target = pick(["/hello", "/", "/headers"])
+    ask(port, "moved-and-not-allowed", [get(target, pick(["POST", "PUT", "DELETE"]))])
+    ask(port, "moved-and-not-allowed", [get("/old")])
+
+
+session("moved-and-not-allowed", status_codes)
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
