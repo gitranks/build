@@ -137,6 +137,8 @@ times = [
     "2028-02-29T10:00:00Z",
 ]
 session("check-the-times", box("times", {"a.csv": csv([row(t, host, metric, v()) for t in times])}), ["run", "bad"])
+values = [pick(["007", "0042.0"]), pick(["42.5", "0.05", "3.10"]), pick(["100.00", "999999999.99", "0"])]
+session("clean-the-values", box("clean", {"a.csv": csv([row(at(f"10:00:0{i + 5}"), host, metric, x) for i, x in enumerate(values)])}), ["run", "rows"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the

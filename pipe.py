@@ -1,10 +1,12 @@
 # pipe: a small data pipeline, written from nothing, with no library.
 # It reads the CSV files in its inbox, cleans their rows, counts them minute by minute and answers questions.
 # Start it with: python pipe.py
+from collections import namedtuple
 from datetime import datetime, timezone
 import os
 import re
 import sys
+import time
 
 # Read and write UTF-8 with plain line ends on every system, Windows too.
 sys.stdin.reconfigure(encoding="utf-8")
@@ -19,6 +21,10 @@ HELP = [
     "help                          this list",
     "exit                          stop pipe",
 ]
+
+
+# A clean row: its time in seconds since 1970 in UTC, its host and metric, and its value in hundredths.
+Row = namedtuple("Row", "time host metric value")
 
 rows = []  # the rows the last run kept
 BLANKS = " \t\r"  # spaces, tabs and the \r of a Windows line end: what strip takes off, as in TypeScript
@@ -72,13 +78,25 @@ def hundredths(text):
     return int(whole) * 100 + int(part.ljust(2, "0"))
 
 
-# Why a line's fields can not be trusted, or None when they look right: a time, a host, a metric and a value.
-def problem(fields):
+# Check a line's fields and clean them: a clean row, or why the line is dropped.
+def clean(fields):
     if len(fields) != 4:
         return "not 4 fields"
-    if seconds(fields[0]) is None:
+    utc, host, metric, value = seconds(fields[0]), fields[1], fields[2], hundredths(fields[3])
+    if utc is None:
         return "bad time"
-    return "bad value" if hundredths(fields[3]) is None else None
+    if value is None:
+        return "bad value"
+    return Row(utc, host, metric, value)
+
+
+# A time as 2026-11-27 10:00:05, and a value in hundredths as 42.5.
+def when(utc):
+    return time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime(utc))
+
+
+def number(value):
+    return re.sub(r"\.?0+$", "", f"{value // 100}.{value % 100:02d}")
 
 
 # Read one file's lines and keep their rows.
@@ -89,11 +107,11 @@ def load(name):
         fields = split(every[i])
         if not fields:
             continue
-        why = problem(fields)
-        if why:
-            bad.append(f"{name} line {i + 1}: {why}: {every[i].strip(BLANKS)}")
+        row = clean(fields)
+        if isinstance(row, str):
+            bad.append(f"{name} line {i + 1}: {row}: {every[i].strip(BLANKS)}")
         else:
-            rows.append(fields)
+            rows.append(row)
     return f"{name}: lines {len(every)}, kept {len(rows) - kept}, dropped {len(bad) - dropped}"
 
 
@@ -117,7 +135,7 @@ def command(words):
     if name == "run":
         return run()
     if name == "rows":
-        return some([" | ".join(fields) for fields in rows], "(no rows)")
+        return some([f"{when(r.time)} {r.host} {r.metric} {number(r.value)}" for r in rows], "(no rows)")
     if name == "bad":
         return some(bad, "(no bad lines)")
     if name == "help":
