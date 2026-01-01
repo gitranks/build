@@ -26,7 +26,14 @@ HELP = "\n".join([
     "/exit    stop the agent",
 ])
 
-messages = []  # the conversation, as the model server reads and writes it: messages, each a role and a content
+# What the model reads first, before your messages: who it is and how to work.
+SYSTEM = (
+    "You are a coding agent. You work in one folder, and every path you use is inside it. "
+    "Look with the tools before you answer. Keep your answers short, and say what you changed."
+)
+
+# The conversation, as the model server reads and writes it: a list of messages, each a role and a content.
+messages = [{"role": "system", "content": SYSTEM}]
 
 
 # Send the model the conversation, and give back its answer.
@@ -80,7 +87,7 @@ while (said := line("you> ")) is not None:
     if text == "/help":
         print(HELP)
     elif text == "/reset":
-        messages = []
+        messages = [{"role": "system", "content": SYSTEM}]
         print("agent: the conversation is forgotten")
     elif text:
         try:
