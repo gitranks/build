@@ -168,6 +168,10 @@ six = csv([row(at(f"10:00:{s}"), host, metric, s) for s in ["05", "15", "25", "3
 crashed = box("crash", {"a.csv": six})
 session("crash-in-the-middle", crashed, [pick(["crash 0", "crash x", "crash"]), "crash 1"])
 session("crash-in-the-middle", crashed, ["run", f"query {metric}"])
+commented = csv([row(at(f"10:00:{s}"), host, metric, s) for s in ["05", "15", "25"]]) + "# a comment line\n" + csv([row(at(f"10:00:{s}"), host, metric, "99" if s == "05" else s) for s in ["35", "05", "45", "55"]])
+once = box("once", {"a.csv": commented, "b.csv": csv([row(at("10:01:05"), other, metric, "7")])})
+session("count-each-row-once", once, ["crash " + pick(["1", "2", "3"])])
+session("count-each-row-once", once, ["files", "run", f"query {metric}"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the

@@ -36,6 +36,7 @@ Row = namedtuple("Row", "time host metric value")
 store = {
     "windows": {},
     "files": {},  # how many lines of each file are loaded
+    "seen": [],  # the rows this run kept so far: after a crash, the next run still finds their duplicates
 }
 
 # The store is kept in store.json, so it is still there when pipe starts again.
@@ -170,11 +171,14 @@ def query(metric, host=None):
 
 
 # Flush the buffer: add its rows to their windows and save the store.
-def flush():
+# The same write saves how many lines of the file are done, so a run after a crash starts after them.
+def flush(name, done):
     global buffer, flushes
     for row in buffer:
         add(row)
     buffer = []
+    store["files"][name] = done
+    store["seen"] = list(seen)
     save()
     flushes += 1
     if flushes == crash_at:
@@ -200,10 +204,8 @@ def load(name):
             rows.append(row)
             buffer.append(row)
             if len(buffer) == BATCH:
-                flush()
-    flush()
-    store["files"][name] = len(every)
-    save()
+                flush(name, i + 1)
+    flush(name, len(every))
     return f"{name}: lines {start + 1} to {len(every)}, kept {len(rows) - kept}, dropped {len(bad) - dropped}"
 
 
@@ -213,10 +215,13 @@ def run(crash):
     rows.clear()
     bad.clear()
     seen.clear()
+    seen.update(store["seen"])  # empty, unless the last run crashed
     flushes = 0
     crash_at = crash
     for name in names:
         print(load(name))
+    store["seen"] = []  # the run is whole: its rows' keys are no longer needed
+    save()
     return f"run: files {len(names)}, kept {len(rows)}, dropped {len(bad)}, windows {len(store['windows'])}, flushes {flushes}"
 
 
