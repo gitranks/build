@@ -61,7 +61,7 @@ function escape(note: string): string {
 const notes: string[] = [];
 
 // The routes: a method and a path, each with the function that answers it.
-const ROUTES: Record<string, (request: Request) => Answer> = {
+const ROUTES: Record<string, (request: Request) => Answer | Promise<Answer>> = {
   "GET /": () =>
     page(
       "Hello from web",
@@ -72,6 +72,7 @@ const ROUTES: Record<string, (request: Request) => Answer> = {
       '  <li><a href="/old">/old</a> has moved to /hello</li>',
       '  <li><a href="/notes">/notes</a> keeps the notes you send</li>',
       '  <li><a href="/about.html">/about.html</a> is a file from the public folder</li>',
+      '  <li><a href="/slow">/slow</a> takes a second to answer</li>',
       "</ul>",
     ),
   "GET /hello": (request) => {
@@ -93,6 +94,10 @@ const ROUTES: Record<string, (request: Request) => Answer> = {
     // 303 sends the browser on to /notes, so a reload asks for that page, and never sends the form twice.
     return { ...text("Saved. See /notes.", 303), headers: { Location: "/notes" } };
   },
+  "GET /slow": async () => {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    return text("That took a second.");
+  },
 };
 
 // A file from the public folder, such as /style.css. Its type comes from the end of its name.
@@ -110,7 +115,7 @@ function file(pathname: string): Answer {
 }
 
 // Find the route for a request. A path with no route gets 404 Not Found.
-function handle(request: Request): Answer {
+function handle(request: Request): Answer | Promise<Answer> {
   const [pathname] = request.target.split("?");
   const route = ROUTES[`${request.method} ${pathname}`];
   if (route) return route(request);
@@ -149,8 +154,8 @@ function send(socket: net.Socket, answer: Answer): void {
 }
 
 // Answer one request, and say so in the log.
-function respond(socket: net.Socket, request: Request): void {
-  const answer = handle(request);
+async function respond(socket: net.Socket, request: Request): Promise<void> {
+  const answer = await handle(request);
   console.log(`web: ${request.method} ${request.target} ${answer.status}`);
   send(socket, answer);
 }

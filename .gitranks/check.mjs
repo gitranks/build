@@ -217,6 +217,31 @@ await session("stay-in-the-folder", async (port) => {
   await ask(port, "stay-in-the-folder", [get(pick(["/100%", "/%FF.html", "/50%25%"]))], { brief: true });
   await ask(port, "stay-in-the-folder", [get(pick(["/about.html", "/style.css"]))], { brief: true });
 });
+await session("many-at-once", async (port) => {
+  const name = pick(["Ada", "Alan", "Grace"]);
+  said.push(["many-at-once", `sent: GET /slow, then GET /hello?name=${name} on a second connection 0.2 seconds later`]);
+  const slow = await connect(port);
+  slow.socket.write(get("/slow"));
+  await sleep(200);
+  const quick = await connect(port);
+  quick.socket.write(get(`/hello?name=${name}`));
+  const order = [];
+  const until = Date.now() + Math.min(4000, left());
+  while (order.length < 2 && Date.now() < until) {
+    for (const [target, link] of [["/slow", slow], [`/hello?name=${name}`, quick]]) {
+      if (!order.includes(target) && (link.closed || whole(answersIn(link.got)))) order.push(target);
+    }
+    await sleep(20);
+  }
+  for (const [i, target] of order.entries()) {
+    const answer = answersIn((target === "/slow" ? slow : quick).got)[0];
+    const body = answer && answer.head !== null ? answer.body.toString("utf8").split("\n")[0] : "nothing";
+    said.push(["many-at-once", `${i ? "then" : "first"} came the answer to ${target}: ${cut(body)}`]);
+  }
+  if (order.length < 2) said.push(["many-at-once", "one answer did not come within 4 seconds"]);
+  slow.socket.destroy();
+  quick.socket.destroy();
+});
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
