@@ -1,13 +1,28 @@
 // pipe: a small data pipeline, written from nothing, with no library.
 // It reads the CSV files in its inbox, cleans their rows, counts them minute by minute and answers questions.
 // Start it with: node pipe.ts
+import * as fs from "node:fs";
 import { createInterface } from "node:readline";
 
 // The commands pipe knows, as help shows them.
 const HELP = [
+  "files                         list the CSV files in the inbox folder",
   "help                          this list",
   "exit                          stop pipe",
 ];
+
+// The names of the CSV files in the inbox folder, in order.
+function inbox(): string[] {
+  if (!fs.existsSync("inbox")) return [];
+  return fs.readdirSync("inbox").filter((name) => name.endsWith(".csv")).sort();
+}
+
+// A file's whole lines. A last piece with no line end may still be being written, so it waits for a later run.
+function lines(name: string): string[] {
+  const all = fs.readFileSync(`inbox/${name}`, "utf8").split("\n");
+  all.pop();
+  return all;
+}
 
 // The prompt pipe> shows only when you type at a terminal, not when another program sends the commands.
 function ask(): void {
@@ -17,6 +32,11 @@ function ask(): void {
 // Do one command, its name and then its words, and give back the answer.
 function command(words: string[]): string {
   const [name] = words;
+  if (name === "files") {
+    const names = inbox();
+    if (!names.length) return "(no CSV files in the inbox folder)";
+    return names.map((name) => `${name}: lines ${lines(name).length}`).join("\n");
+  }
   if (name === "help") return HELP.join("\n");
   return `unknown command: ${name}. Type help for the list.`;
 }

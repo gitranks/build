@@ -57,6 +57,10 @@ function session(about, dir, commands) {
 
 session("what-you-will-build", box("start", {}), []);
 session("read-commands", box("commands", {}), ["help", "", pick(["fly", "hello", "remember"]) + " away", "exit", "help"]);
+session("list-the-inbox", box("no-inbox", null), ["files"]);
+const name = pick(["web", "api", "db"]);
+const listed = { [`${name}.csv`]: "one\ntwo\nthree\n", "2026-11-27.csv": "first\r\nsecond, with no line end yet", "notes.txt": "not a CSV file\n" };
+session("list-the-inbox", box("listed", listed), ["files"]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
