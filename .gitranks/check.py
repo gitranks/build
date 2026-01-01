@@ -28,6 +28,9 @@ asks = [("initialize", {"protocolVersion": version, "capabilities": {}, "clientI
 asks += [("notifications/initialized", None), ("ping", None), ("tools/list", None), (pick(["hello", "say/hi", "what/now"]), None)]
 asks += [("tools/call", {"name": "roll_dice", "arguments": {"sides": pick([6, 8, 12, 20])}})]
 asks += [("tools/call", {"name": pick(["fly", "roll_die", "dice"]), "arguments": {}})]
+asks += [("tools/call", {"name": "roll_dice", "arguments": {"sides": pick([1, 1000, "six", 2.5])}})]
+asks += [("tools/call", {"name": "roll_dice", "arguments": {"count": pick([2, 3, 5])}})]
+asks += [("tools/call", {"name": "roll_dice", "arguments": {"sides": 6, "count": pick([0, 11, "two"])}})]
 
 
 def compact(value):
@@ -152,7 +155,7 @@ talk("sdk/server.py", ["--seed", seed], asks)
 # What this step adds is printed whole: the answers it is about (by id, None for id null), the logs or the prompt.
 # Every other line goes into one line with a fingerprint (a hash), so the print stays short. With --all, every line
 # is printed, after a first line that says this print is only to look at.
-focus = {4, 6, 7}
+focus = {4, 8, 9, 10}
 every = sys.argv[3:4] == ["--all"]
 other = [text for key, text in said if not (every or key in focus or key == "always")]
 if every:
