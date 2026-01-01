@@ -95,6 +95,7 @@ groups.append(("a-first-guess", [f"next {start}", "next " + pick(["at", "o", "th
 groups.append(("test-on-new-text", ["text", "loss"]))
 groups.append(("the-gradient", ["gradcheck"]))
 groups.append(("learn-from-mistakes", ["train " + pick(["60", "80", "100"]), "loss", f"seed {seed}", f"write {start}", "train 0"]))
+groups.append(("look-back", ["train 50", "loss", f"seed {seed}", f"write {start}"]))
 groups.append(("read-commands", ["help", "", pick(["fly", "hello", "learn"]) + " away", "exit", "help"]))
 session(groups)
 shutil.rmtree(folder, ignore_errors=True)

@@ -145,6 +145,7 @@ def matrix(rows, cols, size):
 model = {
     "emb": matrix(V, D, 0.5),  # a row of numbers for each character
     "out": matrix(D, V, 0.5),  # from those numbers to a score for each character
+    "wv": matrix(D, D, 0.25),  # what a character passes on to the ones after it
 }
 steps = 0  # how many training steps the model has taken
 
@@ -173,9 +174,19 @@ def softmax(scores):
 
 # Run the model over a window of characters: after each one, a score for every character that may come next.
 def forward(x):
-    z = [model["emb"][n] for n in x]
+    h = [model["emb"][n] for n in x]
+    v = [times(row, model["wv"]) for row in h]
+    # Each character takes the mean of itself and the ones before it, never the ones after (the mask).
+    a = [[1 / (t + 1)] * (t + 1) for t in range(len(h))]
+    z = []
+    for t, row in enumerate(h):
+        mix = [0.0] * D
+        for u in range(t + 1):
+            for i in range(D):
+                mix[i] += a[t][u] * v[u][i]
+        z.append([e + mix[i] for i, e in enumerate(row)])
     logits = [times(row, model["out"]) for row in z]
-    return {"x": x, "z": z, "logits": logits, "p": [softmax(row) for row in logits]}
+    return {"x": x, "h": h, "v": v, "a": a, "z": z, "logits": logits, "p": [softmax(row) for row in logits]}
 
 # The model's loss: the mean of -log(the chance it gave the character that came next).
 def loss_of(f, y):
@@ -203,9 +214,22 @@ def backward(f, y):
             for j in range(V):
                 g["out"][i][j] += f["z"][t][i] * dl[j]
         dz.append([dot(row, dl) for row in model["out"]])
+    dh = [list(row) for row in dz]  # z is h plus the mix, so h gets all of z's gradient, and the mix too
+    dv = [[0.0] * D for _ in range(n)]
+    for t in range(n):
+        for u in range(t + 1):
+            for i in range(D):
+                dv[u][i] += f["a"][t][u] * dz[t][i]
+    for name, d in (("wv", dv),):
+        for t in range(n):
+            for i in range(D):
+                for j in range(D):
+                    g[name][i][j] += f["h"][t][i] * d[t][j]
+            for i in range(D):
+                dh[t][i] += dot(model[name][i], d[t])
     for t in range(n):
         for i in range(D):
-            g["emb"][f["x"][t]][i] += dz[t][i]
+            g["emb"][f["x"][t]][i] += dh[t][i]
     return g
 
 # One step of training: a random window of the text, then each number moves a little against its gradient.
