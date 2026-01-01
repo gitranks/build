@@ -1,5 +1,7 @@
 # kv: a key-value database, written from nothing, with no library.
 # You type a command, such as set name Ada, and it answers. Start it with: python kv.py
+import json
+import os
 import sys
 
 # Read and write UTF-8 with plain line ends on every system, Windows too.
@@ -16,8 +18,23 @@ HELP = [
     "exit                  stop kv",
 ]
 
+# The log: a file where every change is written down, one line of JSON each. --file picks another file.
+at = sys.argv.index("--file") if "--file" in sys.argv else 0
+FILE = sys.argv[at + 1] if 0 < at < len(sys.argv) - 1 and sys.argv[at + 1] else "data.log"
+
 # What you set, kept in memory while kv runs.
 data = {}
+
+
+# Write records at the end of the log, one line each. The file is opened as bytes, so Windows adds no \r.
+def write(batch):
+    lines = [(to_json(record) + "\n").encode() for record in batch]
+    with open(FILE, "ab") as log:
+        log.write(b"".join(lines))
+
+
+def to_json(value):
+    return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
 
 
 # Run one command, its name and then its words, and give back the answer.
@@ -28,6 +45,7 @@ def run(words):
     if name == "set":
         if not key or not value:
             return "usage: set <key> <value>"
+        write([["set", key, value]])
         data[key] = value
         return "OK"
     if name == "get":
@@ -39,6 +57,7 @@ def run(words):
             return "usage: del <key>"
         if key not in data:
             return "(not found)"
+        write([["del", key]])
         del data[key]
         return "deleted"
     if name == "keys":

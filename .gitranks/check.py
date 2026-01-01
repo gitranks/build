@@ -72,6 +72,19 @@ def session(about, commands):
         said.append((about if code == 3 else "always", f"kv stopped with code {code}"))
 
 
+# The lines kv wrote in its log from this byte on.
+def log_from(about, start):
+    text = ""
+    if os.path.exists(FILE):
+        with open(FILE, "rb") as log:
+            text = log.read()[start:].decode("utf-8", "replace")
+    lines = text.split("\n")
+    for line in lines[:-1]:
+        said.append((about, f"data.log: {line}"))
+    if lines[-1]:
+        said.append((about, f"data.log ends with a line cut short: {lines[-1]}"))
+
+
 session("what-you-will-build", [])
 session("read-commands", ["help", "", pick(["fly", "hello", "remember"]) + " away", "exit", "help"])
 key = pick(["name", "color", "city"])
@@ -81,6 +94,10 @@ gone = pick(["pet", "car", "game"])
 session("delete-a-key", [f"set {gone} " + pick(["cat", "red bike", "chess"]), f"del {gone}", f"get {gone}", f"del {gone}", "del"])
 session("list-the-keys", ["keys"])
 session("list-the-keys", ["set " + pick(["mid", "zeta", "both"]) + " 1", "set " + pick(["alpha", "end", "box"]) + " 2", "keys"])
+before = size()
+word = pick(["sky", "tea", "song"])
+session("write-it-down", [f"set {word} " + pick(["grey", "green", "loud"]), f"set {word} " + pick(["blue", "black", "soft"]), f"del {word}"])
+log_from("write-it-down", before)
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the

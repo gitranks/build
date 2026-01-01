@@ -1,2 +1,4 @@
 .gitranks/build.json
 __pycache__/
+data.log
+data.log.new
