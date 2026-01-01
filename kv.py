@@ -8,14 +8,30 @@ sys.stdout.reconfigure(encoding="utf-8", newline="\n")
 
 # The commands kv knows, as help shows them.
 HELP = [
+    "set <key> <value>     keep the value under the key",
+    "get <key>             say the value of the key",
     "help                  this list",
     "exit                  stop kv",
 ]
+
+# What you set, kept in memory while kv runs.
+data = {}
 
 
 # Run one command, its name and then its words, and give back the answer.
 def run(words):
     name = words[0]
+    key = words[1] if len(words) > 1 else ""
+    value = " ".join(words[2:])
+    if name == "set":
+        if not key or not value:
+            return "usage: set <key> <value>"
+        data[key] = value
+        return "OK"
+    if name == "get":
+        if not key:
+            return "usage: get <key>"
+        return data.get(key, "(not found)")
     if name == "help":
         return "\n".join(HELP)
     return f"unknown command: {name}. Type help for the list."

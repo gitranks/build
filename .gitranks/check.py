@@ -74,6 +74,9 @@ def session(about, commands):
 
 session("what-you-will-build", [])
 session("read-commands", ["help", "", pick(["fly", "hello", "remember"]) + " away", "exit", "help"])
+key = pick(["name", "color", "city"])
+value = pick(["Ada Lovelace", "deep blue", "Kyiv", "café au lait"])
+session("set-and-get", [f"set {key} {value}", f"get {key}", "get " + pick(["age", "size", "mood"]), f"set {key}"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
