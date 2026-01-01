@@ -6,6 +6,7 @@ import json
 import os
 import re
 import shutil
+import signal
 import socket
 import subprocess
 import sys
@@ -222,6 +223,81 @@ def change_and_delete(port):
 
 
 session("change-and-delete", change_and_delete)
+
+# Your tests, run by Python's own runner, unittest, as you run them, each one's result printed with its name.
+RUNNER = """
+import unittest
+def name(test):
+    method = test.id().split(".")[-1]
+    return method + ".py" if type(test).__name__ == "_FailedTest" else method.removeprefix("test_").replace("_", " ")
+class Result(unittest.TestResult):
+    def addSuccess(self, test):
+        print("ok", name(test))
+    def addFailure(self, test, err):
+        print("FAIL", name(test))
+    addError = addFailure
+    def addSkip(self, test, reason):
+        print("skipped", name(test))
+    def addSubTest(self, test, subtest, err):
+        if err is not None:
+            print("FAIL", name(test))
+    def addExpectedFailure(self, test, err):
+        print("ok", name(test))
+    def addUnexpectedSuccess(self, test):
+        print("FAIL", name(test))
+unittest.defaultTestLoader.discover(".").run(Result())
+"""
+
+
+# Run your tests, and print what each one gave, by its name. At the end the runner is stopped with everything it
+# started, each server too, even when a test never ends.
+def tests(about):
+    global stopped, runs
+    if stopped:
+        return
+    if left() < 3:
+        stopped = True
+        said.append(("always", "the check ran out of time before the tests could run"))
+        return
+    if not os.path.exists("test_server.py"):
+        said.append((about, "the tests: none yet"))
+        return
+    runs += 1
+    out = os.path.join(folder, f"out-{runs}.txt")
+    env = {**os.environ, "PYTHONIOENCODING": "utf-8", "PYTHONUNBUFFERED": "1"}
+    own = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if os.name == "nt" else {"start_new_session": True}
+    with open(out, "wb") as out_file, open(os.path.join(folder, f"err-{runs}.txt"), "wb") as err_file:
+        runner = subprocess.Popen([sys.executable, "-c", RUNNER], stdin=subprocess.DEVNULL, stdout=out_file, stderr=err_file, env=env, **own)
+    try:
+        code = runner.wait(timeout=min(10, left()))
+    except subprocess.TimeoutExpired:
+        code = None
+    # On Windows only a runner still running has a tree to stop.
+    try:
+        if os.name == "nt" and code is None:
+            subprocess.run(["taskkill", "/pid", str(runner.pid), "/t", "/f"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        elif os.name != "nt":
+            os.killpg(runner.pid, signal.SIGKILL)
+    except OSError:
+        pass
+    if code is None:
+        stopped = True
+        said.append(("always", "the tests did not end in time, so the check stopped there"))
+        return
+    found = {}  # a test with failing subtests says FAIL once for each: one FAIL is kept
+    for line in read(out).splitlines():
+        result, _, name = line.partition(" ")
+        if result in ("ok", "FAIL", "skipped") and found.get(name) != "FAIL":
+            found[name] = result
+    results = list(found.items())
+    counts = {what: len([1 for _, result in results if result == what]) for what in ("ok", "FAIL")}
+    failed = f", {counts['FAIL']} failed" if counts["FAIL"] else ""
+    said.append((about, f"the tests: {len(results)} ran, {counts['ok']} passed{failed}" if results else "the tests: none ran"))
+    for name, result in sorted(results):
+        said.append((about, f"{result}: {name}"))
+
+
+tests("a-first-test")
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
