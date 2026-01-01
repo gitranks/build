@@ -60,15 +60,30 @@ def load():
             os.truncate(FILE, end)
             print("kv: dropped a record cut short at the end of the log")
             break
-        note(json.loads(log[end:stop]), stop - end)
+        record = parse(log[end:stop])
+        if record is None:
+            print(f"kv: line {records + 1} of the log is damaged, so it is skipped")
+        note(record, stop - end)
+
+
+# A record is ["set", key, value] or ["del", key]. Anything else is damaged: None.
+def parse(line):
+    try:
+        r = json.loads(line)
+    except ValueError:
+        return None
+    if not isinstance(r, list) or len(r) < 2 or not isinstance(r[1], str):
+        return None
+    good = (r[0] == "set" and len(r) == 3 and isinstance(r[2], str)) or (r[0] == "del" and len(r) == 2)
+    return r if good else None
 
 
 # Note one record that was just read or written, and the bytes it takes.
 def note(record, size):
     global end, records
-    if record[0] == "set":
+    if record and record[0] == "set":
         index[record[1]] = (end, size)
-    else:
+    elif record:
         index.pop(record[1], None)
     records += 1
     end += size
