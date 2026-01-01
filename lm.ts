@@ -10,6 +10,7 @@ const HELP = [
   "decode <numbers>      turn numbers back into text",
   "counts <character>    the characters that came after this one, and how often",
   "write <start>         go on from the start, one character at a time",
+  "seed <number>         start the random numbers again from this number",
   "help                  this list",
   "exit                  stop lm",
 ];
@@ -57,14 +58,32 @@ const ids = encode(text);
 // pairs[a][b]: how many times character b came right after character a.
 const pairs = Array.from({ length: V }, () => new Array<number>(V).fill(0));
 for (let i = 0; i + 1 < ids.length; i++) pairs[ids[i]][ids[i + 1]] += 1;
+const SMOOTH = 0.1; // a pair never seen still gets a small count, so it is unlikely, not impossible
 
-// Go on from the start, one character at a time: each time, the character that came next most often.
+// Random numbers from a seed: the same seed gives the same numbers, on every computer and in both languages.
+let state = 1;
+function random(): number {
+  state = (state * 48271) % 2147483647;
+  return state / 2147483647;
+}
+// Pick a place at random, each as likely as its weight.
+function pick(weights: number[]): number {
+  let total = 0;
+  for (const w of weights) total += w;
+  let r = random() * total;
+  for (let i = 0; i < weights.length; i++) {
+    r -= weights[i];
+    if (r < 0) return i;
+  }
+  return weights.length - 1;
+}
+
+// Go on from the start, one character at a time, each picked at random by how often it came next.
 const LENGTH = 60;
 function write(start: number[]): string {
   const out = [...start];
   while (out.length < start.length + LENGTH) {
-    const row = pairs[out[out.length - 1]];
-    out.push(row.indexOf(Math.max(...row)));
+    out.push(pick(pairs[out[out.length - 1]].map((count) => count + SMOOTH)));
   }
   return decode(out);
 }
@@ -102,6 +121,11 @@ function run(words: string[]): string {
     if (!total) return `nothing came after "${arg}"`;
     const top = order.slice(0, 5).map(([count, b]) => `${show(b)} ${count}`).join(", ");
     return `after "${arg}": ${top}${order.length > 5 ? ` and ${order.length - 5} more` : ""}, ${total} in all`;
+  }
+  if (name === "seed") {
+    if (!isNumber(arg)) return "usage: seed <number>";
+    state = (Number(arg) % 2147483646) + 1;
+    return `seed ${Number(arg)}`;
   }
   if (name === "write") {
     if (!arg) return "usage: write <start>";
