@@ -1,6 +1,7 @@
 // lm: a tiny language model, written from nothing, with no library.
 // It reads a text, learns which character comes next, and writes text of its own. Start it with: node lm.ts
 import * as fs from "node:fs";
+import { dirname, join } from "node:path";
 import { createInterface } from "node:readline";
 
 // The commands lm knows, as help shows them.
@@ -19,6 +20,8 @@ const HELP = [
   "train <steps>         learn from the text, one short piece at each step",
   "attend <text>         how much each character looks at the ones before it",
   "temp <number>         how bold write is: below 1 safer, above 1 wilder",
+  "save                  keep what the model learned in model.json",
+  "load                  read model.json back",
   "help                  this list",
   "exit                  stop lm",
 ];
@@ -26,6 +29,7 @@ const HELP = [
 // The text lm learns from. --text picks another file.
 const at = process.argv.indexOf("--text");
 const FILE = at > 0 && process.argv[at + 1] ? process.argv[at + 1] : "text.txt";
+const MODEL = join(dirname(FILE), "model.json");
 
 // Clean a text: small letters, full stops and commas stay, each run of spaces and line ends becomes one space, and
 // every other character goes.
@@ -384,6 +388,27 @@ function run(words: string[]): string {
     if (!isDecimal(arg) || Number(arg) < 0.01 || Number(arg) > 10) return "usage: temp <number>, from 0.01 to 10, such as temp 0.5";
     temperature = Number(arg);
     return `temp ${fmt(temperature, 2)}`;
+  }
+  if (name === "save") {
+    fs.writeFileSync(MODEL, JSON.stringify({ alphabet: ALPHABET, steps, ...model }) + "\n");
+    return `saved the model after ${steps} steps in model.json`;
+  }
+  if (name === "load") {
+    if (!fs.existsSync(MODEL)) return "there is no model.json yet: train, then save";
+    let saved;
+    try {
+      saved = JSON.parse(fs.readFileSync(MODEL, "utf8"));
+    } catch {
+      return "model.json is not a model lm saved: train, then save";
+    }
+    if (saved?.alphabet !== ALPHABET) return "model.json learned from another text: train again, then save";
+    if (!Number.isInteger(saved.steps)) return "model.json does not fit: it has no count of steps";
+    for (const key in model) {
+      if (shape(saved[key]) !== shape(model[key])) return `model.json does not fit: ${key} is ${shape(saved[key])}, not ${shape(model[key])}`;
+    }
+    for (const key in model) model[key] = saved[key];
+    steps = saved.steps;
+    return `loaded the model after ${steps} steps`;
   }
   if (name === "help") return HELP.join("\n");
   return `unknown command: ${name}. Type help for the list.`;
