@@ -20,6 +20,32 @@ def number(text):
     return int(text)
 
 
+# Work out one operator on two values.
+def operate(op, a, b):
+    if op == "+":
+        return a + b
+    if op == "-":
+        return a - b
+    if op == "*":
+        return a * b
+    if b == 0:
+        raise MiniError("division by zero")
+    return a // b  # a whole number, rounded down: 7 / 2 is 3
+
+
+# Work out words such as 12 + 30 - 2: a number, then an operator and a number, again and again, from left to right.
+def calculate(words):
+    total = number(words[0])
+    for i in range(1, len(words), 2):
+        op = words[i]
+        if op not in ["+", "-", "*", "/"]:
+            raise MiniError(f"{op} is not an operator")
+        if i + 1 == len(words):
+            raise MiniError(f"{op} needs a number after it")
+        total = operate(op, total, number(words[i + 1]))
+    return total
+
+
 # Say what went wrong. A mistake in the program is not a crash of mini: anything else is.
 def report(error):
     if not isinstance(error, MiniError):
@@ -30,7 +56,7 @@ def report(error):
 # Run a line that was typed, and say what went wrong if anything did: a mistake does not stop mini.
 def attempt(line):
     try:
-        print(number(line.strip()))
+        print(calculate(line.split()))
     except Exception as error:
         report(error)
 
