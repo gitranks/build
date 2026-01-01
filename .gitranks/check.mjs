@@ -15,6 +15,7 @@ lines.push(JSON.stringify({ jsonrpc: "2.0", method: pick(["notifications/hello",
 const version = pick(["2025-11-25", "2025-06-18", "2024-11-05"]);
 lines.push(call(2, "initialize", { protocolVersion: version, capabilities: {}, clientInfo: { name: "check", version: "1" } }));
 lines.push(call("odd", pick(["initialize", "ping", "tools/list"]), pick(["oops", [1, 2], 7])));
+lines.push(call(3, "ping"));
 
 function show(name, file, args, input) {
   const run = spawnSync(process.execPath, [file, ...args], { input: input.map((l) => l + "\n").join(""), encoding: "utf8", timeout: 5000 });
@@ -41,7 +42,7 @@ show("prompt", "prompt.ts", [], [pick(["tools/list", "ping", "hello/again"])]);
 // What this step adds is printed whole: the answers it is about (by id), the logs or the prompt. Every other
 // line goes into one line with a fingerprint (a hash), so the print stays short. With --all, every line is printed,
 // after a first line that says this print is only to look at.
-const focus = [2, "odd"];
+const focus = [3];
 const every = process.argv[4] === "--all";
 const shown = ([key]) => every || key === "always" || focus.includes(key);
 if (every) console.log("all lines, printed with --all: never send this print, send the one without --all");

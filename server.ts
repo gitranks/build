@@ -33,6 +33,7 @@ function handle(msg: Message): Answer {
       },
     };
   }
+  if (msg.method === "ping") return { result: {} };
   return fail(-32601, `Method not found: ${msg.method}`);
 }
 
