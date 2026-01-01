@@ -154,6 +154,12 @@ def times(row, m):
             out[j] += row[i] * m[i][j]
     return out
 
+def dot(a, b):
+    total = 0.0
+    for i in range(len(a)):
+        total += a[i] * b[i]
+    return total
+
 # Scores to chances: each becomes positive, and together they add up to 1.
 def softmax(scores):
     top = max(scores)
@@ -184,11 +190,28 @@ def surprise(part):
         total += loss_of(forward(x), part[s + 1 : s + 1 + len(x)]) * len(x)
     return total / (len(part) - 1)
 
+# The gradient: for each number of the model, how fast the loss grows when that number grows.
+def backward(f, y):
+    g = {name: [[0.0] * len(row) for row in m] for name, m in model.items()}
+    n = len(f["x"])
+    dz = []
+    for t in range(n):
+        dl = [(p - (1 if j == y[t] else 0)) / n for j, p in enumerate(f["p"][t])]  # the chances, less 1 for the right one
+        for i in range(D):
+            for j in range(V):
+                g["out"][i][j] += f["z"][t][i] * dl[j]
+        dz.append([dot(row, dl) for row in model["out"]])
+    for t in range(n):
+        for i in range(D):
+            g["emb"][f["x"][t]][i] += dz[t][i]
+    return g
+
 # Nudge one number of each table up and down a little, and see how fast the loss moves: the gradient, measured.
 # It is the number in row 0, column 1; in emb, row 0 is the first character of the alphabet, most often the space.
 def gradcheck():
     x = train[:T]
     y = train[1 : T + 1]
+    g = backward(forward(x), y)
     lines = []
     for name, m in model.items():
         keep = m[0][1]
@@ -197,7 +220,7 @@ def gradcheck():
         m[0][1] = keep - 0.00001
         down = loss_of(forward(x), y)
         m[0][1] = keep
-        lines.append(f"{name}: {fmt((up - down) / 0.00002, 6)} by a nudge")
+        lines.append(f"{name}: {fmt(g[name][0][1], 6)} by the formula, {fmt((up - down) / 0.00002, 6)} by a nudge")
     return "\n".join(lines)
 
 # Go on from the start, one character at a time, each picked at random by how often it came next.
