@@ -1,0 +1,2 @@
+# Every text file of the build has LF line ends on every system, as in the steps' commits.
+* text=auto eol=lf
