@@ -1,10 +1,21 @@
 // web: a web server, written from nothing on a plain socket, with no library.
 // While it runs, open http://localhost:8080 in your browser. Start it with: node server.ts
+import * as fs from "node:fs";
 import * as net from "node:net";
+import * as path from "node:path";
 
 // The port: 8080, or the number after --port. With --port 0 the system picks a free one.
 const at = process.argv.indexOf("--port");
 const PORT = at > 0 ? Number(process.argv[at + 1]) : 8080;
+// The folder whose files anyone may ask for: public, beside this file.
+const PUBLIC = path.join(import.meta.dirname, "public");
+// The type of each kind of file, for the Content-Type header: the browser reads it to know what it got.
+const TYPES: Record<string, string> = {
+  ".html": "text/html; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8",
+  ".png": "image/png",
+};
 
 // The words that go with each status code on an answer's first line.
 const REASONS: Record<number, string> = {
@@ -34,6 +45,7 @@ function page(title: string, ...lines: string[]): Answer {
   const top = [
     "<!doctype html>",
     `<title>${title}</title>`,
+    '<link rel="stylesheet" href="/style.css">',
     `<h1>${title}</h1>`,
   ];
   return { status: 200, type: "text/html; charset=utf-8", body: [...top, ...lines, ""].join("\n") };
@@ -59,6 +71,7 @@ const ROUTES: Record<string, (request: Request) => Answer> = {
       '  <li><a href="/headers">/headers</a> lists what your browser sent</li>',
       '  <li><a href="/old">/old</a> has moved to /hello</li>',
       '  <li><a href="/notes">/notes</a> keeps the notes you send</li>',
+      '  <li><a href="/about.html">/about.html</a> is a file from the public folder</li>',
       "</ul>",
     ),
   "GET /hello": (request) => {
@@ -82,6 +95,13 @@ const ROUTES: Record<string, (request: Request) => Answer> = {
   },
 };
 
+// A file from the public folder, such as /style.css. Its type comes from the end of its name.
+function file(pathname: string): Answer {
+  const name = path.join(PUBLIC, decodeURIComponent(pathname));
+  if (!fs.existsSync(name) || !fs.statSync(name).isFile()) return text(`no page at ${pathname}`, 404);
+  return { status: 200, type: TYPES[path.extname(name)] ?? "application/octet-stream", body: fs.readFileSync(name) };
+}
+
 // Find the route for a request. A path with no route gets 404 Not Found.
 function handle(request: Request): Answer {
   const [pathname] = request.target.split("?");
@@ -90,6 +110,7 @@ function handle(request: Request): Answer {
   // The path has routes, but for other methods: 405, and the Allow header names them.
   const methods = Object.keys(ROUTES).filter((key) => key.split(" ")[1] === pathname).map((key) => key.split(" ")[0]);
   if (methods.length) return { ...text(`${request.method} is not allowed at ${pathname}`, 405), headers: { Allow: methods.join(", ") } };
+  if (request.method === "GET") return file(pathname);
   return text(`no page at ${pathname}`, 404);
 }
 

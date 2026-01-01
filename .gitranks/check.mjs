@@ -207,6 +207,11 @@ await session("show-notes-safely", async (port) => {
   await ask(port, "show-notes-safely", [post("/notes", `note=${sly}`)], { label: `POST /notes with the body note=${sly}`, brief: true });
   await ask(port, "show-notes-safely", [get("/notes")], { show: (line) => line.startsWith("<p>") });
 });
+await session("serve-files", async (port) => {
+  await ask(port, "serve-files", [get("/style.css")], { show: (line, i) => i < 1 });
+  await ask(port, "serve-files", [get("/about.html")], { show: (line) => line.startsWith("<h1>") });
+  await ask(port, "serve-files", [get(pick(["/logo.png", "/missing.html", "/style.css.old"]))]);
+});
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
