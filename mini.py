@@ -93,7 +93,7 @@ WORDS = ["let", "true", "false", "print", "if", "else", "while", "fn", "return"]
 
 # The tokenizer cuts the source into pieces: a run of spaces, a number, a name and more, or any other one
 # character. It turns each piece into a token, the words of mini, and leaves the spaces out.
-PIECES = r'[ \t\r]+|[0-9]+|[A-Za-z_][A-Za-z_0-9]*|"[^"\n]*"?|[=!<>]=|[\s\S]'
+PIECES = r'[ \t\r]+|#[^\n]*|\n|[0-9]+|[A-Za-z_][A-Za-z_0-9]*|"[^"\n]*"?|[=!<>]=|[\s\S]'
 
 
 def tokenize(source, line=1):
@@ -105,7 +105,10 @@ def tokenize(source, line=1):
 
     for piece in re.findall(PIECES, source):
         where = line
-        if re.match("[0-9]", piece):
+        if piece == "\n":
+            add(";", "the end of the line")  # a line end ends a statement, as ; does
+            line += 1
+        elif re.match("[0-9]", piece):
             add("number", piece)
         elif re.match("[A-Za-z_]", piece):
             add(piece if piece in WORDS else "name", piece)
@@ -115,7 +118,7 @@ def tokenize(source, line=1):
             add("text", piece[1:-1])
         elif piece in SYMBOLS:
             add(piece, piece)
-        elif piece[0] not in " \t\r":
+        elif piece[0] not in " \t\r#":  # # starts a comment
             raise MiniError(f"unexpected character {piece}")
     add("end", "the end")
     return tokens
@@ -339,13 +342,18 @@ def report(error):
     print(f"error: line {where}: {'too deep' if deep else error}")
 
 
+# Run some source: a line typed at the prompt, or a whole file. At the prompt, an expression's value is said.
+def run_source(source, line, prompt):
+    for node in parse(tokenize(source, line)):
+        value = execute(node, top)
+        if prompt and node.kind == "expr" and value is not None:
+            print(show(value))
+
+
 # Run a line that was typed, and say what went wrong if anything did: a mistake does not stop mini.
 def attempt(text, line):
     try:
-        for node in parse(tokenize(text, line)):
-            value = execute(node, top)
-            if node.kind == "expr" and value is not None:
-                print(show(value))
+        run_source(text, line, True)
     except Exception as error:
         report(error)
 
@@ -368,4 +376,13 @@ def repl():
             attempt(line, count)
 
 
-repl()
+# python mini.py hello.mini runs the file: no prompt, nothing said but what print says, and an error stops it.
+if len(sys.argv) < 2:
+    repl()
+else:
+    try:
+        with open(sys.argv[1], encoding="utf-8", newline="") as file:
+            run_source(file.read(), 1, False)
+    except Exception as error:
+        report(error)
+        sys.exit(1)
