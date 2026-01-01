@@ -175,6 +175,8 @@ const ends = (ask) => {
 await session("keep-it-short", ["read big.txt"], [call("read_file", { path: "big.txt" }), ends]);
 const pages = Array.from({ length: 11 }, (_, i) => call("read_file", { path: `page${i + 1}.txt` }));
 await session("a-limit-on-rounds", [`read every ${pick(["page", "chapter", "part"])}`], [...pages, heard]);
+const again = call("read_file", { path: "notes.txt" });
+await session("stop-going-in-circles", ["read my notes", pick(["just answer", "say hello", "stop reading"])], [again, again, heard]);
 server.close();
 try {
   fs.rmSync(top, { recursive: true, force: true });
