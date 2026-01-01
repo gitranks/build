@@ -41,6 +41,9 @@ function session(about, commands) {
 
 session("what-you-will-build", []);
 session("read-commands", ["help", "", pick(["fly", "hello", "remember"]) + " away", "exit", "help"]);
+const key = pick(["name", "color", "city"]);
+const value = pick(["Ada Lovelace", "deep blue", "Kyiv", "café au lait"]);
+session("set-and-get", [`set ${key} ${value}`, `get ${key}`, `get ${pick(["age", "size", "mood"])}`, `set ${key}`]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

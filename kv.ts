@@ -4,9 +4,14 @@ import { createInterface } from "node:readline";
 
 // The commands kv knows, as help shows them.
 const HELP = [
+  "set <key> <value>     keep the value under the key",
+  "get <key>             say the value of the key",
   "help                  this list",
   "exit                  stop kv",
 ];
+
+// What you set, kept in memory while kv runs.
+const data = new Map<string, string>();
 
 // The prompt kv> shows only when you type at a terminal, not when another program sends the commands.
 function ask(): void {
@@ -15,7 +20,17 @@ function ask(): void {
 
 // Run one command, its name and then its words, and give back the answer.
 function run(words: string[]): string {
-  const [name] = words;
+  const [name, key, ...rest] = words;
+  const value = rest.join(" ");
+  if (name === "set") {
+    if (!key || !value) return "usage: set <key> <value>";
+    data.set(key, value);
+    return "OK";
+  }
+  if (name === "get") {
+    if (!key) return "usage: get <key>";
+    return data.get(key) ?? "(not found)";
+  }
   if (name === "help") return HELP.join("\n");
   return `unknown command: ${name}. Type help for the list.`;
 }
