@@ -79,6 +79,8 @@ value = pick(["Ada Lovelace", "deep blue", "Kyiv", "café au lait"])
 session("set-and-get", [f"set {key} {value}", f"get {key}", "get " + pick(["age", "size", "mood"]), f"set {key}"])
 gone = pick(["pet", "car", "game"])
 session("delete-a-key", [f"set {gone} " + pick(["cat", "red bike", "chess"]), f"del {gone}", f"get {gone}", f"del {gone}", "del"])
+session("list-the-keys", ["keys"])
+session("list-the-keys", ["set " + pick(["mid", "zeta", "both"]) + " 1", "set " + pick(["alpha", "end", "box"]) + " 2", "keys"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the

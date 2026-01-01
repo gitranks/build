@@ -11,6 +11,7 @@ HELP = [
     "set <key> <value>     keep the value under the key",
     "get <key>             say the value of the key",
     "del <key>             delete the key",
+    "keys                  list every key",
     "help                  this list",
     "exit                  stop kv",
 ]
@@ -40,6 +41,9 @@ def run(words):
             return "(not found)"
         del data[key]
         return "deleted"
+    if name == "keys":
+        every = sorted(data)
+        return "\n".join(every) if every else "(no keys)"
     if name == "help":
         return "\n".join(HELP)
     return f"unknown command: {name}. Type help for the list."
