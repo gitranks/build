@@ -2,6 +2,7 @@
 # use tools on the files of this folder. Start it: python3 agent.py on macOS and Linux, py agent.py on Windows.
 import json
 import sys
+import urllib.error
 import urllib.request
 
 # Read and write UTF-8 with plain line ends on every system, Windows too.
@@ -31,8 +32,28 @@ messages = []  # the conversation, as the model server reads and writes it: mess
 def ask():
     body = json.dumps({"model": MODEL, "messages": messages}).encode()
     request = urllib.request.Request(SERVER + "/chat/completions", body, {"Content-Type": "application/json"})
-    with urllib.request.build_opener(urllib.request.ProxyHandler({})).open(request) as response:
-        return json.load(response)["choices"][0]["message"]
+    try:
+        response = urllib.request.build_opener(urllib.request.ProxyHandler({})).open(request)
+    except urllib.error.HTTPError as error:
+        response = error  # a status of 400 or more: a server that failed may say why, as JSON or as plain text
+    with response:
+        try:
+            answer = json.loads(response.read())
+        except ValueError:
+            answer = None
+    answer = answer if isinstance(answer, dict) else {}
+    if "choices" not in answer:
+        why = answer.get("error")
+        why = why.get("message") if isinstance(why, dict) else why
+        raise RuntimeError(f"the model server said: {why or f'status {response.getcode()}'}")
+    return answer["choices"][0]["message"]
+
+
+# What to tell you when a message got no answer.
+def failed(error):
+    if not isinstance(error, urllib.error.URLError):
+        return str(error)
+    return "no answer from the model server. Is it running? README.md says how to start it."
 
 
 # One message from you, and the model's answer to it.
@@ -49,7 +70,7 @@ def line(prompt):
     return sys.stdin.readline() or None
 
 
-print("agent: ready. Type a message, or /help for the commands.")
+print(f"agent: ready, model {MODEL}. Type a message, or /help for the commands.")
 while (said := line("you> ")) is not None:
     text = said.strip()
     if text == "/exit":
@@ -57,4 +78,7 @@ while (said := line("you> ")) is not None:
     if text == "/help":
         print(HELP)
     elif text:
-        turn(text)
+        try:
+            turn(text)
+        except Exception as error:
+            print("agent: " + failed(error))
