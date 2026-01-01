@@ -5,6 +5,7 @@ import { createInterface } from "node:readline";
 // A mistake in the program mini runs, such as 1 / 0: mini says what it is and goes on. It is not a crash of mini.
 class MiniError extends Error {}
 type Value = number;
+type Token = { kind: string; text: string };
 
 // A number, from its digits.
 function number(text: string): number {
@@ -33,6 +34,24 @@ function calculate(words: string[]): Value {
   return total;
 }
 
+const SYMBOLS = [ // the symbols mini knows
+  "+", "-", "*", "/",
+];
+
+// The tokenizer cuts the source into pieces: a run of spaces, a number, a name and more, or any other one
+// character. It turns each piece into a token, the words of mini, and leaves the spaces out.
+const PIECES = /[ \t\r]+|[0-9]+|[\s\S]/gu;
+function tokenize(source: string): Token[] {
+  const tokens: Token[] = [];
+  const add = (kind: string, text: string) => tokens.push({ kind, text });
+  for (const piece of source.match(PIECES) ?? []) {
+    if (/^[0-9]/.test(piece)) add("number", piece);
+    else if (SYMBOLS.includes(piece)) add(piece, piece);
+    else if (!" \t\r".includes(piece[0])) throw new MiniError(`unexpected character ${piece}`);
+  }
+  return tokens;
+}
+
 // Say what went wrong. A mistake in the program is not a crash of mini: anything else is.
 function report(error: unknown): void {
   if (!(error instanceof MiniError)) throw error;
@@ -47,7 +66,7 @@ function ask(): void {
 // Run a line that was typed, and say what went wrong if anything did: a mistake does not stop mini.
 function attempt(line: string): void {
   try {
-    console.log(String(calculate(line.trim().split(/\s+/))));
+    console.log(String(calculate(tokenize(line).map((token) => token.text))));
   } catch (error) {
     report(error);
   }
