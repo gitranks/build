@@ -16,6 +16,7 @@ HELP = [
     "keys                  list every key",
     "fill <count>          set key1, key2 and on, up to the count",
     "stats                 count the keys, the records and the bytes",
+    "compact               keep only the latest record of each key",
     "help                  this list",
     "exit                  stop kv",
 ]
@@ -74,6 +75,22 @@ def read(key):
         return json.loads(log.read(size))[2]
 
 
+# Copy the latest record of each key into a new file, then put the new file in the log's place.
+def compact():
+    global end, records
+    was = f"records {records}, bytes {end}"
+    with open(FILE, "rb") as file:
+        log = file.read()
+    keep = b"".join(log[start : start + size] for start, size in index.values())
+    with open(FILE + ".new", "wb") as new:
+        new.write(keep)
+    os.replace(FILE + ".new", FILE)  # os.rename would refuse on Windows, where the log is already there
+    index.clear()
+    end = records = 0
+    load()
+    return f"compacted: {was} before; records {records}, bytes {end} now"
+
+
 # Run one command, its name and then its words, and give back the answer.
 def run(words):
     name = words[0]
@@ -107,6 +124,8 @@ def run(words):
         return f"OK, set key1 to key{count}"
     if name == "stats":
         return f"keys {len(index)}, records {records}, old records {records - len(index)}, bytes {end}"
+    if name == "compact":
+        return compact() if records else "the log is empty"
     if name == "help":
         return "\n".join(HELP)
     return f"unknown command: {name}. Type help for the list."
