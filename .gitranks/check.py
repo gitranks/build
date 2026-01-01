@@ -40,6 +40,7 @@ lines += [call(9, "tools/call", {"name": "roll_dice", "arguments": {"sides": 6, 
 choices = pick([["tea", "coffee"], ["red", "green", "blue"], ["left", "right", "up", "down"]])
 lines += [call(10, "tools/call", {"name": "pick_one", "arguments": {"choices": choices}})]
 lines += [call(11, "tools/call", {"name": "pick_one", "arguments": {"choices": pick([["alone"], "tea", [1, 2]])}})]
+lines += [pick(["null", "[1, 2]", '{"id": 12}', '{"jsonrpc": "2.0", "id": 12}'])]
 
 
 def show(name, file, args, sent):
