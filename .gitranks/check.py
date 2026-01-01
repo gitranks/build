@@ -139,6 +139,18 @@ times = [
 session("check-the-times", box("times", {"a.csv": csv([row(t, host, metric, v()) for t in times])}), ["run", "bad"])
 values = [pick(["007", "0042.0"]), pick(["42.5", "0.05", "3.10"]), pick(["100.00", "999999999.99", "0"])]
 session("clean-the-values", box("clean", {"a.csv": csv([row(at(f"10:00:0{i + 5}"), host, metric, x) for i, x in enumerate(values)])}), ["run", "rows"])
+zone = pick(["12:00:20+02:00", "04:30:20-05:30", "15:45:20+05:45"])
+names = {
+    "a.csv": "\ufeff" + csv([
+        "time,host,metric,value",
+        row(at("10:00:05"), f" {host.upper()} ", f" {metric.upper()}", "41"),
+        row(f"{day} {zone}", host, metric, "43"),
+        row(at("10:00:15"), pick(["web_1", "-web", "wéb-1"]), metric, "1"),
+        row(at("10:00:25"), host, pick(["cpu%", "1cpu", "c-p-u"]), "1"),
+    ]),
+    "b.csv": csv([row(at("10:00:05"), host, metric, "99"), row(at("10:00:45"), host, metric, "44")]),
+}
+session("names-times-and-duplicates", box("names", names), ["run", "rows", "bad"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the

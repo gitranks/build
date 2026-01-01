@@ -29,6 +29,7 @@ Row = namedtuple("Row", "time host metric value")
 rows = []  # the rows the last run kept
 BLANKS = " \t\r"  # spaces, tabs and the \r of a Windows line end: what strip takes off, as in TypeScript
 bad = []  # the lines it dropped, and why
+seen = set()  # the time, host and metric of each row it kept
 
 
 # The names of the CSV files in the inbox folder, in order.
@@ -40,7 +41,8 @@ def inbox():
 
 # A file's whole lines. A last piece with no line end may still be being written, so it waits for a later run.
 def lines(name):
-    with open(os.path.join("inbox", name), encoding="utf-8", errors="replace", newline="") as file:
+    # A file saved by Excel may start with an invisible byte order mark, U+FEFF: utf-8-sig takes it off.
+    with open(os.path.join("inbox", name), encoding="utf-8-sig", errors="replace", newline="") as file:
         return file.read().split("\n")[:-1]
 
 
@@ -49,7 +51,7 @@ def split(line):
     text = line.strip(BLANKS)
     if not text or text.startswith("#") or text.lower().startswith("time,"):
         return None
-    return text.split(",")
+    return [field.strip(BLANKS) for field in text.split(",")]
 
 
 # At most 10 lines of a list, and how many more there are.
@@ -60,14 +62,19 @@ def some(lines, none):
 
 
 # A time such as 2026-11-27T10:00:05Z in seconds since 1970, or None when it is not a real time from 2000 to 2099.
+# A time in another zone, such as 2026-11-27 12:00:05+02:00, is moved to UTC. A time with no zone is not trusted.
 def seconds(text):
-    m = re.fullmatch(r"(20[0-9]{2})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})Z", text)
+    m = re.fullmatch(r"(20[0-9]{2})-([0-9]{2})-([0-9]{2})[T ]([0-9]{2}):([0-9]{2}):([0-9]{2})(Z|[+-][0-9]{2}:[0-9]{2})", text)
     if not m:
         return None
     try:
-        return int(datetime(*map(int, m.groups()), tzinfo=timezone.utc).timestamp())
+        utc = int(datetime(*map(int, m.groups()[:6]), tzinfo=timezone.utc).timestamp())
     except ValueError:  # not a real time, such as 31 November or 24:00
         return None
+    if m[7] == "Z":
+        return utc
+    shift = (int(m[7][1:3]) * 60 + int(m[7][4:])) * 60
+    return utc - shift if m[7][0] == "+" else utc + shift
 
 
 # A number with at most two decimals, such as 42 or 42.5, in hundredths: 4200, 4250. None for anything else.
@@ -82,11 +89,18 @@ def hundredths(text):
 def clean(fields):
     if len(fields) != 4:
         return "not 4 fields"
-    utc, host, metric, value = seconds(fields[0]), fields[1], fields[2], hundredths(fields[3])
+    utc, host, metric, value = seconds(fields[0]), fields[1].lower(), fields[2].lower(), hundredths(fields[3])
     if utc is None:
         return "bad time"
+    if not re.fullmatch(r"[a-z0-9][a-z0-9.-]*", host):
+        return "bad host"
+    if not re.fullmatch(r"[a-z][a-z0-9_]*", metric):
+        return "bad metric"
     if value is None:
         return "bad value"
+    if f"{utc} {host} {metric}" in seen:
+        return "duplicate"
+    seen.add(f"{utc} {host} {metric}")
     return Row(utc, host, metric, value)
 
 
@@ -119,6 +133,7 @@ def run():
     names = inbox()
     rows.clear()
     bad.clear()
+    seen.clear()
     for name in names:
         print(load(name))
     return f"run: files {len(names)}, kept {len(rows)}, dropped {len(bad)}"
