@@ -42,8 +42,16 @@ function text(words: string): object {
   return { content: [{ type: "text", text: words }] };
 }
 
+// A tool's own error goes back as a result marked isError, so the agent can read it and try again.
+function toolError(words: string): object {
+  return { content: [{ type: "text", text: words }], isError: true };
+}
+
 function rollDice(args: any): object {
   const sides = args.sides ?? 6;
+  if (!Number.isInteger(sides) || sides < 2 || sides > 100) {
+    return toolError(`sides must be a whole number from 2 to 100, not ${JSON.stringify(args.sides)}.`);
+  }
   return text(`You rolled ${randomBelow(sides) + 1}.`);
 }
 
@@ -73,7 +81,9 @@ function handle(msg: Message): Answer {
   if (msg.method === "tools/call") {
     const run = typeof params.name === "string" ? RUN.get(params.name) : undefined;
     if (!run) return fail(-32602, `Unknown tool: ${JSON.stringify(params.name ?? null)}`);
-    return { result: run(params.arguments ?? {}) };
+    const args = params.arguments ?? {};
+    if (typeof args !== "object" || Array.isArray(args)) return fail(-32602, "arguments must be an object");
+    return { result: run(args) };
   }
   return fail(-32601, `Method not found: ${msg.method}`);
 }
