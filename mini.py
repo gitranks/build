@@ -15,26 +15,39 @@ class MiniError(Exception):
     pass
 
 
+# Every number is whole and between -LIMIT and LIMIT, so mini gives the same answers in every language.
+LIMIT = 9007199254740991  # 2 ** 53 - 1: the largest whole number a JavaScript number holds exactly
+
+
+def checked(n):
+    if abs(n) > LIMIT:
+        raise MiniError(f"number too big: mini's numbers stop at {LIMIT}")
+    return n
+
+
 # A number, from its digits.
 def number(text):
-    return int(text)
+    return checked(LIMIT + 1 if len(text) > 16 else int(text))
 
 
 # Work out one operator on two values.
 def operate(op, a, b):
     if op == "+":
-        return a + b
+        return checked(a + b)
     if op == "-":
-        return a - b
+        return checked(a - b)
     if op == "*":
-        return a * b
+        return checked(a * b)
     if b == 0:
         raise MiniError("division by zero")
-    return a // b  # a whole number, rounded down: 7 / 2 is 3
+    if op == "/":
+        return a // b  # a whole number, rounded down: 7 / 2 is 3, and -7 / 2 is -4
+    return a % b  # the remainder has the sign of b, so a is always (a / b) * b + a % b
 
 
 SYMBOLS = [  # the symbols mini knows
     "+", "-", "*", "/",
+    "%",
     "(", ")",
 ]
 
@@ -82,7 +95,7 @@ def parse(tokens):
     def expression():
         return binary(["+", "-"], factor)
     def factor():
-        return binary(["*", "/"], unary)
+        return binary(["*", "/", "%"], unary)
     def unary():
         return Node(kind="negate", value=unary()) if accept("-") else primary()
     def primary():
