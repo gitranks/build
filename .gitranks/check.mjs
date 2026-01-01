@@ -14,6 +14,7 @@ const version = pick(["2025-11-25", "2025-06-18", "2024-11-05"]);
 lines.push(call(2, "initialize", { protocolVersion: version, capabilities: {}, clientInfo: { name: "check", version: "1" } }));
 lines.push(call("odd", pick(["initialize", "ping", "tools/list"]), pick(["oops", [1, 2], 7])));
 lines.push(call(3, "ping"));
+lines.push(call(4, "tools/list"));
 
 function show(name, file, args, input) {
   const run = spawnSync(process.execPath, [file, ...args], { input: input.map((l) => l + "\n").join(""), encoding: "utf8", timeout: 5000 });

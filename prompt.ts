@@ -11,7 +11,12 @@ const typed = createInterface({ input: process.stdin });
 typed.on("line", (line) => {
   const [method, ...rest] = line.trim().split(" ");
   if (!method) return;
-  const params = rest.length ? JSON.parse(rest.join(" ")) : undefined;
+  let params;
+  try {
+    params = rest.length ? JSON.parse(rest.join(" ")) : undefined;
+  } catch {
+    return console.log('Those params are not JSON. Try: initialize {"protocolVersion": "2025-11-25"}');
+  }
   // A notification has no id, so the server sends nothing back.
   const note = method.startsWith("notifications/");
   send(JSON.stringify(note ? { jsonrpc: "2.0", method, params } : { jsonrpc: "2.0", id: ++id, method, params }));
