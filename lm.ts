@@ -18,6 +18,7 @@ const HELP = [
   "gradcheck             nudge a number of each table and see the loss move",
   "train <steps>         learn from the text, one short piece at each step",
   "attend <text>         how much each character looks at the ones before it",
+  "temp <number>         how bold write is: below 1 safer, above 1 wilder",
   "help                  this list",
   "exit                  stop lm",
 ];
@@ -273,11 +274,12 @@ function gradcheck(): string {
 
 // Go on from the start, one character at a time: from the counts until the model has learned, then from the model.
 const LENGTH = 60;
+let temperature = 1;
 function write(start: number[]): string {
   const out = [...start];
   while (out.length < start.length + LENGTH) {
     const counts = pairs[out[out.length - 1]].map((count) => count + SMOOTH);
-    out.push(pick(steps === 0 ? counts : (forward(out.slice(-T)).p.at(-1) as number[])));
+    out.push(pick(steps === 0 ? counts : softmax((forward(out.slice(-T)).logits.at(-1) as number[]).map((l) => l / temperature))));
   }
   return decode(out);
 }
@@ -377,6 +379,11 @@ function run(words: string[]): string {
     if (!start || missing) return "usage: attend <text>, with characters of the alphabet";
     const f = forward(encode(start).slice(-T));
     return f.a.map((row, t) => `${show(f.x[t])} ` + row.map((w) => fmt(w, 2)).join(" ")).join("\n");
+  }
+  if (name === "temp") {
+    if (!isDecimal(arg) || Number(arg) < 0.01 || Number(arg) > 10) return "usage: temp <number>, from 0.01 to 10, such as temp 0.5";
+    temperature = Number(arg);
+    return `temp ${fmt(temperature, 2)}`;
   }
   if (name === "help") return HELP.join("\n");
   return `unknown command: ${name}. Type help for the list.`;

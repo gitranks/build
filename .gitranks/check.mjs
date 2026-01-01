@@ -70,6 +70,7 @@ groups.push(["learn-from-mistakes", [`train ${pick(["60", "80", "100"])}`, "loss
 groups.push(["look-back", ["train 50", "loss", `seed ${seed}`, `write ${start}`]]);
 groups.push(["attention", [`attend ${pick(["the cat", "a dog", "my hat"])}`, "gradcheck"]]);
 groups.push(["where-each-character-is", ["shapes", "gradcheck", "loss"]]);
+groups.push(["temperature", [`seed ${seed}`, "temp 0.5", `write ${start}`, `seed ${seed}`, "temp 2", `write ${start}`, "temp 0", `next ${start}`]]);
 groups.push(["read-commands", ["help", "", pick(["fly", "hello", "learn"]) + " away", "exit", "help"]]);
 session(groups);
 try {
