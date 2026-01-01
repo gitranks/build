@@ -101,6 +101,7 @@ session("if-and-while", [
 session("text-values", [f'"{pick(["hello", "mini", "Ada"])}"', f'"n = " + {a}', '"ab" == "a" + "b"', '"a" * 2', f'"{pick(["no end", "half"])}', f'let s = ""; let i = 0; while i < {b} {{ s = s + "*"; i = i + 1 }} s'])
 fn = pick(["hello", "greet", "say_hi"])
 session("functions", [f'fn {fn}() {{ print "hi from {fn}" }}', f"{fn}()", fn, f"{a}()", f"{fn}(); {fn}()"])
+session("parameters-and-scope", ["fn add(a, b) { print a + b }", f"add({a}, {b})", "add(1)", "a", f"let k = {b}; fn use_k(n) {{ print n + k }} use_k(1); fn own_k() {{ let k = 100; print k }} own_k(); k", "let c = 0; fn inc() { c = c + 1 } inc(); inc(); c"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the

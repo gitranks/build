@@ -85,6 +85,7 @@ SYMBOLS = [  # the symbols mini knows
     "=",
     ";",
     "{", "}",
+    ",",
 ]
 WORDS = ["let", "true", "false", "print", "if", "else", "while", "fn"]  # mini's own words: not names of variables
 
@@ -167,8 +168,12 @@ def parse(tokens):
         if accept("fn"):
             name = expect("name").text
             expect("(")
-            expect(")")
-            return Node(kind="fn", name=name, body=block())
+            params = []
+            while not accept(")"):
+                if params:
+                    expect(",")
+                params.append(expect("name").text)
+            return Node(kind="fn", name=name, params=params, body=block())
         return Node(kind="expr", value=expression())
     def binary(ops, operand):
         left = operand()
@@ -187,8 +192,12 @@ def parse(tokens):
     def call():
         node = primary()
         while accept("("):
-            expect(")")
-            node = Node(kind="call", callee=node)
+            args = []
+            while not accept(")"):
+                if args:
+                    expect(",")
+                args.append(expression())
+            node = Node(kind="call", callee=node, args=args)
         return node
     def primary():
         token = tokens.pop(0)
@@ -216,6 +225,8 @@ top = {}
 def find(scope, name):
     if name in scope:
         return scope
+    if name in top:
+        return top  # a call's own variable first, then the program's
     raise MiniError(f"{name} is not defined")
 
 
@@ -229,9 +240,12 @@ def evaluate(node, scope):
         return operate("-", 0, evaluate(node.value, scope))
     if node.kind == "call":
         fn = evaluate(node.callee, scope)
+        args = [evaluate(arg, scope) for arg in node.args]
         if not isinstance(fn, Node):
             raise MiniError(f"{quote(fn)} is not a function")
-        run(fn.body, top)
+        if len(args) != len(fn.params):
+            raise MiniError(f"{fn.name} takes ({', '.join(fn.params)})")
+        run(fn.body, dict(zip(fn.params, args)))
         return None
     return operate(node.op, evaluate(node.left, scope), evaluate(node.right, scope))
 
