@@ -8,6 +8,9 @@ import sys
 sys.stdin.reconfigure(encoding="utf-8")
 sys.stdout.reconfigure(encoding="utf-8", newline="\n")
 
+# The versions of MCP this server speaks, newest first.
+VERSIONS = ["2025-11-25", "2025-06-18"]
+
 
 # Logs go to standard error. Standard output is kept for messages alone.
 def log(text: str) -> None:
@@ -20,6 +23,19 @@ def fail(code: int, message: str) -> dict:
 
 # Every request gets exactly one answer.
 def handle(msg: dict) -> dict:
+    params = {} if msg.get("params") is None else msg["params"]
+    if not isinstance(params, dict):
+        return fail(-32602, "params must be an object")
+    if msg["method"] == "initialize":
+        # Answer the version the agent asked for if we speak it, else the newest we speak.
+        asked = params.get("protocolVersion")
+        return {
+            "result": {
+                "protocolVersion": asked if asked in VERSIONS else VERSIONS[0],
+                "capabilities": {},
+                "serverInfo": {"name": "my-server", "version": "0.1.0"},
+            }
+        }
     return fail(-32601, f"Method not found: {msg['method']}")
 
 
