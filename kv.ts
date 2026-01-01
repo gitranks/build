@@ -17,13 +17,23 @@ const HELP = [
 const at = process.argv.indexOf("--file");
 const FILE = at > 0 && process.argv[at + 1] ? process.argv[at + 1] : "data.log";
 
-// What you set, kept in memory while kv runs.
-const data = new Map<string, string>();
-
 // Write records at the end of the log, one line each.
 function write(batch: string[][]): void {
   const lines = batch.map((record) => JSON.stringify(record) + "\n");
   fs.appendFileSync(FILE, lines.join(""));
+}
+
+// Read the whole log from the start: the latest record of each key says what it holds now.
+function scan(): Map<string, string> {
+  const now = new Map<string, string>();
+  if (!fs.existsSync(FILE)) return now;
+  for (const line of fs.readFileSync(FILE, "utf8").split("\n")) {
+    if (!line) continue;
+    const [op, key, value] = JSON.parse(line);
+    if (op === "set") now.set(key, value);
+    else now.delete(key);
+  }
+  return now;
 }
 
 // The prompt kv> shows only when you type at a terminal, not when another program sends the commands.
@@ -38,22 +48,20 @@ function run(words: string[]): string {
   if (name === "set") {
     if (!key || !value) return "usage: set <key> <value>";
     write([["set", key, value]]);
-    data.set(key, value);
     return "OK";
   }
   if (name === "get") {
     if (!key) return "usage: get <key>";
-    return data.get(key) ?? "(not found)";
+    return scan().get(key) ?? "(not found)";
   }
   if (name === "del") {
     if (!key) return "usage: del <key>";
-    if (!data.has(key)) return "(not found)";
+    if (!scan().has(key)) return "(not found)";
     write([["del", key]]);
-    data.delete(key);
     return "deleted";
   }
   if (name === "keys") {
-    const all = [...data.keys()].sort();
+    const all = [...scan().keys()].sort();
     return all.length ? all.join("\n") : "(no keys)";
   }
   if (name === "help") return HELP.join("\n");

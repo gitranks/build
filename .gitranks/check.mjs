@@ -60,6 +60,7 @@ const before = size();
 const word = pick(["sky", "tea", "song"]);
 session("write-it-down", [`set ${word} ${pick(["grey", "green", "loud"])}`, `set ${word} ${pick(["blue", "black", "soft"])}`, `del ${word}`]);
 logFrom("write-it-down", before);
+session("read-it-back", [`get ${key}`, "keys"]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
