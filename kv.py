@@ -15,6 +15,7 @@ HELP = [
     "del <key>             delete the key",
     "keys                  list every key",
     "fill <count>          set key1, key2 and on, up to the count",
+    "stats                 count the keys, the records and the bytes",
     "help                  this list",
     "exit                  stop kv",
 ]
@@ -25,6 +26,7 @@ FILE = sys.argv[at + 1] if 0 < at < len(sys.argv) - 1 and sys.argv[at + 1] else 
 # The index: for each key, where its latest record starts in the log and how long it is, in bytes.
 index = {}
 end = 0  # the log's length in bytes: where the next record goes
+records = 0  # every record in the log, the old ones too
 
 
 # Write records at the end of the log, one line each. The file is opened as bytes, so Windows adds no \r.
@@ -53,11 +55,12 @@ def load():
 
 # Note one record that was just read or written, and the bytes it takes.
 def note(record, size):
-    global end
+    global end, records
     if record[0] == "set":
         index[record[1]] = (end, size)
     else:
         index.pop(record[1], None)
+    records += 1
     end += size
 
 
@@ -102,6 +105,8 @@ def run(words):
             return "usage: fill <count>, a whole number from 1 to 1000000"
         write([["set", f"key{i}", f"value {i}"] for i in range(1, count + 1)])
         return f"OK, set key1 to key{count}"
+    if name == "stats":
+        return f"keys {len(index)}, records {records}, old records {records - len(index)}, bytes {end}"
     if name == "help":
         return "\n".join(HELP)
     return f"unknown command: {name}. Type help for the list."

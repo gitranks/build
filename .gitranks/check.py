@@ -105,6 +105,8 @@ greeting = pick(["hello", "greeting", "word"])
 session("an-index", [f"set {greeting} " + pick(["привіт", "こんにちは", "olá"]), "set after " + pick(["one", "two"]), "del after"])
 session("an-index", ["del after"])
 session("jump-to-the-value", [f"get {greeting}", "get key2", f"set {greeting}2 " + pick(["ünïcödé", "日本語", "ελλάδα"]), "set after " + pick(["three", "four"]), "get after"])
+counter = pick(["visits", "score", "level"])
+session("count-the-waste", [f"set {counter} 1", f"set {counter} 2", f"set {counter} 3", "stats"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
