@@ -38,6 +38,14 @@ function createServer(): McpServer {
       return { content: [{ type: "text", text }] };
     },
   );
+  server.registerTool(
+    "pick_one",
+    {
+      description: "Pick one of the choices at random. Use it when the person cannot decide between a few options.",
+      inputSchema: z.object({ choices: z.array(z.string()).min(2).max(20).describe("The options to pick from.") }),
+    },
+    async ({ choices }) => ({ content: [{ type: "text", text: `I picked: ${choices[randomBelow(choices.length)]}` }] }),
+  );
   return server;
 }
 
