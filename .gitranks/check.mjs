@@ -166,6 +166,13 @@ await session("run-a-command", [`what is ${sum[0]} times ${sum[1]}?`, "yes", "de
 said.push(["run-a-command", `notes.txt is still there: ${fs.existsSync(join(folder, "notes.txt")) ? "yes" : "no"}`]);
 const slow = command(`console.log('${pick(["starting", "working", "waiting"])}'); setTimeout(Date.now, 5000)`);
 await session("a-time-limit", ["run the slow one", "yes"], [call("run_command", { command: slow, seconds: 2 }), heard]);
+const rows = pick([200, 250, 300]);
+fs.writeFileSync(join(folder, "big.txt"), Array.from({ length: rows }, (_, i) => `line ${i + 1} of a long file\n`).join(""));
+const ends = (ask) => {
+  const got = String(ask.messages.at(-1)?.content ?? "");
+  return `The tool's answer has ${got.length} characters and ends with: ${oneLine(got.slice(-45))}`;
+};
+await session("keep-it-short", ["read big.txt"], [call("read_file", { path: "big.txt" }), ends]);
 server.close();
 try {
   fs.rmSync(top, { recursive: true, force: true });

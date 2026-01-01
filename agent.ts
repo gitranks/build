@@ -82,7 +82,7 @@ async function turn(text: string): Promise<void> {
       return console.log(answer.content ?? "");
     }
     messages.push({ role: "assistant", content: answer.content, tool_calls: calls });
-    for (const call of calls) messages.push({ role: "tool", tool_call_id: call.id, content: await use(call) });
+    for (const call of calls) messages.push({ role: "tool", tool_call_id: call.id, content: cut(await use(call)) });
   }
 }
 
@@ -174,6 +174,12 @@ async function run(command: unknown, seconds: unknown): Promise<string> {
     fs.rmSync(folder, { recursive: true });
   } catch {}
   return `${done.error ? `stopped after ${limit} s: it ran too long` : `exit code ${done.status}`}\n${output}`;
+}
+
+// A long answer from a tool is cut: a small model reads only so much, and the rest of the conversation must fit too.
+const LIMIT = 3000;
+function cut(text: string): string {
+  return text.length <= LIMIT ? text : `${text.slice(0, LIMIT)}\n(cut here: ${text.length - LIMIT} more characters)`;
 }
 
 // Read your lines one at a time. The prompt shows only when you type at a terminal, not when a program sends them.
