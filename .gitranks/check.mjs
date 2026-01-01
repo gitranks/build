@@ -52,6 +52,7 @@ session("read-lines", [pick(["hello", "good morning", "hi there"]), "", "   " + 
 const a = pick([12, 30, 45, 7]);
 const b = pick([3, 4, 5]);
 session("whole-numbers", [`${a}`, " 00" + b, pick(["twelve", "4x", "1.5", "-3"]), `${a} ${b}`]);
+session("do-arithmetic", [`${a} + ${b} - 1`, pick(["7 / 2", "17 / 5", "29 / 4"]), "2 + 3 * 4", `${a} / 0`, `${a} +`, `${a} ${pick(["x", "plus", "^"])} ${b}`]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

@@ -12,6 +12,27 @@ function number(text: string): number {
   return Number(text);
 }
 
+// Work out one operator on two values.
+function operate(op: string, a: Value, b: Value): Value {
+  if (op === "+") return a + b;
+  if (op === "-") return a - b;
+  if (op === "*") return a * b;
+  if (b === 0) throw new MiniError("division by zero");
+  return Math.floor(a / b); // a whole number, rounded down: 7 / 2 is 3
+}
+
+// Work out words such as 12 + 30 - 2: a number, then an operator and a number, again and again, from left to right.
+function calculate(words: string[]): Value {
+  let total = number(words[0]);
+  for (let i = 1; i < words.length; i += 2) {
+    const op = words[i];
+    if (!["+", "-", "*", "/"].includes(op)) throw new MiniError(`${op} is not an operator`);
+    if (i + 1 === words.length) throw new MiniError(`${op} needs a number after it`);
+    total = operate(op, total, number(words[i + 1]));
+  }
+  return total;
+}
+
 // Say what went wrong. A mistake in the program is not a crash of mini: anything else is.
 function report(error: unknown): void {
   if (!(error instanceof MiniError)) throw error;
@@ -26,7 +47,7 @@ function ask(): void {
 // Run a line that was typed, and say what went wrong if anything did: a mistake does not stop mini.
 function attempt(line: string): void {
   try {
-    console.log(String(number(line.trim())));
+    console.log(String(calculate(line.trim().split(/\s+/))));
   } catch (error) {
     report(error);
   }
