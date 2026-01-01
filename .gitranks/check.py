@@ -355,6 +355,26 @@ def many_at_once(port):
 
 
 session("many-at-once", many_at_once)
+
+
+def keep_alive(port):
+    names = [pick(["Ada", "Alan"]), pick(["Grace", "Linus"])]
+    said.append(("keep-alive", f"sent: GET /hello?name={names[0]} and GET /hello?name={names[1]} at once, on one connection"))
+    link = Link(port)
+    if link.open:
+        link.send("".join(get(f"/hello?name={name}").replace("Connection: close\r\n", "") for name in names))
+    link.wait(lambda: whole(answers_in(link.got)) >= 2)
+    said.append(("keep-alive", "sent: GET /hello on the same connection, with Connection: close"))
+    if not link.closed:
+        link.send(get("/hello"))
+    link.wait(lambda: False)
+    for answer in answers_in(link.got):
+        tell("keep-alive", answer, lambda line, i: i < 1)
+    said.append(("keep-alive", "then the server closed the connection" if link.closed else "the server did not close the connection within 3 seconds"))
+    link.close()
+
+
+session("keep-alive", keep_alive)
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the

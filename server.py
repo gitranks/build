@@ -150,23 +150,23 @@ def parse(head):
 
 
 # Write an answer: the status line, one header a line, a blank line, then the body.
-def send(conn, answer):
+def send(conn, answer, keep):
     data = answer["body"].encode() if isinstance(answer["body"], str) else answer["body"]
     head = [
         f"HTTP/1.1 {answer['status']} {REASONS[answer['status']]}",
         f"Content-Type: {answer['type']}",
         f"Content-Length: {len(data)}",
-        "Connection: close",
+        f"Connection: {'keep-alive' if keep else 'close'}",
     ]
     head += [f"{name}: {value}" for name, value in answer.get("headers", {}).items()]
     conn.sendall(("\r\n".join(head) + "\r\n\r\n").encode() + data)
 
 
 # Answer one request, and say so in the log.
-def respond(conn, request):
+def respond(conn, request, keep, number):
     answer = handle(request)
-    print(f"web: {request['method']} {request['target']} {answer['status']}")
-    send(conn, answer)
+    print(f"web: {request['method']} {request['target']} {answer['status']}, request {number} on its connection")
+    send(conn, answer, keep)
 
 
 # Add the next piece of the request's bytes. An empty piece: the browser closed the connection.
@@ -177,24 +177,32 @@ def more(conn, data):
     return data + piece
 
 
-# One connection. Its bytes come in pieces of any size: they wait in `data` until the head ends, at a blank line.
+# One connection, and every request on it. Their bytes come in pieces of any size: they wait in `data` until a
+# whole request is there, its head up to the blank line, then its body.
 def serve(conn):
     data = b""
-    while b"\r\n\r\n" not in data:
-        data = more(conn, data)
-    end = data.index(b"\r\n\r\n")
-    request = parse(data[:end].decode("latin-1"))
-    # The Content-Length header says how many bytes of body come after the head.
-    size = int(request["headers"].get("content-length", "0"))
-    while len(data) < end + 4 + size:
-        data = more(conn, data)
-    request["body"] = data[end + 4 : end + 4 + size]
-    respond(conn, request)
+    count = 0
+    while True:
+        while b"\r\n\r\n" not in data:
+            data = more(conn, data)
+        end = data.index(b"\r\n\r\n")
+        request = parse(data[:end].decode("latin-1"))
+        size = int(request["headers"].get("content-length", "0"))
+        while len(data) < end + 4 + size:
+            data = more(conn, data)
+        request["body"] = data[end + 4 : end + 4 + size]
+        data = data[end + 4 + size :]
+        # HTTP/1.1 keeps a connection open for the next request, unless the browser asks to close it.
+        keep = request["version"] == "HTTP/1.1" and request["headers"].get("connection", "").lower() != "close"
+        count += 1
+        respond(conn, request, keep, count)
+        if not keep:
+            return
 
 
 # One connection, closed at the end. A browser may hang up at any time: that ends its connection, never the server.
 def connected(conn):
-    conn.settimeout(1)  # a browser may open a connection and send nothing: after a second, it is closed
+    conn.settimeout(5)  # a connection with nothing to do closes after 5 seconds
     with conn:
         try:
             serve(conn)
