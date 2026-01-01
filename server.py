@@ -47,6 +47,11 @@ ROLL_DICE = {
         },
         "additionalProperties": False,
     },
+    "outputSchema": {
+        "type": "object",
+        "properties": {"rolls": {"type": "array", "items": {"type": "integer"}}, "total": {"type": "integer"}},
+        "required": ["rolls", "total"],
+    },
 }
 PICK_ONE = {
     "name": "pick_one",
@@ -59,13 +64,14 @@ PICK_ONE = {
         "required": ["choices"],
         "additionalProperties": False,
     },
+    "outputSchema": {"type": "object", "properties": {"choice": {"type": "string"}}, "required": ["choice"]},
 }
 TOOLS = [ROLL_DICE, PICK_ONE]
 
 
-# A tool's result is a list of content. Ours is one piece of text.
-def text(words: str) -> dict:
-    return {"content": [{"type": "text", "text": words}]}
+# The result as data the agent can read field by field, and as JSON text for agents that can not.
+def data(value: dict) -> dict:
+    return {"content": [{"type": "text", "text": to_json(value)}], "structuredContent": value}
 
 
 # A tool's own error goes back as a result marked isError, so the agent can read it and try again.
@@ -87,14 +93,14 @@ def roll_dice(args: dict) -> dict:
         return tool_error(f"count must be a whole number from 1 to 10, not {to_json(args.get('count'))}.")
     rolls = [random_below(sides) + 1 for _ in range(count)]
     total = sum(rolls)
-    return text(f"You rolled {total}." if count == 1 else f"You rolled {', '.join(map(str, rolls))}: {total} in total.")
+    return data({"rolls": rolls, "total": total})
 
 
 def pick_one(args: dict) -> dict:
     choices = args.get("choices")
     if not isinstance(choices, list) or not 2 <= len(choices) <= 20 or not all(isinstance(c, str) for c in choices):
         return tool_error("choices must be a list of 2 to 20 pieces of text.")
-    return text(f"I picked: {choices[random_below(len(choices))]}")
+    return data({"choice": choices[random_below(len(choices))]})
 
 
 RUN = {"roll_dice": roll_dice, "pick_one": pick_one}
