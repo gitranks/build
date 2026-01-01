@@ -66,6 +66,7 @@ session("fill-it-up", [`fill ${many}`, `get key${many}`, `get key${many + 1}`, `
 const greeting = pick(["hello", "greeting", "word"]);
 session("an-index", [`set ${greeting} ${pick(["привіт", "こんにちは", "olá"])}`, `set after ${pick(["one", "two"])}`, "del after"]);
 session("an-index", ["del after"]);
+session("jump-to-the-value", [`get ${greeting}`, "get key2", `set ${greeting}2 ${pick(["ünïcödé", "日本語", "ελλάδα"])}`, `set after ${pick(["three", "four"])}`, "get after"]);
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

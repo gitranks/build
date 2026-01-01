@@ -29,19 +29,6 @@ function write(batch: string[][]): void {
   batch.forEach((record, i) => note(record, Buffer.byteLength(lines[i])));
 }
 
-// Read the whole log from the start: the latest record of each key says what it holds now.
-function scan(): Map<string, string> {
-  const now = new Map<string, string>();
-  if (!fs.existsSync(FILE)) return now;
-  for (const line of fs.readFileSync(FILE, "utf8").split("\n")) {
-    if (!line) continue;
-    const [op, key, value] = JSON.parse(line);
-    if (op === "set") now.set(key, value);
-    else now.delete(key);
-  }
-  return now;
-}
-
 // Read the log once, at start, and note where each key's latest record is.
 function load(): void {
   if (!fs.existsSync(FILE)) return;
@@ -57,6 +44,17 @@ function note(record: string[], size: number): void {
   if (record[0] === "set") index.set(record[1], { start: end, size });
   else index.delete(record[1]);
   end += size;
+}
+
+// Read one value: only its own record, from where the index says it is.
+function read(key: string): string | undefined {
+  const where = index.get(key);
+  if (!where) return undefined;
+  const bytes = Buffer.alloc(where.size);
+  const fd = fs.openSync(FILE, "r");
+  fs.readSync(fd, bytes, 0, where.size, where.start);
+  fs.closeSync(fd);
+  return JSON.parse(bytes.toString("utf8"))[2];
 }
 
 // The prompt kv> shows only when you type at a terminal, not when another program sends the commands.
@@ -75,7 +73,7 @@ function run(words: string[]): string {
   }
   if (name === "get") {
     if (!key) return "usage: get <key>";
-    return scan().get(key) ?? "(not found)";
+    return read(key) ?? "(not found)";
   }
   if (name === "del") {
     if (!key) return "usage: del <key>";
