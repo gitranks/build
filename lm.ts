@@ -14,6 +14,7 @@ const HELP = [
   "loss                  how surprised lm is by the text: lower is better",
   "shapes                the size of each table of numbers in the model",
   "softmax <numbers>     turn scores into chances that add up to 1",
+  "next <text>           the model's guess for the character after the text",
   "help                  this list",
   "exit                  stop lm",
 ];
@@ -130,6 +131,13 @@ const model: Record<string, Matrix> = {
   out: matrix(D, V, 0.5), // from those numbers to a score for each character
 };
 
+// A row of numbers times a table: one number for each column of the table.
+function times(row: number[], m: Matrix): number[] {
+  const out = new Array<number>(m[0].length).fill(0);
+  for (let i = 0; i < row.length; i++) for (let j = 0; j < out.length; j++) out[j] += row[i] * m[i][j];
+  return out;
+}
+
 // Scores to chances: each becomes positive, and together they add up to 1.
 function softmax(scores: number[]): number[] {
   const top = Math.max(...scores);
@@ -137,6 +145,13 @@ function softmax(scores: number[]): number[] {
   let total = 0;
   for (const x of e) total += x;
   return e.map((x) => x / total);
+}
+
+// Run the model over a window of characters: after each one, a score for every character that may come next.
+function forward(x: number[]) {
+  const z = x.map((id) => model.emb[id]);
+  const logits = z.map((row) => times(row, model.out));
+  return { x, z, logits, p: logits.map(softmax) };
 }
 
 // Go on from the start, one character at a time, each picked at random by how often it came next.
@@ -211,6 +226,14 @@ function run(words: string[]): string {
   if (name === "softmax") {
     if (!rest.length || rest.length > 12 || !rest.every(isDecimal)) return "usage: softmax <numbers>, such as softmax 2 1 0.5";
     return softmax(rest.map(Number)).map((p) => fmt(p)).join(" ");
+  }
+  if (name === "next") {
+    const start = clean(arg);
+    const missing = [...start].find((ch) => !ALPHABET.includes(ch));
+    if (!start || missing) return "usage: next <text>, with characters of the alphabet";
+    const p = forward(encode(start).slice(-T)).p.at(-1) as number[];
+    const order = p.map((chance, b) => [chance, b]).sort((x, y) => y[0] - x[0]);
+    return `after "${start}": ` + order.slice(0, 5).map(([c, b]) => `${show(b)} ${fmt(c)}`).join(", ");
   }
   if (name === "help") return HELP.join("\n");
   return `unknown command: ${name}. Type help for the list.`;
