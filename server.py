@@ -55,8 +55,20 @@ def text(words: str) -> dict:
     return {"content": [{"type": "text", "text": words}]}
 
 
+# A tool's own error goes back as a result marked isError, so the agent can read it and try again.
+def tool_error(words: str) -> dict:
+    return {"content": [{"type": "text", "text": words}], "isError": True}
+
+
+# True for a whole number from low to high. JSON's true and false are not numbers here.
+def whole(value, low: int, high: int) -> bool:
+    return type(value) is int and low <= value <= high
+
+
 def roll_dice(args: dict) -> dict:
     sides = 6 if args.get("sides") is None else args["sides"]
+    if not whole(sides, 2, 100):
+        return tool_error(f"sides must be a whole number from 2 to 100, not {to_json(args.get('sides'))}.")
     return text(f"You rolled {random_below(sides) + 1}.")
 
 
@@ -90,7 +102,10 @@ def handle(msg: dict) -> dict:
         run = RUN.get(params["name"]) if isinstance(params.get("name"), str) else None
         if run is None:
             return fail(-32602, f"Unknown tool: {to_json(params.get('name'))}")
-        return {"result": run({} if params.get("arguments") is None else params["arguments"])}
+        args = {} if params.get("arguments") is None else params["arguments"]
+        if not isinstance(args, dict):
+            return fail(-32602, "arguments must be an object")
+        return {"result": run(args)}
     return fail(-32601, f"Method not found: {msg['method']}")
 
 
