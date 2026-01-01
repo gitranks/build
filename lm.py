@@ -1,6 +1,7 @@
 # lm: a tiny language model, written from nothing, with no library.
 # It reads a text, learns which character comes next, and writes text of its own. Start it with: python lm.py
 import os
+import re
 import sys
 
 # Read and write UTF-8 with plain line ends on every system, Windows too.
@@ -10,6 +11,8 @@ sys.stdout.reconfigure(encoding="utf-8", newline="\n")
 # The commands lm knows, as help shows them.
 HELP = [
     "text                  what lm read, and what it kept",
+    "encode <text>         turn text into numbers, one for each character",
+    "decode <numbers>      turn numbers back into text",
     "help                  this list",
     "exit                  stop lm",
 ]
@@ -40,11 +43,37 @@ if len(text) < 100 or len(set(text)) < 2:
     print("lm: the text is too short: it needs 100 characters or more after cleaning, of two kinds at least")
     sys.exit(1)
 
+# The alphabet: each character of the text once, in order. A character's number is its place in the alphabet.
+ALPHABET = "".join(sorted(set(text)))
+V = len(ALPHABET)
+
+def encode(part):
+    return [ALPHABET.index(ch) for ch in part]
+
+def decode(numbers):
+    return "".join(ALPHABET[n] for n in numbers)
+
+# A whole number, such as 42.
+def is_number(word):
+    return re.fullmatch(r"[0-9]{1,9}", word) is not None
+
 # Run one command, its name and then its words, and give back the answer.
 def run(words):
-    name = words[0]
+    name, rest = words[0], words[1:]
+    arg = " ".join(rest)
     if name == "text":
         return f"lm read {len(raw)} characters and kept {len(text)}"
+    if name == "encode":
+        if not arg:
+            return "usage: encode <text>"
+        missing = [ch for ch in arg if ch not in ALPHABET]
+        if missing:
+            return f'not in the alphabet: "{missing[0]}". The alphabet is "{ALPHABET}"'
+        return " ".join(str(n) for n in encode(arg))
+    if name == "decode":
+        if not rest or not all(is_number(w) and int(w) < V for w in rest):
+            return f"usage: decode <numbers>, each from 0 to {V - 1}"
+        return f'"{decode(int(w) for w in rest)}"'
     if name == "help":
         return "\n".join(HELP)
     return f"unknown command: {name}. Type help for the list."
