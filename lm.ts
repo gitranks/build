@@ -134,6 +134,7 @@ function matrix(rows: number, cols: number, size: number): Matrix {
 const model: Record<string, Matrix> = {
   emb: matrix(V, D, 0.5), // a row of numbers for each character
   out: matrix(D, V, 0.5), // from those numbers to a score for each character
+  wv: matrix(D, D, 0.25), // what a character passes on to the ones after it
 };
 let steps = 0; // how many training steps the model has taken
 
@@ -160,9 +161,17 @@ function softmax(scores: number[]): number[] {
 
 // Run the model over a window of characters: after each one, a score for every character that may come next.
 function forward(x: number[]) {
-  const z = x.map((id) => model.emb[id]);
+  const h = x.map((id) => model.emb[id]);
+  const v = h.map((row) => times(row, model.wv));
+  // Each character takes the mean of itself and the ones before it, never the ones after (the mask).
+  const a = h.map((_, t) => new Array<number>(t + 1).fill(1 / (t + 1)));
+  const z = h.map((row, t) => {
+    const mix = new Array<number>(D).fill(0);
+    for (let u = 0; u <= t; u++) for (let i = 0; i < D; i++) mix[i] += a[t][u] * v[u][i];
+    return row.map((e, i) => e + mix[i]);
+  });
   const logits = z.map((row) => times(row, model.out));
-  return { x, z, logits, p: logits.map(softmax) };
+  return { x, h, v, a, z, logits, p: logits.map(softmax) };
 }
 type Pass = ReturnType<typeof forward>;
 // The model's loss: the mean of -log(the chance it gave the character that came next).
@@ -192,7 +201,20 @@ function backward(f: Pass, y: number[]): Record<string, Matrix> {
     for (let i = 0; i < D; i++) for (let j = 0; j < V; j++) g.out[i][j] += f.z[t][i] * dl[j];
     dz.push(model.out.map((row) => dot(row, dl)));
   }
-  for (let t = 0; t < n; t++) for (let i = 0; i < D; i++) g.emb[f.x[t]][i] += dz[t][i];
+  const dh = dz.map((row) => [...row]); // z is h plus the mix, so h gets all of z's gradient, and the mix too
+  const dv = f.h.map(() => new Array<number>(D).fill(0));
+  for (let t = 0; t < n; t++) {
+    for (let u = 0; u <= t; u++) {
+      for (let i = 0; i < D; i++) dv[u][i] += f.a[t][u] * dz[t][i];
+    }
+  }
+  for (const [name, d] of [["wv", dv]] as const) {
+    for (let t = 0; t < n; t++) {
+      for (let i = 0; i < D; i++) for (let j = 0; j < D; j++) g[name][i][j] += f.h[t][i] * d[t][j];
+      for (let i = 0; i < D; i++) dh[t][i] += dot(model[name][i], d[t]);
+    }
+  }
+  for (let t = 0; t < n; t++) for (let i = 0; i < D; i++) g.emb[f.x[t]][i] += dh[t][i];
   return g;
 }
 
