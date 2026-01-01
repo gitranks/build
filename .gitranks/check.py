@@ -94,6 +94,7 @@ def session(about, path, commands):
 
 
 session("what-you-will-build", box("start", {}), [])
+session("read-commands", box("commands", {}), ["help", "", pick(["fly", "hello", "remember"]) + " away", "exit", "help"])
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
