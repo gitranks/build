@@ -36,8 +36,10 @@ def operate(op, a, b):
         return type(a) is type(b) and a == b  # in mini, 1 and true are not the same
     if op == "!=":
         return not operate("==", a, b)
+    if op == "+" and (type(a) is str or type(b) is str):
+        return show(a) + show(b)
     if type(a) is not int or type(b) is not int:
-        raise MiniError(f"{op} needs numbers, not {show(a)} and {show(b)}")
+        raise MiniError(f"{op} needs numbers, not {quote(a)} and {quote(b)}")
     if op == "<":
         return a < b
     if op == "<=":
@@ -66,6 +68,11 @@ def show(value):
     return str(value)
 
 
+# A value as an error shows it: text in quotes, so "5" and 5 look different.
+def quote(value):
+    return f'"{value}"' if type(value) is str else show(value)
+
+
 SYMBOLS = [  # the symbols mini knows
     "==", "!=", "<=", ">=", "<", ">",
     "+", "-", "*", "/",
@@ -80,7 +87,7 @@ WORDS = ["let", "true", "false", "print", "if", "else", "while"]  # mini's own w
 
 # The tokenizer cuts the source into pieces: a run of spaces, a number, a name and more, or any other one
 # character. It turns each piece into a token, the words of mini, and leaves the spaces out.
-PIECES = r"[ \t\r]+|[0-9]+|[A-Za-z_][A-Za-z_0-9]*|[=!<>]=|[\s\S]"
+PIECES = r'[ \t\r]+|[0-9]+|[A-Za-z_][A-Za-z_0-9]*|"[^"\n]*"?|[=!<>]=|[\s\S]'
 
 
 def tokenize(source):
@@ -94,6 +101,10 @@ def tokenize(source):
             add("number", piece)
         elif re.match("[A-Za-z_]", piece):
             add(piece if piece in WORDS else "name", piece)
+        elif piece[0] == '"':
+            if len(piece) < 2 or not piece.endswith('"'):
+                raise MiniError('this text has no closing "')
+            add("text", piece[1:-1])
         elif piece in SYMBOLS:
             add(piece, piece)
         elif piece[0] not in " \t\r":
@@ -169,6 +180,8 @@ def parse(tokens):
             return Node(kind="value", value=number(token.text))
         if token.kind in ["true", "false"]:
             return Node(kind="value", value=token.kind == "true")
+        if token.kind == "text":
+            return Node(kind="value", value=token.text)
         if token.kind == "name":
             return Node(kind="name", name=token.text)
         if token.kind == "(":
@@ -226,7 +239,7 @@ def run(found, scope):  # the statements of a block, one after another
 
 def truth(value, word):  # the answer to an if or a while must be true or false
     if type(value) is not bool:
-        raise MiniError(f"{word} needs true or false, not {show(value)}")
+        raise MiniError(f"{word} needs true or false, not {quote(value)}")
     return value
 
 
