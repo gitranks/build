@@ -38,7 +38,7 @@ const text = (description: string) => ({ type: "string", description });
 const TOOLS = [
   tool("list_files", "List every file in the folder."),
   tool("read_file", "Read a file.", { path: text("the file's path") }),
-  tool("edit_file", "Change a file: old_text, found once in it, becomes new_text.", {
+  tool("edit_file", "Change a file: old_text, found once in it, becomes new_text. An empty old_text makes a new file.", {
     path: text("the file's path"),
     old_text: text("the text to change"),
     new_text: text("the text to put in its place"),
@@ -127,12 +127,17 @@ function read(given: unknown): string {
 }
 const isFile = (file: string) => fs.existsSync(file) && fs.statSync(file).isFile();
 
-// Change a file: old_text, found once in it, becomes new_text.
+// Change a file: old_text, found once in it, becomes new_text. An empty old_text makes a new file.
 function edit(given: unknown, old: unknown, now: unknown): string {
   const file = inside(given);
   if (!file) return outside(given);
   if (typeof old !== "string" || typeof now !== "string") return "error: give old_text and new_text";
-  if (!old) return "error: old_text is empty: give the text to change";
+  if (!old) {
+    if (fs.existsSync(file)) return `error: ${given} is there already. To change it, give the text to change`;
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, now);
+    return `made ${given}`;
+  }
   if (!isFile(file)) return `error: there is no file ${given}`;
   const was = fs.readFileSync(file, "utf8");
   const found = was.split(old).length - 1;

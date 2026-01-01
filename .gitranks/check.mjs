@@ -155,6 +155,10 @@ const edits = [call("edit_file", { path: "notes.txt", old_text: word, new_text: 
 edits.push(call("edit_file", { path: "notes.txt", old_text: pick(["nothing like this", "zebra"]), new_text: "x" }), heard);
 edits.push(call("edit_file", { path: "../secret.txt", old_text: "the", new_text: "a" }), heard);
 await session("edit-a-file", [`change ${word} to ${changed}`, "change something that is not there", "change the secret"], edits);
+const made = pick(["plans/next.txt", "docs/ideas.md", "todo/today.txt"]);
+const makes = [call("edit_file", { path: made, old_text: "", new_text: "run a command\n" }), call("list_files"), heard];
+makes.push(call("edit_file", { path: made, old_text: "", new_text: "again\n" }), heard);
+await session("make-a-file", [`make ${made}`, "make it again"], makes);
 server.close();
 try {
   fs.rmSync(top, { recursive: true, force: true });
