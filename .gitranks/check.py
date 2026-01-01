@@ -26,6 +26,7 @@ def call(id, method, params=None):
 
 
 lines += [call(1, pick(["hello", "say/hi", "what/now", "roll/please"])), "this line is not JSON"]
+lines += [json.dumps({"jsonrpc": "2.0", "method": pick(["notifications/hello", "notifications/ready"])})]
 
 
 def show(name, file, args, sent):
