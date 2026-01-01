@@ -15,7 +15,12 @@ PORT = int(sys.argv[at + 1]) if 0 < at < len(sys.argv) - 1 else 8080
 def parse(head):
     first, *lines = head.split("\r\n")
     method, target, version = first.split(" ")
-    return {"method": method, "target": target, "version": version}
+    # A header line is a name, a colon and a value. A name has no case: Host and host are the same.
+    headers = {}
+    for line in lines:
+        name, colon, value = line.partition(":")
+        headers[name.strip().lower()] = value.strip()
+    return {"method": method, "target": target, "version": version, "headers": headers}
 
 
 # Write an answer: the status line, one header a line, a blank line, then the body.
@@ -45,8 +50,9 @@ def serve(conn):
         data = more(conn, data)
     end = data.index(b"\r\n\r\n")
     request = parse(data[:end].decode("latin-1"))
+    lines = [f"{name}: {value}" for name, value in request["headers"].items()]
     print(f"web: {request['method']} {request['target']}")
-    send(conn, f"You asked for {request['target']} with {request['method']}.")
+    send(conn, "\n".join([f"You asked for {request['target']} with {request['method']}. The headers:", *lines]))
 
 
 # One connection, closed at the end. A browser may hang up at any time: that ends its connection, never the server.

@@ -253,6 +253,14 @@ def read_the_request_line(port):
 
 
 session("read-the-request-line", read_the_request_line)
+
+
+def read_the_headers(port):
+    extra = "User-Agent: " + pick(["web-check/1", "curious-browser", "a teapot"]) + "\r\nX-Color:   " + pick(["blue", "green", "red"]) + "  \r\nACCEPT: text/plain\r\nX-Time: 12:30\r\n"
+    ask(port, "read-the-headers", [get("/" + pick(["page", "headers", "hello"])).replace("\r\n\r\n", f"\r\n{extra}\r\n", 1)], show=lambda line, i: i < 7)
+
+
+session("read-the-headers", read_the_headers)
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
