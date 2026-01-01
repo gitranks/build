@@ -1,5 +1,6 @@
 # lm: a tiny language model, written from nothing, with no library.
 # It reads a text, learns which character comes next, and writes text of its own. Start it with: python lm.py
+import math
 import os
 import re
 import sys
@@ -16,6 +17,7 @@ HELP = [
     "counts <character>    the characters that came after this one, and how often",
     "write <start>         go on from the start, one character at a time",
     "seed <number>         start the random numbers again from this number",
+    "loss                  how surprised lm is by the text: lower is better",
     "help                  this list",
     "exit                  stop lm",
 ]
@@ -88,6 +90,32 @@ def pick(weights):
             return i
     return len(weights) - 1
 
+# log from + - * / alone, so that every computer gets the very same numbers.
+LN2 = 0.6931471805599453
+
+def log(x):
+    x, k = max(x, 1e-300), 0
+    while x >= 2 or x < 1:
+        x, k = (x / 2, k + 1) if x >= 2 else (x * 2, k - 1)
+    y = (x - 1) / (x + 1)  # x is 2 to the k, times a number from 1 to 2
+    total = 0.0
+    for i in range(39, 0, -2):
+        total = total * y * y + 1 / i
+    return k * LN2 + 2 * y * total
+
+# A number with a fixed count of places after the point, rounded the same way in both languages.
+def fmt(x, places=3):
+    n = math.floor(abs(x) * 10**places + 0.5)
+    digits = str(n).rjust(places + 1, "0")
+    return ("-" if x < 0 and n > 0 else "") + digits[:-places] + "." + digits[-places:]
+
+# The loss: the mean of -log(the chance the counts gave the character that came next). Lower is better.
+def counts_loss(part):
+    total = 0.0
+    for a, b in zip(part, part[1:]):
+        total -= log((pairs[a][b] + SMOOTH) / (sum(pairs[a]) + SMOOTH * V))
+    return total / (len(part) - 1)
+
 # Go on from the start, one character at a time, each picked at random by how often it came next.
 LENGTH = 60
 
@@ -145,6 +173,8 @@ def run(words):
         if not start or missing:
             return f'not in the alphabet: "{missing[0] if missing else arg}"'
         return write(encode(start))
+    if name == "loss":
+        return f"counts: {fmt(counts_loss(ids))}, a blind guess {fmt(log(V))}"
     if name == "help":
         return "\n".join(HELP)
     return f"unknown command: {name}. Type help for the list."
