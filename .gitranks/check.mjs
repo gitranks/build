@@ -174,6 +174,12 @@ await session("read-the-request-line", async (port) => {
   await ask(port, "read-the-request-line", [get(pick(["/hello?name=Ada", "/cats/1", "/a/b/c"]))]);
   await ask(port, "read-the-request-line", [get(pick(["/notes", "/x?y=z", "/"]), pick(["DELETE", "PUT", "POST"]))]);
 });
+await session("read-the-headers", async (port) => {
+  const extra = `User-Agent: ${pick(["web-check/1", "curious-browser", "a teapot"])}\r\nX-Color:   ${pick(["blue", "green", "red"])}  \r\nACCEPT: text/plain\r\nX-Time: 12:30\r\n`;
+  await ask(port, "read-the-headers", [get("/" + pick(["page", "headers", "hello"])).replace("\r\n\r\n", `\r\n${extra}\r\n`)], {
+    show: (line, i) => i < 7,
+  });
+});
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

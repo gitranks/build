@@ -11,13 +11,20 @@ type Request = {
   method: string;
   target: string;
   version: string;
+  headers: Map<string, string>;
 };
 
 // Read a request's head: its first line, then one header a line.
 function parse(head: string): Request {
   const [first, ...lines] = head.split("\r\n");
   const [method, target, version] = first.split(" ");
-  return { method, target, version };
+  // A header line is a name, a colon and a value. A name has no case: Host and host are the same.
+  const headers = new Map<string, string>();
+  for (const line of lines) {
+    const colon = line.indexOf(":");
+    headers.set(line.slice(0, colon).trim().toLowerCase(), line.slice(colon + 1).trim());
+  }
+  return { method, target, version, headers };
 }
 
 // Write an answer: the status line, one header a line, a blank line, then the body.
@@ -42,8 +49,9 @@ function serve(socket: net.Socket): void {
     if (end < 0) return; // the head is not all here yet
     const request = parse(bytes.subarray(0, end).toString("latin1"));
     bytes = bytes.subarray(end + 4);
+    const lines = [...request.headers].map(([name, value]) => `${name}: ${value}`);
     console.log(`web: ${request.method} ${request.target}`);
-    send(socket, `You asked for ${request.target} with ${request.method}.`);
+    send(socket, [`You asked for ${request.target} with ${request.method}. The headers:`, ...lines].join("\n"));
   });
 }
 
