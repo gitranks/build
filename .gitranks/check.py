@@ -193,6 +193,15 @@ def offered(ask):
 
 
 session("offer-a-tool", ["which tools do you have?", "what files are here?"], [offered, call("list_files")])
+# The folder's own files.
+note, word, changed = pick([("remember the milk", "milk", "bread"), ("water the plants", "plants", "cactus"), ("call the bank", "bank", "school")])
+with open(os.path.join(folder, "notes.txt"), "wb") as f:
+    f.write(f"todo: {note}\n".encode())
+os.mkdir(os.path.join(folder, "src"))
+with open(os.path.join(folder, "src", pick(["hello.js", "main.py", "app.ts"])), "wb") as f:
+    f.write(b"print('hello')\n")
+other = pick(["delete_all", "search_web", "open_browser"])
+session("the-agent-loop", ["what files are here?", "use another tool"], [call("list_files"), heard, call(other), heard])
 server.shutdown()
 shutil.rmtree(top, ignore_errors=True)
 
