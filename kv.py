@@ -40,21 +40,6 @@ def to_json(value):
     return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
 
 
-# Read the whole log from the start: the latest record of each key says what it holds now.
-def scan():
-    now = {}
-    if not os.path.exists(FILE):
-        return now
-    with open(FILE, "rb") as log:
-        for line in log:
-            op, key, *value = json.loads(line)
-            if op == "set":
-                now[key] = value[0]
-            else:
-                now.pop(key, None)
-    return now
-
-
 # Read the log once, at start, and note where each key's latest record is.
 def load():
     if not os.path.exists(FILE):
@@ -76,6 +61,16 @@ def note(record, size):
     end += size
 
 
+# Read one value: only its own record, from where the index says it is.
+def read(key):
+    if key not in index:
+        return None
+    start, size = index[key]
+    with open(FILE, "rb") as log:
+        log.seek(start)
+        return json.loads(log.read(size))[2]
+
+
 # Run one command, its name and then its words, and give back the answer.
 def run(words):
     name = words[0]
@@ -89,7 +84,8 @@ def run(words):
     if name == "get":
         if not key:
             return "usage: get <key>"
-        return scan().get(key, "(not found)")
+        found = read(key)
+        return "(not found)" if found is None else found
     if name == "del":
         if not key:
             return "usage: del <key>"
