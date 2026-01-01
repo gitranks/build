@@ -56,12 +56,15 @@ function decode(numbers: number[]): string {
 }
 const show = (id: number): string => `"${ALPHABET[id]}"`;
 
-// The text as numbers.
+// The text as numbers, cut in two: the model learns from the first nine tenths and is tested on the last tenth.
 const ids = encode(text);
+const cut = ids.length - Math.floor(ids.length / 10);
+const train = ids.slice(0, cut);
+const test = ids.slice(cut);
 
-// pairs[a][b]: how many times character b came right after character a.
+// pairs[a][b]: how many times character b came right after character a, in the part to learn from.
 const pairs = Array.from({ length: V }, () => new Array<number>(V).fill(0));
-for (let i = 0; i + 1 < ids.length; i++) pairs[ids[i]][ids[i + 1]] += 1;
+for (let i = 0; i + 1 < train.length; i++) pairs[train[i]][train[i + 1]] += 1;
 const SMOOTH = 0.1; // a pair never seen still gets a small count, so it is unlikely, not impossible
 
 // Random numbers from a seed: the same seed gives the same numbers, on every computer and in both languages.
@@ -153,6 +156,22 @@ function forward(x: number[]) {
   const logits = z.map((row) => times(row, model.out));
   return { x, z, logits, p: logits.map(softmax) };
 }
+type Pass = ReturnType<typeof forward>;
+// The model's loss: the mean of -log(the chance it gave the character that came next).
+function lossOf(f: Pass, y: number[]): number {
+  let sum = 0;
+  for (let t = 0; t < y.length; t++) sum -= log(f.p[t][y[t]]);
+  return sum / y.length;
+}
+// The model's loss over a whole part of the text, window by window.
+function surprise(part: number[]): number {
+  let sum = 0;
+  for (let s = 0; s + 1 < part.length; s += T) {
+    const x = part.slice(s, Math.min(s + T, part.length - 1));
+    sum += lossOf(forward(x), part.slice(s + 1, s + 1 + x.length)) * x.length;
+  }
+  return sum / (part.length - 1);
+}
 
 // Go on from the start, one character at a time, each picked at random by how often it came next.
 const LENGTH = 60;
@@ -183,7 +202,7 @@ function ask(): void {
 function run(words: string[]): string {
   const [name, ...rest] = words;
   const arg = rest.join(" ");
-  if (name === "text") return `lm read ${[...raw].length} characters and kept ${text.length}`;
+  if (name === "text") return `lm read ${[...raw].length} characters and kept ${text.length}: ${train.length} to learn from, ${test.length} to test on`;
   if (name === "encode") {
     if (!arg) return "usage: encode <text>";
     const missing = [...arg].find((ch) => !ALPHABET.includes(ch));
@@ -217,7 +236,12 @@ function run(words: string[]): string {
     if (!start || missing) return `not in the alphabet: "${missing ?? arg}"`;
     return write(encode(start));
   }
-  if (name === "loss") return `counts: ${fmt(countsLoss(ids))}, a blind guess ${fmt(log(V))}`;
+  if (name === "loss") {
+    return [
+      `counts: train ${fmt(countsLoss(train))}, test ${fmt(countsLoss(test))}, a blind guess ${fmt(log(V))}`,
+      `model: train ${fmt(surprise(train))}, test ${fmt(surprise(test))}`,
+    ].join("\n");
+  }
   if (name === "shapes") {
     let all = 0;
     for (const m of Object.values(model)) all += m.length * m[0].length;
