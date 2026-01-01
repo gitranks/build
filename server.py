@@ -25,9 +25,27 @@ def text(body, status=200):
     return {"status": status, "type": "text/plain; charset=utf-8", "body": body}
 
 
+# An HTML page: the browser draws it, and follows its links.
+def page(title, *lines):
+    top = [
+        "<!doctype html>",
+        f"<title>{title}</title>",
+        f"<h1>{title}</h1>",
+    ]
+    return {"status": 200, "type": "text/html; charset=utf-8", "body": "\n".join([*top, *lines, ""])}
+
+
 # The routes: each function below answers one method and path, as ROUTES says.
 def home(request):
-    return text("Hello from web. Try /hello?name=Ada and /headers.")
+    return page(
+        "Hello from web",
+        "<p>Every byte of this page came from your own server → no library, just a socket.</p>",
+        "<ul>",
+        '  <li><a href="/hello?name=Ada">/hello?name=Ada</a> says hello</li>',
+        '  <li><a href="/headers">/headers</a> lists what your browser sent</li>',
+        '  <li><a href="/old">/old</a> has moved to /hello</li>',
+        "</ul>",
+    )
 
 
 def hello(request):

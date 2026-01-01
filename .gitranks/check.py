@@ -287,6 +287,7 @@ def status_codes(port):
 
 
 session("moved-and-not-allowed", status_codes)
+session("send-html", lambda port: ask(port, "send-html", [get("/")], show=lambda line, i: re.search(r"<title>|<p>", line)))
 shutil.rmtree(folder, ignore_errors=True)
 
 # What this step adds is printed whole. Every other line goes into one line with a fingerprint (a hash), so the
