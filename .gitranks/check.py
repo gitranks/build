@@ -169,6 +169,14 @@ with socket.socket() as spare:
     nowhere = f"http://127.0.0.1:{spare.getsockname()[1]}/v1"
 session("when-the-model-fails", ["are you there?"], [], url_given=nowhere)
 session("when-the-model-fails", ["hello"], [heard], model=pick(["llama9", "qwen-huge", "gpt-local"]))
+
+
+def told(ask):
+    return f"I got messages: {len(ask['messages'])}. You told me: " + " / ".join(m["content"] for m in ask["messages"] if m.get("role") == "user")
+
+
+name = pick(["Ada", "Grace", "Linus", "Margaret"])
+session("remember-the-conversation", [f"my name is {name}", "what is my name?", "/reset", "what is my name?"], [told, told, told])
 server.shutdown()
 shutil.rmtree(top, ignore_errors=True)
 
