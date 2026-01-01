@@ -164,6 +164,7 @@ const post = (target, body) =>
   `Content-Length: ${Buffer.byteLength(body)}\r\nConnection: close\r\n\r\n${body}`;
 
 await session("what-you-will-build", null);
+await session("listen-on-a-port", (port) => ask(port, "listen-on-a-port", [get("/")]));
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}
