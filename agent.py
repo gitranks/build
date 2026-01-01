@@ -36,9 +36,21 @@ SYSTEM = (
 messages = [{"role": "system", "content": SYSTEM}]
 
 
+# The tools the model may ask for: each one's name, what it does and its arguments, in JSON Schema.
+def tool(name, description, properties=None, required=None):
+    properties = properties or {}
+    parameters = {"type": "object", "properties": properties, "required": list(properties) if required is None else required}
+    return {"type": "function", "function": {"name": name, "description": description, "parameters": parameters}}
+
+
+TOOLS = [
+    tool("list_files", "List every file in the folder."),
+]
+
+
 # Send the model the conversation, and give back its answer.
 def ask():
-    body = json.dumps({"model": MODEL, "messages": messages}).encode()
+    body = json.dumps({"model": MODEL, "messages": messages, "tools": TOOLS}).encode()
     request = urllib.request.Request(SERVER + "/chat/completions", body, {"Content-Type": "application/json"})
     try:
         response = urllib.request.build_opener(urllib.request.ProxyHandler({})).open(request)
@@ -68,6 +80,12 @@ def failed(error):
 def turn(text):
     messages.append({"role": "user", "content": text})
     answer = ask()
+    calls = answer.get("tool_calls") or []
+    if calls:
+        for call in calls:
+            print("tool: " + call["function"]["name"] + " " + call["function"]["arguments"])
+        print("agent: the model asked for a tool. The next step runs it.")
+        return
     messages.append({"role": "assistant", "content": answer.get("content")})
     print(answer.get("content") or "")
 
