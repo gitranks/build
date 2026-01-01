@@ -127,6 +127,16 @@ await session("a-task-by-id", async (port) => {
   await call(port, "a-task-by-id", "GET", "/api/tasks/1");
   await call(port, "a-task-by-id", "GET", `/api/tasks/${pick(["2", "42", "abc"])}`);
 });
+await session("check-the-fields", async (port) => {
+  const bodies = [
+    pick(['{"title":""}', '{"title":42}', '{"done":true}', '{"title":"   "}']),
+    pick(['{"title":"Buy milk","done":"yes"}', '{"title":"Buy milk","done":1}', '{"title":"Buy milk","done":null}']),
+    pick(["title=Buy+milk", '{"title":"Buy milk"', ""]),
+    pick(['["Buy milk"]', '"Buy milk"', "null"]),
+    JSON.stringify({ title: `  ${pick(titles)}  ` }),
+  ];
+  for (const body of bodies) await call(port, "check-the-fields", "POST", "/api/tasks", body);
+});
 try {
   fs.rmSync(folder, { recursive: true, force: true });
 } catch {}

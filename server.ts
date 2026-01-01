@@ -75,6 +75,32 @@ let lastId = 0;
 const idOf = (request: Request) => request.target.split("?")[0].split("/")[3];
 const missing = (request: Request) => json({ error: `no task with id ${idOf(request)}` }, 404);
 
+// The fields a request's body gives a task, checked. A new task needs a title; a change may give either field.
+// Anything wrong gets 400 Bad Request instead, with an error that names the field.
+function fields(request: Request, needsTitle: boolean): Partial<Task> | Answer {
+  let body;
+  try {
+    body = JSON.parse(request.body.toString("utf8"));
+  } catch {
+    return json({ error: "the body is not JSON" }, 400);
+  }
+  if (typeof body !== "object" || body === null || Array.isArray(body)) return json({ error: "the body is not a JSON object" }, 400);
+  const given: Partial<Task> = {};
+  if (needsTitle || "title" in body) {
+    const title = typeof body.title === "string" ? body.title.trim() : "";
+    // 1 to 100 characters once trimmed, and text UTF-8 can write: half of an emoji sent alone is refused too.
+    if (!title || [...title].length > 100 || !title.isWellFormed()) {
+      return json({ error: "title must be text of 1 to 100 characters", field: "title" }, 400);
+    }
+    given.title = title;
+  }
+  if ("done" in body) {
+    if (typeof body.done !== "boolean") return json({ error: "done must be true or false", field: "done" }, 400);
+    given.done = body.done;
+  }
+  return given;
+}
+
 // The routes: a method and a path, each with the function that answers it.
 const ROUTES: Record<string, (request: Request) => Answer | Promise<Answer>> = {
   "GET /": () =>
@@ -119,8 +145,8 @@ const ROUTES: Record<string, (request: Request) => Answer | Promise<Answer>> = {
   },
   "GET /api/tasks": () => json([...tasks.values()]),
   "POST /api/tasks": (request) => {
-    // The body is JSON, such as {"title":"Buy milk"}: JSON.parse turns it into an object.
-    const given = JSON.parse(request.body.toString("utf8"));
+    const given = fields(request, true);
+    if ("status" in given) return given;
     const task: Task = { id: ++lastId, title: "", done: false, ...given };
     tasks.set(String(task.id), task);
     // 201 Created, and Location says where the new task lives.
