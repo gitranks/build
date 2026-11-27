@@ -1,0 +1,440 @@
+{
+  "format": 1,
+  "project": "web-server",
+  "language": "python",
+  "check": ".gitranks/check.py",
+  "steps": [
+    {
+      "branch": "web-server/python/base",
+      "number": 1,
+      "slug": "what-you-will-build",
+      "commit": "8358229331ef4316ee0ead5d5c81c6e8de64c376",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "ee952ad9649adbf03a6a9bd62a28d86ef5d46b8a8331354f204352a1c859d40e"
+        },
+        {
+          "seed": "3",
+          "sha256": "ee952ad9649adbf03a6a9bd62a28d86ef5d46b8a8331354f204352a1c859d40e"
+        },
+        {
+          "seed": "maple",
+          "sha256": "ee952ad9649adbf03a6a9bd62a28d86ef5d46b8a8331354f204352a1c859d40e"
+        },
+        {
+          "seed": "40",
+          "sha256": "ee952ad9649adbf03a6a9bd62a28d86ef5d46b8a8331354f204352a1c859d40e"
+        }
+      ]
+    },
+    {
+      "branch": "web-server/python/base",
+      "number": 2,
+      "slug": "listen-on-a-port",
+      "commit": "b2752dbc41fbeab56d7f2550ce0873c98ccc13e8",
+      "cases": [
+        {
+          "seed": "maple",
+          "sha256": "aa9629d64b5445166e5c13151d666fb32f9b759b0e49c6ffc538b90eee91faee"
+        },
+        {
+          "seed": "40",
+          "sha256": "aa9629d64b5445166e5c13151d666fb32f9b759b0e49c6ffc538b90eee91faee"
+        },
+        {
+          "seed": "river",
+          "sha256": "aa9629d64b5445166e5c13151d666fb32f9b759b0e49c6ffc538b90eee91faee"
+        },
+        {
+          "seed": "10",
+          "sha256": "aa9629d64b5445166e5c13151d666fb32f9b759b0e49c6ffc538b90eee91faee"
+        }
+      ]
+    },
+    {
+      "branch": "web-server/python/base",
+      "number": 3,
+      "slug": "read-the-request",
+      "commit": "6f8981c541e33331599a6437c64d9cf7b88c8169",
+      "cases": [
+        {
+          "seed": "river",
+          "sha256": "ca4e600a0e747fc12f79d7ed43468c75c3183af5490cb7c21840f03e23a60e41"
+        },
+        {
+          "seed": "10",
+          "sha256": "f4354180668c5b7ace891406d02669de03eae3c145e5071c2a43071b2dc47d78"
+        },
+        {
+          "seed": "cobalt",
+          "sha256": "e2f5bba8721cef800f1d703fefbd98d566c56d6c1c18dc4b5601c013a5eeb02d"
+        },
+        {
+          "seed": "51",
+          "sha256": "e2f5bba8721cef800f1d703fefbd98d566c56d6c1c18dc4b5601c013a5eeb02d"
+        }
+      ]
+    },
+    {
+      "branch": "web-server/python/base",
+      "number": 4,
+      "slug": "answer-by-hand",
+      "commit": "11abdf2f9255b0db84fea7b040318138e20bdc94",
+      "cases": [
+        {
+          "seed": "cobalt",
+          "sha256": "9862915a6200b5cb61765f918ef09469e986014dc9ea3531a68d01d6553f5d48"
+        },
+        {
+          "seed": "51",
+          "sha256": "303b2c89d106bbe98fb68e3f9bdf6595234bba7bbfcb641b431fdfc62af7e609"
+        },
+        {
+          "seed": "coral",
+          "sha256": "c666bf720f7de4e84639b5344ab7efed17a18a28290aec46280c170acaad6076"
+        },
+        {
+          "seed": "87",
+          "sha256": "303b2c89d106bbe98fb68e3f9bdf6595234bba7bbfcb641b431fdfc62af7e609"
+        }
+      ]
+    },
+    {
+      "branch": "web-server/python/base",
+      "number": 5,
+      "slug": "read-the-request-line",
+      "commit": "27b68111c9134fd46ed7c0bbf76fd4987b257cb4",
+      "cases": [
+        {
+          "seed": "coral",
+          "sha256": "11c94004fd28c273570f3c8603e316404ffeee1f6bd018adf5cf035bcfadc670"
+        },
+        {
+          "seed": "87",
+          "sha256": "b079259bafbef62d013ad9aaef3649966215d8ecb4844158f2094fa20eec4674"
+        },
+        {
+          "seed": "sparrow",
+          "sha256": "fdc30d0fc4aad371e0d534c506bf8e038017d9071039c0cdb9c434db780df6ca"
+        },
+        {
+          "seed": "172",
+          "sha256": "5831ed66bc040a62a33c351ba6a5afbd9ea6f122cbf31089e28a90f27e1e713b"
+        }
+      ]
+    },
+    {
+      "branch": "web-server/python/base",
+      "number": 6,
+      "slug": "read-the-headers",
+      "commit": "9fdc915aa2558f52ac32fb6e527fd9f1c7602e92",
+      "cases": [
+        {
+          "seed": "sparrow",
+          "sha256": "2314b22f2f264c679f82cbb51126d77ff3d9fb01d47348595ab3f1f930396bb2"
+        },
+        {
+          "seed": "172",
+          "sha256": "53673e37f41d78aef596b5b41e665d04d43f3dbd9ed8f7866758e222ecf79fca"
+        },
+        {
+          "seed": "birch",
+          "sha256": "625f56ea3e4e1cb00862059bd472641fe84394218c8f8550885301b6481d378d"
+        },
+        {
+          "seed": "7",
+          "sha256": "0b1a6130bbf5942efebc0944eb7cdb9a03a8324bca088cc77ef82655055a36fa"
+        }
+      ]
+    },
+    {
+      "branch": "web-server/python/base",
+      "number": 7,
+      "slug": "not-found",
+      "commit": "fe0d55d69e4557c1820b2c70fea63fd5de738794",
+      "cases": [
+        {
+          "seed": "birch",
+          "sha256": "84dc8e3a03d05b8dad1eae5e3af229e842ebfd21741f09730ae4a74a979f1314"
+        },
+        {
+          "seed": "7",
+          "sha256": "ce540933d9e99a0840a106fad0893954cf0d9105dbe4fd1a2e519955ec75b891"
+        },
+        {
+          "seed": "quartz",
+          "sha256": "fd2ad5da3f738de6146fb252438f7be27ae59e992b6317e4e34863e4f5d16240"
+        },
+        {
+          "seed": "23",
+          "sha256": "43075428f6dc5581db2287e7983cf56d04c950f2d8f03de18301d3eca8aa0790"
+        }
+      ]
+    },
+    {
+      "branch": "web-server/python/base",
+      "number": 8,
+      "slug": "routes",
+      "commit": "dd5a4f3ce845efe30ba983cdb2f8b8c6cec0a9db",
+      "cases": [
+        {
+          "seed": "quartz",
+          "sha256": "e05bd831f8473b426e2cd2c3efd4e34d9b55e94309546655865bdc246697008b"
+        },
+        {
+          "seed": "23",
+          "sha256": "e5dab9402438cc59ecd2b55aa44189964354802fb5827aea015b4844d638e851"
+        },
+        {
+          "seed": "willow",
+          "sha256": "fd7e9104b66015d02481da42d0e99d7ea1449d62badf99123b28bbee3c04f1fa"
+        },
+        {
+          "seed": "64",
+          "sha256": "eca4e400460c0686968ffcf1c21c5253ef36eec59301daf6210244148dc4485e"
+        }
+      ]
+    },
+    {
+      "branch": "web-server/python/base",
+      "number": 9,
+      "slug": "moved-and-not-allowed",
+      "commit": "5dcdd02879472e86a0441c57db6b913dfffef4c6",
+      "cases": [
+        {
+          "seed": "willow",
+          "sha256": "6e2e40c838b98f12f193b3c2b2bc190b4bb507e6709f4501c145da16c3a5a5e5"
+        },
+        {
+          "seed": "64",
+          "sha256": "5e6184c3632cd124869e5c06c5a5841ef8b322ff0a0444c07063ceffa9748ba5"
+        },
+        {
+          "seed": "acorn",
+          "sha256": "4c5003759d47708c83a52934eefedfa14e5bbccc076add0fa24f2c888dee3b74"
+        },
+        {
+          "seed": "3",
+          "sha256": "57222fe16e3ca1895d38516b2e5e42fcc806918b6464f6e561ce940a8ec522cc"
+        }
+      ]
+    },
+    {
+      "branch": "web-server/python/base",
+      "number": 10,
+      "slug": "send-html",
+      "commit": "d9ef45615b882fab6295c3c0282b33acf87d1f3a",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "5310b224d27584cd9f5114de31c7803a1f61ef6fc39ac88a93ddbe072afd5765"
+        },
+        {
+          "seed": "3",
+          "sha256": "3fc46910bc0050f7422acb3a1752a3e77da3bfbcb16bc67ccaffa56f24ad02a1"
+        },
+        {
+          "seed": "maple",
+          "sha256": "3eb16fde75bba243c025e7b8966b157988564f5e2a773dd0573339532a1bbee1"
+        },
+        {
+          "seed": "40",
+          "sha256": "eb1c8a6522977d06a1ea2e47dd51a278a6c465ddf33a558c9fd034ff538be3cd"
+        }
+      ]
+    },
+    {
+      "branch": "web-server/python/base",
+      "number": 11,
+      "slug": "read-a-body",
+      "commit": "5f3d7c9c413e0e4704f5759cf9ad8248779e3365",
+      "cases": [
+        {
+          "seed": "maple",
+          "sha256": "68ffdaf372418ac5dcef0dfd6769b80cc5fc0023ca166afdccd8939dc489e0d0"
+        },
+        {
+          "seed": "40",
+          "sha256": "db1091b788e308ffc8f46fc779ca2f12e1ab4f91ca530f9eb3c6e0c52e81c2ad"
+        },
+        {
+          "seed": "river",
+          "sha256": "d73fed3914c197b0d8dd2a13ed593db9ab7a911b5463dddafd25c839bfb5190a"
+        },
+        {
+          "seed": "10",
+          "sha256": "50c3cac6cf77089065393cec51c8554ed0b02a775b33140b160a3f8f95a59a7b"
+        }
+      ]
+    },
+    {
+      "branch": "web-server/python/base",
+      "number": 12,
+      "slug": "show-notes-safely",
+      "commit": "89737ea540f92ce5a8cb2a80d3f3d975fb83c082",
+      "cases": [
+        {
+          "seed": "river",
+          "sha256": "96bb9b5c7626c857dc93c13df53a8cce5dfc99ec4e879ab997c11bb9f2b9c9c2"
+        },
+        {
+          "seed": "10",
+          "sha256": "823426d2d598c781a5ba3ef8509f42d4fda36e8f4f09344f2a68b7a71ca13f1d"
+        },
+        {
+          "seed": "cobalt",
+          "sha256": "8395a6799844be470ba6177fe3b7a0e5e9224d422ed9141948d64eaf6ba185ab"
+        },
+        {
+          "seed": "51",
+          "sha256": "cf9365cd753e60f0acf947d49695711ea0b1c4a0c96c2e64bec51fffcd2d6876"
+        }
+      ]
+    },
+    {
+      "branch": "web-server/python/base",
+      "number": 13,
+      "slug": "serve-files",
+      "commit": "b856dc8c1ff88f5bccf5b803fa0d618bcd7decbf",
+      "cases": [
+        {
+          "seed": "cobalt",
+          "sha256": "e17c408807da1c813231d304c8d5d0998df21b7eaf689e29c3852e190be417ac"
+        },
+        {
+          "seed": "51",
+          "sha256": "506bebc994fceefbb43effe72cbd1e634b878d5097407d57aa6492033b73da5d"
+        },
+        {
+          "seed": "coral",
+          "sha256": "6bdc216f78f32eb30065269edd5254f19dd67fbc343370029448693d53c8939f"
+        },
+        {
+          "seed": "87",
+          "sha256": "56308076b91396233a27a2f13bae2a6fa4e60f5dc5aadbd02e1005e83d6084e3"
+        }
+      ]
+    },
+    {
+      "branch": "web-server/python/base",
+      "number": 14,
+      "slug": "stay-in-the-folder",
+      "commit": "27c9c0806dd2151c50c04c33f584c9e7277f9837",
+      "cases": [
+        {
+          "seed": "coral",
+          "sha256": "f85a89e9b560a4d6cf71ce27f654cd6308287a23aed8361c6a9f5ced53decafb"
+        },
+        {
+          "seed": "87",
+          "sha256": "cb8180e7d648263be10530965bfe21d89334c15ce27be4c01cbf2a45016aa034"
+        },
+        {
+          "seed": "sparrow",
+          "sha256": "40ad576427dd59f792b29799e235b612b4a39660af6a85fcf67847d78cb441eb"
+        },
+        {
+          "seed": "172",
+          "sha256": "6586293e829bcd5a48a216762abae036330835df659b0a3c450b4b57d0ccfee9"
+        }
+      ]
+    },
+    {
+      "branch": "web-server/python/base",
+      "number": 15,
+      "slug": "many-at-once",
+      "commit": "dc7283dbc6e18912d65ce637820e54f2b173c7c7",
+      "cases": [
+        {
+          "seed": "sparrow",
+          "sha256": "e6ee86c7aaaeb0ab78be9d4785b1192a5222689f90da5e680aaf8b5b504b5fdf"
+        },
+        {
+          "seed": "172",
+          "sha256": "9c322ab5d044e6735d8f906dee8c1648a1958717ecf23042e7013dde21e90eb2"
+        },
+        {
+          "seed": "birch",
+          "sha256": "a9dac28a055996ae6b69ce53657614191cddcfb1e29795cc42df387351056c9e"
+        },
+        {
+          "seed": "7",
+          "sha256": "4f33a246364052099404bf955f6df98ea3cd9259431bd210eaccb1806bad5f21"
+        }
+      ]
+    },
+    {
+      "branch": "web-server/python/base",
+      "number": 16,
+      "slug": "keep-alive",
+      "commit": "491aab03ea3f4c8dfc89f05da7adbaf46a7d8a57",
+      "cases": [
+        {
+          "seed": "birch",
+          "sha256": "9db267b71e96218c9e26b28f2bcb26fcbfb85faf4236462428595cafbc0cbb25"
+        },
+        {
+          "seed": "7",
+          "sha256": "927ac0aa78cc9180821754f2bdf892b552baab7cc38ac4210c0378cfd0f35422"
+        },
+        {
+          "seed": "quartz",
+          "sha256": "4413d4c7c76bc3e725db84232e21cac9c2890e66b91a2173559063eac9fd7a31"
+        },
+        {
+          "seed": "23",
+          "sha256": "6ae3148de18f9e42a65736ed47c34f322002983bcc043417f8cebc9e238dd740"
+        }
+      ]
+    },
+    {
+      "branch": "web-server/python/base",
+      "number": 17,
+      "slug": "a-bad-request",
+      "commit": "5b6bcf1038050cf2b62ffd397991fee50b30412c",
+      "cases": [
+        {
+          "seed": "quartz",
+          "sha256": "6b0c41f1dd3c51065d9de4bd34f47110bfb73de79165e1fd1f2b5457e820e300"
+        },
+        {
+          "seed": "23",
+          "sha256": "1a4edb5001d333b3484a814ab056e01feda0718c1ba889994631f21fcdfb182d"
+        },
+        {
+          "seed": "willow",
+          "sha256": "9193f8fcc363ac6ae89aff2ecd087b3ee6df165562aaba0564523f8a052b1bab"
+        },
+        {
+          "seed": "64",
+          "sha256": "330d13391471e8f4a367e18df699da400419f9920f6453dbc6121a226e208a06"
+        }
+      ]
+    },
+    {
+      "branch": "web-server/python/base",
+      "number": 18,
+      "slug": "an-error-in-a-route",
+      "commit": "c8207f234349409c56f0652cbf80bbf8b64cb423",
+      "cases": [
+        {
+          "seed": "willow",
+          "sha256": "8ab04d7dc38719c9335ad700722a5ccee4501b993064afb13302d5c7b8600218"
+        },
+        {
+          "seed": "64",
+          "sha256": "2dfc02d76097e0fb2b051f069d2ccc117f5f9d39c5eb74e00c46d69bbfa88583"
+        },
+        {
+          "seed": "acorn",
+          "sha256": "226847f91ed2e45fbeb7fec26285313af3f670228222c39d5af6b4ca70c28741"
+        },
+        {
+          "seed": "3",
+          "sha256": "3e35272a6abcdeac71484f01627de38a2e121c74d5398351cfac32c4d51974df"
+        }
+      ]
+    }
+  ]
+}
