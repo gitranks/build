@@ -1,0 +1,368 @@
+{
+  "format": 1,
+  "project": "key-value-database",
+  "language": "python",
+  "check": ".gitranks/check.py",
+  "steps": [
+    {
+      "branch": "key-value-database/python/base",
+      "number": 1,
+      "slug": "what-you-will-build",
+      "commit": "5f536c1c9a7823d095a7b808e95948e89746ffd3",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "c7f89fac6fd5c508780fa4f1e652f25cca0153231c408c6cf369622922021257"
+        },
+        {
+          "seed": "3",
+          "sha256": "c7f89fac6fd5c508780fa4f1e652f25cca0153231c408c6cf369622922021257"
+        },
+        {
+          "seed": "maple",
+          "sha256": "c7f89fac6fd5c508780fa4f1e652f25cca0153231c408c6cf369622922021257"
+        },
+        {
+          "seed": "40",
+          "sha256": "c7f89fac6fd5c508780fa4f1e652f25cca0153231c408c6cf369622922021257"
+        }
+      ]
+    },
+    {
+      "branch": "key-value-database/python/base",
+      "number": 2,
+      "slug": "read-commands",
+      "commit": "7f51c4bc19e97d56df82daf655d3cf546d97cbc0",
+      "cases": [
+        {
+          "seed": "river",
+          "sha256": "6fe734d66edc7151eed725bbd2b793a2ada8d5d5f4c46569a571e25dce1f0e95"
+        },
+        {
+          "seed": "10",
+          "sha256": "cbb3982cdcb87a7f0302739ec01456f38bff24677ae08b1b82b1eb7dfbb7c4d2"
+        },
+        {
+          "seed": "cobalt",
+          "sha256": "c9e2c0f6267c54cb9775036d64df37ae0a7d34a1ee8d792c658129bd04e255b4"
+        },
+        {
+          "seed": "51",
+          "sha256": "c9e2c0f6267c54cb9775036d64df37ae0a7d34a1ee8d792c658129bd04e255b4"
+        }
+      ]
+    },
+    {
+      "branch": "key-value-database/python/base",
+      "number": 3,
+      "slug": "set-and-get",
+      "commit": "dbd46c408eceee04ec6f992ef914c92381e8c195",
+      "cases": [
+        {
+          "seed": "harbor",
+          "sha256": "94b14430e921b739a1dfbaf729af78bb0e57952a61eaa4e8df3b6a16074fd3d9"
+        },
+        {
+          "seed": "17",
+          "sha256": "1279910f5e78133e0d3cb9ac696e4dcb8c620a916168c42bdf8faa6396b698df"
+        },
+        {
+          "seed": "quartz",
+          "sha256": "e14e0b83e8bbc232cee613e9a2539036728ddbe6bdd3c9ea53d30b90603ddee6"
+        },
+        {
+          "seed": "62",
+          "sha256": "fd82d3620716e1e8f05da2f15657278ed6d35a6a6179107102cc02b2fea403e7"
+        }
+      ]
+    },
+    {
+      "branch": "key-value-database/python/base",
+      "number": 4,
+      "slug": "delete-a-key",
+      "commit": "593218015bd16f1595d99fc89f706c765b8767fc",
+      "cases": [
+        {
+          "seed": "saffron",
+          "sha256": "5582439d53fe03191ad62d91212696894afbf90ed4c7711f474e7b18a3749517"
+        },
+        {
+          "seed": "24",
+          "sha256": "62516a795b26862ea292622796f3f674324e82eb03087a77e2230ea60a9e07f0"
+        },
+        {
+          "seed": "canyon",
+          "sha256": "3ea80c9c98aa45810ce24837e1fc648b43824cd4b7abe0d068400c0e7b57c1fe"
+        },
+        {
+          "seed": "73",
+          "sha256": "eee971d316ecf550cefc56fe3450dc5bc358e960557997b1b278f45a0db1b7d3"
+        }
+      ]
+    },
+    {
+      "branch": "key-value-database/python/base",
+      "number": 5,
+      "slug": "list-the-keys",
+      "commit": "9a39373df690d374b8eb3121137e0acabaa24989",
+      "cases": [
+        {
+          "seed": "willow",
+          "sha256": "85fd4e983dd7bed5f23326440010ccc9f6a518a7fc8f60641e939a922e3a8dff"
+        },
+        {
+          "seed": "31",
+          "sha256": "293bd2d881ab5e3f5336f82417d78295df8bfd220d43fc9a0e22824452a57246"
+        },
+        {
+          "seed": "ember",
+          "sha256": "d79d04973d972818503d26c507ae8a93b8f1c5d43241ffbbfe842354dd3d161a"
+        },
+        {
+          "seed": "84",
+          "sha256": "b153041b5f42bb3a2c73b49af2dd6a13170fd24f00f39cc2b23cb04c83a3cd00"
+        }
+      ]
+    },
+    {
+      "branch": "key-value-database/python/base",
+      "number": 6,
+      "slug": "write-it-down",
+      "commit": "b3fd5476b0e2451e5033cdde2b795f31dbd11f84",
+      "cases": [
+        {
+          "seed": "lantern",
+          "sha256": "f01656d2beb8fb48b1beb67bcccb542910bb7e3d7569d95d2410befb900211a9"
+        },
+        {
+          "seed": "38",
+          "sha256": "da7777d07c3f36fe8ba6b2a20cb89edf500de23ecfb7599fa416ba2b7267d976"
+        },
+        {
+          "seed": "meadow",
+          "sha256": "4b10618f58e76eddb1f83ce2cce106a480e1e4df1062c2386d0afb6a3b778789"
+        },
+        {
+          "seed": "95",
+          "sha256": "eae99283202a8bc90988f88b3aae3c739ae92067b4aa000c9f609a84fdfd319e"
+        }
+      ]
+    },
+    {
+      "branch": "key-value-database/python/base",
+      "number": 7,
+      "slug": "read-it-back",
+      "commit": "0e81257ada1bbd74364f0e94ac5a0ef83818a317",
+      "cases": [
+        {
+          "seed": "pebble",
+          "sha256": "f7faa73711ef89cbc8eda9948b3e88bf4af854e6aac11a4a119584ddf4efe887"
+        },
+        {
+          "seed": "45",
+          "sha256": "b957694f3911a02dd0cb7098d8c58fad4a93dbc26dac682f1e9cf2b2df204898"
+        },
+        {
+          "seed": "thistle",
+          "sha256": "1aa5b7f554f35fe4ff832947b666e1182431d770f80395e40c710cb14fdc130c"
+        },
+        {
+          "seed": "106",
+          "sha256": "f27abc860d159fe6d8b89abf89dcd5a902a164e6c1a577728ed36f55c234201a"
+        }
+      ]
+    },
+    {
+      "branch": "key-value-database/python/base",
+      "number": 8,
+      "slug": "fill-it-up",
+      "commit": "7a282c1e51e1da856926fc6e3620ea251c1c2ba7",
+      "cases": [
+        {
+          "seed": "orchid",
+          "sha256": "dbe6aa385d551d8beb2772bdb8e3e2ce98b585231815a82fd8080a820851ce3c"
+        },
+        {
+          "seed": "52",
+          "sha256": "f05158b92bf81281f8aacb2ee78d5db91271aff102fc61565821a92290fec80c"
+        },
+        {
+          "seed": "falcon",
+          "sha256": "a072034e5df5a7355c36f89ef96a15eb91c3f6d14fa6aa7943e10882c2d5aa57"
+        },
+        {
+          "seed": "117",
+          "sha256": "974111021ade4c729b9de26f194e69b1c2a686827934b7d9507726a93746dea7"
+        }
+      ]
+    },
+    {
+      "branch": "key-value-database/python/base",
+      "number": 9,
+      "slug": "an-index",
+      "commit": "9174aa982809067363734da74f3f61a0d671b974",
+      "cases": [
+        {
+          "seed": "juniper",
+          "sha256": "6129b5d951f30ac4bb4b1b6cc73f4acba9a64efd42079a6ddce73e4303f59aa2"
+        },
+        {
+          "seed": "59",
+          "sha256": "ad4dcfb047060a61fdad6a275a0ee95317ec763306132ffaa36d254e407ca5f3"
+        },
+        {
+          "seed": "marble",
+          "sha256": "89ea02180f8cf02570cd6d056bdc6064a3517558a1bc2ded6a4acb02d923cea2"
+        },
+        {
+          "seed": "128",
+          "sha256": "6ff54c9a31d0bb95ce8024cb915436f84c7c577cf1d3fe145d1fd5a1e4dba1e5"
+        }
+      ]
+    },
+    {
+      "branch": "key-value-database/python/base",
+      "number": 10,
+      "slug": "jump-to-the-value",
+      "commit": "dd2c063d2197a17194f265a482253ffd13fddbb9",
+      "cases": [
+        {
+          "seed": "cedar",
+          "sha256": "6726ea402c03c66ac9126cfd2944df57637191f7e0b61105badd4db89ffe079f"
+        },
+        {
+          "seed": "66",
+          "sha256": "85079a418d1bc87364aee5061a6557bc8c1737c368f03990a2a64eb992f642ce"
+        },
+        {
+          "seed": "tundra",
+          "sha256": "f026596312e20f5ca0d5b897394ebb701f3b641342c6e99c9bb45759e4434baa"
+        },
+        {
+          "seed": "139",
+          "sha256": "f7b6a871e4122e22167cecc9933bf805df48abc2fa52bdb8b42673c12b9c279c"
+        }
+      ]
+    },
+    {
+      "branch": "key-value-database/python/base",
+      "number": 11,
+      "slug": "count-the-waste",
+      "commit": "90db2f2a2020dac7bde7df6cc03b1aa1d958ff47",
+      "cases": [
+        {
+          "seed": "velvet",
+          "sha256": "540b67daaf6675a0860bd27523fb66fad767120659388d6bd4e6ec0167d2a8fa"
+        },
+        {
+          "seed": "73",
+          "sha256": "151ec949d4733b0c136c358eccc5afda78757a1655362fdbcf214670337ca79d"
+        },
+        {
+          "seed": "hazel",
+          "sha256": "dc3772d751091df6493c71d7b952566a5caf1c58d5c3d1b5562bff1f30549e5d"
+        },
+        {
+          "seed": "150",
+          "sha256": "5686d63e68e8a0846d8f7a0dfd8db59f916febcce7b513a2ef0d38f67c078f5b"
+        }
+      ]
+    },
+    {
+      "branch": "key-value-database/python/base",
+      "number": 12,
+      "slug": "compact-the-log",
+      "commit": "ca54d9830cfbbea266303f6d61db9346636b3956",
+      "cases": [
+        {
+          "seed": "walnut",
+          "sha256": "0f78f8c9ddb9dbf50c688a7d1823c114e760b44390ee746c3ff91b971c743397"
+        },
+        {
+          "seed": "80",
+          "sha256": "8f5ebe07d1a12ebc6ee53074dda7234247c74211c1f3bbdab9d9f4d8c6d28e1c"
+        },
+        {
+          "seed": "breeze",
+          "sha256": "0a1afd189812cc6dc8ffe4fe1794244228e8ec2f58a08c3436c69444aaa841ca"
+        },
+        {
+          "seed": "161",
+          "sha256": "4818073b203a89cf6d167ab2f19f24aaacba9bcbeecb964165d55fd85e68ded0"
+        }
+      ]
+    },
+    {
+      "branch": "key-value-database/python/base",
+      "number": 13,
+      "slug": "survive-a-crash",
+      "commit": "7f03c1696ead992b36b5f621ade9db68b5a23953",
+      "cases": [
+        {
+          "seed": "coral",
+          "sha256": "9fa73a498dbad3fdecb614dad5b397e4cd53c6c777b2f0ae709b66928bded4ba"
+        },
+        {
+          "seed": "87",
+          "sha256": "8125d56e47259da32c4836fd8c5c8a7b07e01ef8658e5552ab8ccd0c866f1fa1"
+        },
+        {
+          "seed": "sparrow",
+          "sha256": "441ded3364081476da1e40c7e3ca00623807ac73d03c33829604780438f5c723"
+        },
+        {
+          "seed": "172",
+          "sha256": "b38d0a57e99226b64867652e25e2aacdc27a7ef94f3d2532a8f28316605f6205"
+        }
+      ]
+    },
+    {
+      "branch": "key-value-database/python/base",
+      "number": 14,
+      "slug": "skip-a-damaged-record",
+      "commit": "40d61168767471367189b5a89b33d693043c01b5",
+      "cases": [
+        {
+          "seed": "nectar",
+          "sha256": "4846ff22c6a93c1dc5c8d293d2bb67efdf3347b558667e5acb49806473c1971f"
+        },
+        {
+          "seed": "94",
+          "sha256": "143de1ba49bcc3fb379990a0f471f0101729931779e6487ba641933e9ad01efc"
+        },
+        {
+          "seed": "granite",
+          "sha256": "d9f2498513f5f6980bfe4e08ac76251a117527fdf2f86253214975847167fe6a"
+        },
+        {
+          "seed": "183",
+          "sha256": "e31f0c4665b93eb037263b4bf553f5c5831446f530bfa6f57f2c49a94422ca65"
+        }
+      ]
+    },
+    {
+      "branch": "key-value-database/python/base",
+      "number": 15,
+      "slug": "compact-safely",
+      "commit": "4363b42db122a3fc7dcd3fdd1092cda6bf5d34bb",
+      "cases": [
+        {
+          "seed": "clover",
+          "sha256": "a052a0ee251d08e23877f0cb322311068eec2558db1ac68e3761ba3339a35589"
+        },
+        {
+          "seed": "101",
+          "sha256": "f993fd4a445a68bd99f3b00f9542c0ededaf22a6f9be81a5baa03313b8b0fcd3"
+        },
+        {
+          "seed": "summit",
+          "sha256": "4241c2a68411acb9529743612f5770db7c287e020c18f4a04fc9af45145df783"
+        },
+        {
+          "seed": "194",
+          "sha256": "5dd3ee5e5bd717f038cd83f291445dbea77220618d2ef73817caf2b3b7aa14c2"
+        }
+      ]
+    }
+  ]
+}
