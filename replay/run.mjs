@@ -5,10 +5,12 @@
 //   node replay/run.mjs                 every project, every language
 //   node replay/run.mjs typescript      only these languages
 //
-// Python runs as "python", or as the command in REPLAY_PYTHON. It needs git, and a clone with every branch.
+// Python runs as "python", or as the command in REPLAY_PYTHON. It needs git, and a clone with every branch. A step
+// that needs packages has a setup script: it runs first and installs the exact versions the step pins, from npm or
+// PyPI, the only network use.
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,6 +23,7 @@ const RUNS = {
   python: (process.env.REPLAY_PYTHON || 'python').split(' ').filter(Boolean),
 };
 const CHECK_TIMEOUT_MS = 60_000;
+const SETUP_TIMEOUT_MS = 600_000;
 // Python writes UTF-8 whatever the system's code page, so a check prints the same bytes on every system.
 const env = { ...process.env, PYTHONUTF8: '1', PYTHONIOENCODING: 'utf-8' };
 
@@ -51,11 +54,21 @@ const normalized = (text) =>
     .join('\n')
     .replace(/\n+$/, '');
 
-// Why a check's run is not a pass: it could not start, ran out of time, or ended with an error.
-function howItEnded(run) {
+// Why a run is not a pass: it could not start, ran out of time, or ended with an error.
+function howItEnded(run, timeoutMs) {
   if (run.error && run.error.code !== 'ETIMEDOUT') return `could not start: ${run.error.code ?? run.error.message}`;
-  if (run.status === null) return `no end within ${CHECK_TIMEOUT_MS / 1000} s`;
+  if (run.status === null) return `no end within ${timeoutMs / 1000} s`;
   return run.status === 0 ? 'another text' : `exit code ${run.status}`;
+}
+
+// A step that needs packages installs them first, with the step's own setup script. Why it failed, if it did.
+function setUp(words, script, dir) {
+  if (!script || !existsSync(join(dir, script))) return undefined;
+  const options = { cwd: dir, env, encoding: 'utf8', timeout: SETUP_TIMEOUT_MS, windowsHide: true };
+  const run = spawnSync(words[0], [...words.slice(1), script], options);
+  if (run.status === 0) return undefined;
+  const said = `${run.stdout ?? ''}\n${run.stderr ?? ''}`.trim().split('\n').slice(-10);
+  return { how: howItEnded(run, SETUP_TIMEOUT_MS), said };
 }
 
 const sha256 = (text) => createHash('sha256').update(text, 'utf8').digest('hex');
@@ -96,6 +109,13 @@ try {
       const name = `${step.branch} step ${step.number} (${step.slug})`;
       const dir = mkdtempSync(join(scratch, 'step-'));
       writeStep(step.commit, dir);
+      const setup = setUp(words, replay.setup, dir);
+      if (setup) {
+        wrong += step.cases.length;
+        console.log(`DIFFERS  ${name}: its setup failed (${setup.how}), so no check ran. It printed:`);
+        for (const line of setup.said) console.log(`    ${line}`);
+        continue;
+      }
       const failed = [];
       for (const { seed, sha256: expected } of step.cases) {
         const args = [...words.slice(1), replay.check, step.slug, seed];
@@ -104,7 +124,7 @@ try {
         ran++;
         const printed = normalized(run.stdout ?? '');
         if (run.status === 0 && sha256(printed) === expected) continue;
-        const how = howItEnded(run);
+        const how = howItEnded(run, CHECK_TIMEOUT_MS);
         failed.push({ seed, how, printed, stderr: (run.stderr ?? '').trim() });
       }
       if (!failed.length) {
@@ -120,7 +140,10 @@ try {
     }
   }
 } finally {
-  rmSync(scratch, { recursive: true, force: true });
+  // Best effort: on Windows a program a check left running may still hold its folder.
+  try {
+    rmSync(scratch, { recursive: true, force: true });
+  } catch {}
 }
 
 console.log(wrong ? `${wrong} of ${ran} checks printed another text.` : `All ${ran} checks printed the expected text.`);

@@ -3,6 +3,7 @@
   "project": "mcp-server",
   "language": "typescript",
   "check": ".gitranks/check.mjs",
+  "setup": ".gitranks/setup.mjs",
   "steps": [
     {
       "branch": "mcp-server/typescript/base",
@@ -301,6 +302,126 @@
         {
           "seed": "ember",
           "sha256": "05b871a8cd66903bdcc6912292ab7c3876bb068c2e4a5caf5ad4671c2ef2f994"
+        }
+      ]
+    },
+    {
+      "branch": "mcp-server/typescript/on-the-official-sdk",
+      "number": 1,
+      "slug": "bring-in-the-sdk",
+      "commit": "6b42d94ed52a8c8c14ec452607209b826597ab66",
+      "cases": [
+        {
+          "seed": "summit",
+          "sha256": "3187c992c627398337236bbc5bd129d847f6841ada32009011e496421a32fc25"
+        },
+        {
+          "seed": "77",
+          "sha256": "3f6817f05002fe7fc0eb052eded4935f1fcf671983c6e18431f8bc12a6f9c943"
+        },
+        {
+          "seed": "ember",
+          "sha256": "93dcf5e423d2b211908e5b43e8ab47e5386d4d6ce2bd1cb51ef665df8463a241"
+        }
+      ]
+    },
+    {
+      "branch": "mcp-server/typescript/on-the-official-sdk",
+      "number": 2,
+      "slug": "a-tool-on-the-sdk",
+      "commit": "524b0bcd6cb7b67666abd1341ceb735753b7fa78",
+      "cases": [
+        {
+          "seed": "summit",
+          "sha256": "32fda24c37ea9ec0276b0093c6724bf4f8067149e0129fae9b03badd1ff8f509"
+        },
+        {
+          "seed": "77",
+          "sha256": "39dfba099899970a30602b08bcfb02f8705a77e432769c887d2394e8e1f457ae"
+        },
+        {
+          "seed": "ember",
+          "sha256": "60c71bafc507b89da9661567a062a328d3a85b9fa2ad7777d129bea9f42265d4"
+        }
+      ]
+    },
+    {
+      "branch": "mcp-server/typescript/on-the-official-sdk",
+      "number": 3,
+      "slug": "let-the-schema-check-it",
+      "commit": "297b03eeced07e66869b747b58ec01ed875478e1",
+      "cases": [
+        {
+          "seed": "summit",
+          "sha256": "c705add8a0d263d9058c774cd781b8b4998248598397b18d0aca0f2c04fe99df"
+        },
+        {
+          "seed": "77",
+          "sha256": "cf9426ba6bb39ab3ccf3b7023783bee9a2474824300bf1f75fc49a064ee8a4c0"
+        },
+        {
+          "seed": "ember",
+          "sha256": "6928d51b63c31c2519ba461ae260617f8917bc698e1ee62281763bc9b116c3de"
+        }
+      ]
+    },
+    {
+      "branch": "mcp-server/typescript/on-the-official-sdk",
+      "number": 4,
+      "slug": "pick-one-on-the-sdk",
+      "commit": "38e1df7041afcd97bea41fda6bb7b898b3995656",
+      "cases": [
+        {
+          "seed": "summit",
+          "sha256": "9ff66342bc890a7e39771e7ca9c921510c9210dec71b2b7b5b1bdfe166199884"
+        },
+        {
+          "seed": "77",
+          "sha256": "28929d673c38599d4a30f077ec38aacb83df9b33640da249b1d9a7fd780b5677"
+        },
+        {
+          "seed": "ember",
+          "sha256": "f8269c00c4f272c6a2249f99b4376de13c937ae76f82996f0706e7c20e1a0edb"
+        }
+      ]
+    },
+    {
+      "branch": "mcp-server/typescript/on-the-official-sdk",
+      "number": 5,
+      "slug": "data-on-the-sdk",
+      "commit": "d58088f1d74b55634d50b47b970760e4a6fd23a2",
+      "cases": [
+        {
+          "seed": "summit",
+          "sha256": "3fe029866edfe7869cd9a37766ef2170f6f10e9065d1686cfe62f8f204c28cdb"
+        },
+        {
+          "seed": "77",
+          "sha256": "a5660cc0532d154c3938c963884502e32360c93ebdc9309fe41daffa6705219a"
+        },
+        {
+          "seed": "ember",
+          "sha256": "1d96ff3ab72004fbbf8bed2e27d8815cdd6398103a712d1670d53f308018d036"
+        }
+      ]
+    },
+    {
+      "branch": "mcp-server/typescript/on-the-official-sdk",
+      "number": 6,
+      "slug": "instructions-on-the-sdk",
+      "commit": "049801ee10a2fb15f3e13d6805ff9b5db2175585",
+      "cases": [
+        {
+          "seed": "summit",
+          "sha256": "d14b71c7de81816613f190e141a315953ef42fda43e88f86d271d32ff31cc69b"
+        },
+        {
+          "seed": "77",
+          "sha256": "569d0d7062774ac3c97feb37321b3340c449c0d7f6f259132083dbd89c1687a5"
+        },
+        {
+          "seed": "ember",
+          "sha256": "306d7df9c37752aab748bf930f360af3741ee831a21075b914acb9660c4bb19e"
         }
       ]
     }

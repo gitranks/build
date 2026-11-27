@@ -3,6 +3,7 @@
   "project": "mcp-server",
   "language": "python",
   "check": ".gitranks/check.py",
+  "setup": ".gitranks/setup.py",
   "steps": [
     {
       "branch": "mcp-server/python/base",
@@ -301,6 +302,126 @@
         {
           "seed": "ember",
           "sha256": "05b871a8cd66903bdcc6912292ab7c3876bb068c2e4a5caf5ad4671c2ef2f994"
+        }
+      ]
+    },
+    {
+      "branch": "mcp-server/python/on-the-official-sdk",
+      "number": 1,
+      "slug": "bring-in-the-sdk",
+      "commit": "460a24d75053ed5085b6d8258608189995b7658e",
+      "cases": [
+        {
+          "seed": "summit",
+          "sha256": "274eee665c3585c126908d1bf2b2651fde834271460345f2668807bd66602ced"
+        },
+        {
+          "seed": "77",
+          "sha256": "d6f44a5e304b6fa0d3fe50ea3e29abea96afe9b161cabf6b7f817fcb586fd827"
+        },
+        {
+          "seed": "ember",
+          "sha256": "e1b25c55b97eae4655a4c54d24ccf3175ef642ee9f6709772b6a5148726bf7ea"
+        }
+      ]
+    },
+    {
+      "branch": "mcp-server/python/on-the-official-sdk",
+      "number": 2,
+      "slug": "a-tool-on-the-sdk",
+      "commit": "27777fe66a77016afa7c5c170aee3278d2e4be63",
+      "cases": [
+        {
+          "seed": "summit",
+          "sha256": "2a5bf78e6598381f36ec5f0d9923660394c127950987a2b3d8a23f84193897e1"
+        },
+        {
+          "seed": "77",
+          "sha256": "236c9d23c8f3755f26956ba8b9f92528c3f778a7c57e475c0773a5edca311326"
+        },
+        {
+          "seed": "ember",
+          "sha256": "6ff771c4104a4e1403bfc605dff0c9a61530019ef61f7a0285ceb26b969a26b2"
+        }
+      ]
+    },
+    {
+      "branch": "mcp-server/python/on-the-official-sdk",
+      "number": 3,
+      "slug": "let-the-schema-check-it",
+      "commit": "f9ef692b41ef04f40f4ce092d90feb658df17ef5",
+      "cases": [
+        {
+          "seed": "summit",
+          "sha256": "593771b3f83d82e7a745798e5ea48d90c9fe422e567b056d0cd26c000d23a1b9"
+        },
+        {
+          "seed": "77",
+          "sha256": "56ca8c25f52d7f15fa084dd0309759bb4e57658868c0f71b9e4adb32d350c614"
+        },
+        {
+          "seed": "ember",
+          "sha256": "6c3386f3b9e1cde34668ad17575b5bc735c7128a0cff0d1a74ab48dbba9d37e1"
+        }
+      ]
+    },
+    {
+      "branch": "mcp-server/python/on-the-official-sdk",
+      "number": 4,
+      "slug": "pick-one-on-the-sdk",
+      "commit": "a8f22c6a6d59673baf4d4f6e15a47d9771a91165",
+      "cases": [
+        {
+          "seed": "summit",
+          "sha256": "c304f81def2785ad2427242e4bc4531fc23e0686e359562d47f6e54e25b2282e"
+        },
+        {
+          "seed": "77",
+          "sha256": "f28c5f1b4152ec8b4b2fb95b036a9d122635264a42a4763a5a4f78726bfccec1"
+        },
+        {
+          "seed": "ember",
+          "sha256": "63b13e163e28735879213fba6a7af1ab62595ca9ea840edef65514f122c11164"
+        }
+      ]
+    },
+    {
+      "branch": "mcp-server/python/on-the-official-sdk",
+      "number": 5,
+      "slug": "data-on-the-sdk",
+      "commit": "0a6b3e90d76e7374345889bcac7f6a4b8e7d4968",
+      "cases": [
+        {
+          "seed": "summit",
+          "sha256": "aaad9400c925aab68799a0441783ff1e5756f44b03a070c575eec66d65453fe7"
+        },
+        {
+          "seed": "77",
+          "sha256": "233988c49944a28347ff40c44b373fbe21ad8b46ad393222683499de642d9179"
+        },
+        {
+          "seed": "ember",
+          "sha256": "658abd8683009dd384f1e2adc09a5671b7a9b1b089d2b3a85cf8f508e151a346"
+        }
+      ]
+    },
+    {
+      "branch": "mcp-server/python/on-the-official-sdk",
+      "number": 6,
+      "slug": "instructions-on-the-sdk",
+      "commit": "7f17865fde910275818bbf770f77d59cd72de42b",
+      "cases": [
+        {
+          "seed": "summit",
+          "sha256": "2dde4012b8f8d74d651d8a95034d875583a77fb368e490e957136b009dbf5dc0"
+        },
+        {
+          "seed": "77",
+          "sha256": "bc2af99c18a88bde8021919c37ddf5b67ae0bef810dd162be54092bbd0dd0892"
+        },
+        {
+          "seed": "ember",
+          "sha256": "da09f4f22b570f7cb3f414896ab84d495c6eefaf718d41c4bed79b1dedaa306d"
         }
       ]
     }

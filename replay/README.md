@@ -8,6 +8,9 @@ Linux, macOS and Windows, with the oldest Node and Python a project asks for and
   prints. It holds the hash, never the text.
 - `run.mjs` writes each step's files from its commit into an empty folder, runs the check with each seed and
   compares the hashes.
+- A step that needs packages, such as a part on the official SDK, has a setup script in `.gitranks` too. `run.mjs`
+  runs it first: it installs the exact versions the step pins, from npm or PyPI, into the step's own folder. That
+  is the only use of the network.
 - The workflow in `.github/workflows/replay.yml` runs it on every change to `main`, once a week, and by hand.
 
 To run it yourself, from a clone with every branch:
