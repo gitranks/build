@@ -1,0 +1,540 @@
+{
+  "format": 1,
+  "project": "data-pipeline",
+  "language": "python",
+  "check": ".gitranks/check.py",
+  "steps": [
+    {
+      "branch": "data-pipeline/python/base",
+      "number": 1,
+      "slug": "what-you-will-build",
+      "commit": "5c97daa2776fb9397f5bcdffba230ff1b05dd837",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "443919f10cbfc09fda53a7998d59030010da4f1a8c2c1b567163b083c8c1fc5c"
+        },
+        {
+          "seed": "3",
+          "sha256": "443919f10cbfc09fda53a7998d59030010da4f1a8c2c1b567163b083c8c1fc5c"
+        },
+        {
+          "seed": "maple",
+          "sha256": "443919f10cbfc09fda53a7998d59030010da4f1a8c2c1b567163b083c8c1fc5c"
+        },
+        {
+          "seed": "40",
+          "sha256": "443919f10cbfc09fda53a7998d59030010da4f1a8c2c1b567163b083c8c1fc5c"
+        },
+        {
+          "seed": "12",
+          "sha256": "443919f10cbfc09fda53a7998d59030010da4f1a8c2c1b567163b083c8c1fc5c"
+        }
+      ]
+    },
+    {
+      "branch": "data-pipeline/python/base",
+      "number": 2,
+      "slug": "read-commands",
+      "commit": "e4960d20905775ae712bba61e966660faadeb915",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "0cc1e34d125b3e5caef46200992a758d5c29cd07c1d8b0d01a51a542f74a9529"
+        },
+        {
+          "seed": "3",
+          "sha256": "8df5b1e47ba7fc8a322deca364a202b8b2131dd8004155d89311648a10c17d76"
+        },
+        {
+          "seed": "maple",
+          "sha256": "0cc1e34d125b3e5caef46200992a758d5c29cd07c1d8b0d01a51a542f74a9529"
+        },
+        {
+          "seed": "40",
+          "sha256": "73f2b52176c60adbfab55b05cb6fab12946ea19c5abc280e357f8e9f1c5d3cf8"
+        },
+        {
+          "seed": "12",
+          "sha256": "8df5b1e47ba7fc8a322deca364a202b8b2131dd8004155d89311648a10c17d76"
+        }
+      ]
+    },
+    {
+      "branch": "data-pipeline/python/base",
+      "number": 3,
+      "slug": "list-the-inbox",
+      "commit": "932c3063056d4f4ab6f7e5400390de33fd546655",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "7685720c2645f1281b5dad9fc3bab27df1699a1bb91231a5554c8da63c67d170"
+        },
+        {
+          "seed": "3",
+          "sha256": "cd6b3d69f363878269e36ddc8d90caa7addeeb2b7ca7eb10aaa6e48edf9e4610"
+        },
+        {
+          "seed": "maple",
+          "sha256": "7685720c2645f1281b5dad9fc3bab27df1699a1bb91231a5554c8da63c67d170"
+        },
+        {
+          "seed": "40",
+          "sha256": "2cc7c80f431c1d2d172536d9b060bf27f6c6e04de47de6829787bfa6aafde5b8"
+        },
+        {
+          "seed": "12",
+          "sha256": "11c0d70f7f4d4f61601a8ddb3e1d21f690469e3ede1ffe37d2a0f1ed5ad43c72"
+        }
+      ]
+    },
+    {
+      "branch": "data-pipeline/python/base",
+      "number": 4,
+      "slug": "read-the-rows",
+      "commit": "09e24ba21a9861749380382d96dbe23d97f03732",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "1cdfdbebc18d6a4a35b06ac39976c12735f729d9ee9c713807ddfa1f4be42090"
+        },
+        {
+          "seed": "3",
+          "sha256": "7b5a0219a97207582fb47283e1d19a625273b91742e0c827a3f59f33fc962543"
+        },
+        {
+          "seed": "maple",
+          "sha256": "1cdfdbebc18d6a4a35b06ac39976c12735f729d9ee9c713807ddfa1f4be42090"
+        },
+        {
+          "seed": "40",
+          "sha256": "287fde8624aa94b97994bbed2d609c04b375d96d10e800752c0052cc9a42e1ca"
+        },
+        {
+          "seed": "12",
+          "sha256": "71a9bca8896210884169e3cbfa8fc9d465dcc980e501619bb63b56969de745e4"
+        }
+      ]
+    },
+    {
+      "branch": "data-pipeline/python/base",
+      "number": 5,
+      "slug": "show-the-rows",
+      "commit": "5a3c833081f3f715179240ee84466b9bca07562c",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "f955567c10fff10f7bea2bbfb0f2e141d08705b331d2c54bd68ca8ecea65ec2e"
+        },
+        {
+          "seed": "3",
+          "sha256": "95dc4a2d0323774988726a9dc81b820232b48938c9740222f37069bc2a40df10"
+        },
+        {
+          "seed": "maple",
+          "sha256": "84c3b55c20e4e812137c958159575717a6b3c1159da906d20b876308c78478cc"
+        },
+        {
+          "seed": "40",
+          "sha256": "6bc78edee3588f17066a553f40d0c39d8c8984236f95b5538a3c12ce4cf19f39"
+        },
+        {
+          "seed": "12",
+          "sha256": "c39d765af2bdd2da38c7445b9ed74b6fd3c4d598bd2847cd04cbae657dc05428"
+        }
+      ]
+    },
+    {
+      "branch": "data-pipeline/python/base",
+      "number": 6,
+      "slug": "check-each-row",
+      "commit": "4d6417b341b5e77a114a61a0afb65170f8786995",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "8fbf31122a07a8cba7b496048bce6debc16f65203a6e75a2fe2c84343ea10a19"
+        },
+        {
+          "seed": "3",
+          "sha256": "3a42a82fe98b085731279c1dc4536469ea652b91d288f4b01f335f04e5d77fc7"
+        },
+        {
+          "seed": "maple",
+          "sha256": "fab096c9e3bebc96d2d528b0f81303cac08601198b434f2497dab827b60e4356"
+        },
+        {
+          "seed": "40",
+          "sha256": "b4664d494980e4632476cda4ebbcef949fc0d9e4ea56ee828ff2ad366eafce3a"
+        },
+        {
+          "seed": "12",
+          "sha256": "78769c580c53d9da739b6a6ca1653702f627a412950f915798fdbb59cae8e232"
+        }
+      ]
+    },
+    {
+      "branch": "data-pipeline/python/base",
+      "number": 7,
+      "slug": "check-the-times",
+      "commit": "04e4981b3585eaf116e00ad2ae88d94af867d760",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "beca12d4a30d2257cd6f9aeeed08f270a63168ce98421432ceb252b01548473d"
+        },
+        {
+          "seed": "3",
+          "sha256": "4f6bcfe71b37250a7cd293e5a2c57ccfd0438f2b4bee7bd18ceaad59f0b65020"
+        },
+        {
+          "seed": "maple",
+          "sha256": "8bcb87bdffc277af95830d157cfe800ea1b924314176e56d891d71b9a695796d"
+        },
+        {
+          "seed": "40",
+          "sha256": "ab06cc5fccc27341e3b58a5aa685f1a627f4668c24b9a53b683729a622b5360d"
+        },
+        {
+          "seed": "12",
+          "sha256": "b51c0204110cb47296f6f0ea5e71f7222c048f339cf01033569f604391a8cf5c"
+        }
+      ]
+    },
+    {
+      "branch": "data-pipeline/python/base",
+      "number": 8,
+      "slug": "clean-the-values",
+      "commit": "64bd1d83bec59972839a14a65f4ab84578ea53bb",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "2e4fac89d702a998f09a422eebbbf67923b770732da5aba253a31859821955ad"
+        },
+        {
+          "seed": "3",
+          "sha256": "07e9b69d6c093c5d46c1e00b5a5ba2cd4e3e9ef8692df5caccb0e1ede5ac609f"
+        },
+        {
+          "seed": "maple",
+          "sha256": "b5595659e0d37f7f4a101961abc8c70a0e1dda18586c2efa8feebe021f13770c"
+        },
+        {
+          "seed": "40",
+          "sha256": "001c71da4da8e5439125c000406e09e8bad432908fd95c6d0843e1f13592b672"
+        },
+        {
+          "seed": "12",
+          "sha256": "ecc2e4820ae553fd8839a93c7b63d8fc533f29cfb55b0d6f391e990e8308985a"
+        }
+      ]
+    },
+    {
+      "branch": "data-pipeline/python/base",
+      "number": 9,
+      "slug": "names-times-and-duplicates",
+      "commit": "9a6d003baf5fba82f29946c10698dc2e3ae1d799",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "1cce2f741855bdbf53799cc0262dd87140fb3da229eac2b583f9b2486ba257ca"
+        },
+        {
+          "seed": "3",
+          "sha256": "0a5e05f6e22726648a2b700e2db8a1fe274a23eb83cd971c68654df87e6b9601"
+        },
+        {
+          "seed": "maple",
+          "sha256": "59e6bc320972b942bdbb3268b3bc04ac697140909fd7cf75ef56cb1f9d9df508"
+        },
+        {
+          "seed": "40",
+          "sha256": "5a74940f711bd7d793cebdbfd71ae4331cce4bc059a01dbb09b09cef004ffd18"
+        },
+        {
+          "seed": "12",
+          "sha256": "330c883b6aa78155a7998a64ef442f7bd112229c659e952eebdafadff590f4bc"
+        }
+      ]
+    },
+    {
+      "branch": "data-pipeline/python/base",
+      "number": 10,
+      "slug": "count-by-minute",
+      "commit": "1a34b517128d257c88134f32d2722d7a4dada1ed",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "c051f01422660d6d882e54a28b977508994c3b69de4c7b3f7f4e768db53a3cd4"
+        },
+        {
+          "seed": "3",
+          "sha256": "9940c2842055d1fcae07199cb9b02d16f08683d8e9ea9af811fbbc832311abfe"
+        },
+        {
+          "seed": "maple",
+          "sha256": "9b24e15dc16071d491f0b1ef4d943f4297b7b32a0ef1a0a0bf7ce3061c060aec"
+        },
+        {
+          "seed": "40",
+          "sha256": "ac90b43a86a09a9813edaab993f50e1a98e154f01a4274719d7f361fe7e4eed6"
+        },
+        {
+          "seed": "12",
+          "sha256": "7f5e652509011d9c9cf1e4ecaa4b02930d10a414afbd3513728d4f976919a973"
+        }
+      ]
+    },
+    {
+      "branch": "data-pipeline/python/base",
+      "number": 11,
+      "slug": "answer-a-query",
+      "commit": "e9cc726cd7f18720a4ea3d004aa1aa5bc3c4f858",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "6492bb487f97a66f2d37174249d00abe5c53abb1d3be47121d71b3149d6c97a0"
+        },
+        {
+          "seed": "3",
+          "sha256": "2385dfff73b6371932eb5b305b15d2f9e3a41a1ba209d27681c420b08bc85bd2"
+        },
+        {
+          "seed": "maple",
+          "sha256": "26f82af64b027f8f967de7147f30d2c9e5ebdeddced489c6e7d38af1d5352a72"
+        },
+        {
+          "seed": "40",
+          "sha256": "6ed775a83e55a487c98e00806a0f2c6393a9047f9c93684ffe23661aee12863a"
+        },
+        {
+          "seed": "12",
+          "sha256": "8c3fc50bbcccd6f38931440ab6bc9269f58c06a4f2e13d7b6592fb4ff393a0f5"
+        }
+      ]
+    },
+    {
+      "branch": "data-pipeline/python/base",
+      "number": 12,
+      "slug": "save-the-store",
+      "commit": "6bd5ebef0304556867f07d1a54717ae315f7b000",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "82d4690e45d8e77fd8044132b998889cc6adfb9f3980bbe00d0e93ba25f4c801"
+        },
+        {
+          "seed": "3",
+          "sha256": "7b12cf1521ef49f58587c9faf8089a35fb6458fa1a5ca612bd3c137c5dc276ce"
+        },
+        {
+          "seed": "maple",
+          "sha256": "e403cb5eeb22894ea97b14e780144998f6447e4df96ca5e5b40eaaa0e21bfea9"
+        },
+        {
+          "seed": "40",
+          "sha256": "7976d3967c8986726a1382378f007dfd391ae3f37cbc7016e601c6cd43322ff4"
+        },
+        {
+          "seed": "12",
+          "sha256": "45ab543e4988c6f498f16e535ce80616e2e034ebfc3899d83ebecc2bb32383a0"
+        }
+      ]
+    },
+    {
+      "branch": "data-pipeline/python/base",
+      "number": 13,
+      "slug": "write-in-batches",
+      "commit": "a0d73ea0db083381c41cbfe85f5108ad8507e142",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "76c90adf0926aa9acaa639096555e008a3e646fc2191339d47609512413981f6"
+        },
+        {
+          "seed": "3",
+          "sha256": "4a3d0a2048a14689bfd5bf31629d1d0156fa1e2af6e6bcccd4cd1c8260f47804"
+        },
+        {
+          "seed": "maple",
+          "sha256": "abcd431086b04a76c002e630ea315bedc3a5608605aed16916ffbfa8f8a1d4e9"
+        },
+        {
+          "seed": "40",
+          "sha256": "1faf0cd5f718e82271735b2b0e123a78f6e048e2d4f94734d41b2af0cc579a05"
+        },
+        {
+          "seed": "12",
+          "sha256": "1edffaba2ffb8b03c6744d9edd9755836a79f9ba35071c95fb2fede62459e6fb"
+        }
+      ]
+    },
+    {
+      "branch": "data-pipeline/python/base",
+      "number": 14,
+      "slug": "crash-in-the-middle",
+      "commit": "5380dfef4120ba69b4210d718bab1ca2fe252018",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "82188e8be7aaddffb5eb89327fe374d253d7787d528d4ce102f2f9307554b6e4"
+        },
+        {
+          "seed": "3",
+          "sha256": "05e23c2afdf3080e91f726cc1394c0378aaa3de14cf365eb55ad0ed2273e1332"
+        },
+        {
+          "seed": "maple",
+          "sha256": "28783f70acc86f9e1812a5594b78ba98d23caf0e3b680bd0af907e31765cd011"
+        },
+        {
+          "seed": "40",
+          "sha256": "990be1782cd5116abdd8d9d953df492034682165a5201b30ec0d92ba496f20be"
+        },
+        {
+          "seed": "12",
+          "sha256": "a53494f93ee7a15277d97e95cd533c63e1cd863eaa729938fbbf98ffde1174ba"
+        }
+      ]
+    },
+    {
+      "branch": "data-pipeline/python/base",
+      "number": 15,
+      "slug": "count-each-row-once",
+      "commit": "8cf2dc30c6e152a9aac2b5a1bf4f0dcbc6651424",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "4fd372b006b5c55153f5bb049a4fdc9b24f05063e6a19ca8cb4b657091d82d93"
+        },
+        {
+          "seed": "3",
+          "sha256": "729faea8e7bd78e5800c49f32eb2e58f47dba7ab217a88a61cc03b0d9cb6b744"
+        },
+        {
+          "seed": "maple",
+          "sha256": "990230dbdb7e08cf0cd456464c31e2e7135815712842e0d2ce89dd39c9822632"
+        },
+        {
+          "seed": "40",
+          "sha256": "07eebbc5ccfe172009d3fe6812b646c5b0a49df3077982adebb46a972ded8dd6"
+        },
+        {
+          "seed": "12",
+          "sha256": "00eb96183387ef7d81924e4fbf056566bcf6edf91fe0335053fa3d9195d70bfe"
+        }
+      ]
+    },
+    {
+      "branch": "data-pipeline/python/base",
+      "number": 16,
+      "slug": "bigger-windows",
+      "commit": "ec0bf572542e3990421a6c2887b871cde628aa4b",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "bd343f2148154689651709de63759ba769c4ab46c652bb4a7a522f9826dba429"
+        },
+        {
+          "seed": "3",
+          "sha256": "ef8a3979bf7a79e112d5526a666b011d25d24be73ccf5a2b6f26186df7b03e82"
+        },
+        {
+          "seed": "maple",
+          "sha256": "37034dc63c7ab5db120ccd92c3c514e3bec9c0f35d0990b8931122fbeb0143d9"
+        },
+        {
+          "seed": "40",
+          "sha256": "2e8a6775ad213fcd32d79a990595388eeb7f3fb06574786e7bfb51eb262379f9"
+        },
+        {
+          "seed": "12",
+          "sha256": "e332094c92138adf4f661a7044e43a27226f53fb1c9811fb79eebe1182391553"
+        }
+      ]
+    },
+    {
+      "branch": "data-pipeline/python/base",
+      "number": 17,
+      "slug": "alert-on-a-limit",
+      "commit": "c4ae74286b1cf4f47f653a1ede1b50ea7f7a4246",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "574e7ea28a3c4ab7b6e7c9a99bf0e6605402e2eb71171430d75b650de221771e"
+        },
+        {
+          "seed": "3",
+          "sha256": "30151ed8cf3314979236451fd87621d07c088f8f25095a189ad2f013de9a99dc"
+        },
+        {
+          "seed": "maple",
+          "sha256": "575a12d5ae18b6993ee4b4b2dae5cd2e587b16542176611df31220a6a92b450a"
+        },
+        {
+          "seed": "40",
+          "sha256": "a56fc0e023f6b89fdc5e10ca5b1dfb0e43ce51ed7212d83e598b933a69e597ef"
+        },
+        {
+          "seed": "12",
+          "sha256": "8a4f4dff7fbd8f7e52174a4f34e58636a4c550c7bea6d3e3e3f674878ba78858"
+        }
+      ]
+    },
+    {
+      "branch": "data-pipeline/python/base",
+      "number": 18,
+      "slug": "test-the-cleaning",
+      "commit": "2a656074f8ea3ffea27a6ca5e278a670ede1b2b6",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "3cf27a6611f9f884fc404e34e2e332dd63e62ed1cd384fafd0b0721ac419943d"
+        },
+        {
+          "seed": "3",
+          "sha256": "b4bd3ffee5e0f4bf1e85a0a8999ce55f99307025acb6e2b3f75f9140dbb98bf5"
+        },
+        {
+          "seed": "maple",
+          "sha256": "8510e146920bf64dd2bd447fd13e256930824de77950791a2c1ae6bb6973a229"
+        },
+        {
+          "seed": "40",
+          "sha256": "e62d62354994f1cded8862162ad0e367f6cce684accab561d52d3a5baeb1a82e"
+        },
+        {
+          "seed": "12",
+          "sha256": "436732a0edf041a25cf7b35f0a0215de40dd6f20e6c7f222598bac1de5cb4855"
+        }
+      ]
+    },
+    {
+      "branch": "data-pipeline/python/base",
+      "number": 19,
+      "slug": "test-a-crash",
+      "commit": "693206799df21c53d5a3e8bc546bbead67f0bd1d",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "1eabb8c116ff28247a6d07d5f2ec08cabc7e932e1a8a07d6ada7e2865a9a5d58"
+        },
+        {
+          "seed": "3",
+          "sha256": "3bb044c29499058d609197020928bce68a1aa1fbedfdaea6108f985d36c977c8"
+        },
+        {
+          "seed": "maple",
+          "sha256": "fea596dd1a5806a482ce105e1e5cad5637fd98cbfeeb7b247fa222b3235d85c0"
+        },
+        {
+          "seed": "40",
+          "sha256": "65b5cb42d89fd3aa6587169ff2b80244ef50b283bcc3f704e737c68cad4a99d1"
+        },
+        {
+          "seed": "12",
+          "sha256": "e8fcfe3450e8be3a5cd986fe493a58206e661923c4fa9c3bdae2b9e61bd4ba8d"
+        }
+      ]
+    }
+  ]
+}
