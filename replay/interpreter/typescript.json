@@ -1,0 +1,488 @@
+{
+  "format": 1,
+  "project": "interpreter",
+  "language": "typescript",
+  "check": ".gitranks/check.mjs",
+  "steps": [
+    {
+      "branch": "interpreter/typescript/base",
+      "number": 1,
+      "slug": "what-you-will-build",
+      "commit": "6033b5de08468159217b3d3a9b62f04a10807c72",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "9b9932f9a56d920009fac01f2bdd20c4fa2c6c528288363a8d89c8293de23d60"
+        },
+        {
+          "seed": "3",
+          "sha256": "9b9932f9a56d920009fac01f2bdd20c4fa2c6c528288363a8d89c8293de23d60"
+        },
+        {
+          "seed": "maple",
+          "sha256": "9b9932f9a56d920009fac01f2bdd20c4fa2c6c528288363a8d89c8293de23d60"
+        },
+        {
+          "seed": "40",
+          "sha256": "9b9932f9a56d920009fac01f2bdd20c4fa2c6c528288363a8d89c8293de23d60"
+        }
+      ]
+    },
+    {
+      "branch": "interpreter/typescript/base",
+      "number": 2,
+      "slug": "read-lines",
+      "commit": "89f4d2d8125244126efea6e44c1c68fe5ff5bd75",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "155f877e70bbb0fb272cf036eee94d9054b45b47aa2a267248427f7f403a1b1d"
+        },
+        {
+          "seed": "3",
+          "sha256": "55b2fcd5f8ee5444308374541804a6989c6cc2e48c58bf46ab9a8c0087ba134e"
+        },
+        {
+          "seed": "maple",
+          "sha256": "155f877e70bbb0fb272cf036eee94d9054b45b47aa2a267248427f7f403a1b1d"
+        },
+        {
+          "seed": "40",
+          "sha256": "74a43ee6f3841ede1d2421df751bf99c95619a0e98eaef119befee9150bdcecc"
+        }
+      ]
+    },
+    {
+      "branch": "interpreter/typescript/base",
+      "number": 3,
+      "slug": "whole-numbers",
+      "commit": "15e081d1bb56b467da4bcab8cfd3d6867086fa4f",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "cc909bd3f4e5e073f67be589b74868ece08420549cbdc1b7fe8f8ecf1790bfec"
+        },
+        {
+          "seed": "3",
+          "sha256": "3a6bc82496e0015623e2bcb2acbe580ecc435abe52ecc3c1998644b88ee4fcd7"
+        },
+        {
+          "seed": "maple",
+          "sha256": "131e163ba795ce99b5a7d8ae41861126eed25b8814ee6be3e05bb77cd4dda4b0"
+        },
+        {
+          "seed": "40",
+          "sha256": "d1c841caf455fda5c233a9f4a0476e84746218f32a029c455b4cf66742c57c9f"
+        }
+      ]
+    },
+    {
+      "branch": "interpreter/typescript/base",
+      "number": 4,
+      "slug": "do-arithmetic",
+      "commit": "8444dae57c93dfb2690170396a6c5d4c656d444c",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "c1a3ccb8896519ef4b57d3960db05d87d487f6b734777742f4dbad0ff4d35322"
+        },
+        {
+          "seed": "3",
+          "sha256": "5f580309182d9e30deaa761e28c5f38598114f5ab99bcfbc11178f7bc45cefbb"
+        },
+        {
+          "seed": "maple",
+          "sha256": "928c6cd5456164e36872162e3def4d5ef4aaab707691b86228355016bb96258f"
+        },
+        {
+          "seed": "40",
+          "sha256": "5389ee6d7e73fcad899a4de2feed80673717b8a2b360b9a6096c587396ef399d"
+        }
+      ]
+    },
+    {
+      "branch": "interpreter/typescript/base",
+      "number": 5,
+      "slug": "cut-into-tokens",
+      "commit": "f9900d11ccfa114181e7fafaf35f749ce13398bb",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "8eb3f40261ce6774b5a9b506a400fb2a6b8cbbea4d79cefcf2ac7ab37b30dfee"
+        },
+        {
+          "seed": "3",
+          "sha256": "b469febdc3e47425a0b707253be2f28033512eb70ad7f3cfa170be8f9507b345"
+        },
+        {
+          "seed": "maple",
+          "sha256": "8048dbe9ce71fc50318a7762355a97481856c7be54207a3682c2c7f6fb329d36"
+        },
+        {
+          "seed": "40",
+          "sha256": "48ff3481d49cc49306f810d3736bed259a357723ce2c0ab08102440dc7376a19"
+        }
+      ]
+    },
+    {
+      "branch": "interpreter/typescript/base",
+      "number": 6,
+      "slug": "build-a-tree",
+      "commit": "a5f27f7a2fb3d17a41ed90a0c7549751d8f4bfd6",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "c9de2504bb56d536b5f3c607a8fcd21e8fbd7725faa9d287391df6180dde4505"
+        },
+        {
+          "seed": "3",
+          "sha256": "61b55c79fe9bb76148fdb5a8ffb1f66344ad25ad5cab851f4feb7623d1417322"
+        },
+        {
+          "seed": "maple",
+          "sha256": "cde053121e3ff3d0ecbacea760cf24afe14eb4a20306e8ecd4815b97c8e2aa7c"
+        },
+        {
+          "seed": "40",
+          "sha256": "77d6ff70ebf87f0121792f3066d237ae75e9a85a30b69911234e7d5dab37ae65"
+        }
+      ]
+    },
+    {
+      "branch": "interpreter/typescript/base",
+      "number": 7,
+      "slug": "brackets-and-minus",
+      "commit": "ce690bdfe965b6dd8ac2445ff2ba0e6d7d7f730a",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "dc0f6f24cdca39a742c5daabf14eac9d69dc29e1f3bea806ee70711656788dd3"
+        },
+        {
+          "seed": "3",
+          "sha256": "cdfc083abcf32611d95bc53b48e06efe2e33c1b07ab821c762ceaca3dd985d0c"
+        },
+        {
+          "seed": "maple",
+          "sha256": "36e6d0aee1885b0afc31080c5a5bac76f27f3470edc80d94d91c9f3c8800bf79"
+        },
+        {
+          "seed": "40",
+          "sha256": "cffe5ca4ce605811ed5fc033e6b5175c5aafe887b95b5de5e83dd4be0dacaf40"
+        }
+      ]
+    },
+    {
+      "branch": "interpreter/typescript/base",
+      "number": 8,
+      "slug": "exact-whole-numbers",
+      "commit": "78ce871da10f79baedba2cb0bb9e46022ff4f9fb",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "f5920a30ba8ca2ee4fe0888002c121fa57328c3207a0eaaf7cec5fc673e77259"
+        },
+        {
+          "seed": "3",
+          "sha256": "66938d045f078003a12afb0938eeaf9a8a92ffd0dec3d3f3720c876f05f16937"
+        },
+        {
+          "seed": "maple",
+          "sha256": "beb48cd930af689f3d107564eba7d53de81091cc6d46457a2b35e09a8e734cc3"
+        },
+        {
+          "seed": "40",
+          "sha256": "9958fc29388e7c9667992f5a5638b634f07c26126e47de914a57f4416833bfb1"
+        }
+      ]
+    },
+    {
+      "branch": "interpreter/typescript/base",
+      "number": 9,
+      "slug": "let-and-names",
+      "commit": "078da443028351f41887ec10d627d13f88d15607",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "d6ad802055cf39405d924baa33ff1718ccca365b56941f96cbdc1da410ede8b4"
+        },
+        {
+          "seed": "3",
+          "sha256": "8ed730725bcb88349c909ed524041fe9b05eff2dc3a1f4b3b1c156054c2a3bf2"
+        },
+        {
+          "seed": "maple",
+          "sha256": "2217b602ff35ea65c04f80dd4ba0570d1e13dfb857f0248f04ff531b8d542f3f"
+        },
+        {
+          "seed": "40",
+          "sha256": "f46d8010d7f8cc3cf9c7c7ce144c9ebd4f07ee0fc51eae0ae7695a9b3d6e4979"
+        }
+      ]
+    },
+    {
+      "branch": "interpreter/typescript/base",
+      "number": 10,
+      "slug": "change-a-variable",
+      "commit": "8c4bcec1091b428e26d390448dd5cec27c946c51",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "2b66c404d3b9f45a245b7a116c019e2d33bc9c54e1944c77a76590207c381980"
+        },
+        {
+          "seed": "3",
+          "sha256": "54f4aca3b45ee1d621c98c0142cfdd2f8a94a7e2e0c9d46e81e2824d9f852f81"
+        },
+        {
+          "seed": "maple",
+          "sha256": "a42b2e4751e41d834413a80d3bdfaac4053fd4d44cc41cb72cad86e41c165f25"
+        },
+        {
+          "seed": "40",
+          "sha256": "8fe18ab51b6cb0472d730076a45d305f82a01b7939d57db8d02bbd00d59d3db2"
+        }
+      ]
+    },
+    {
+      "branch": "interpreter/typescript/base",
+      "number": 11,
+      "slug": "true-and-false",
+      "commit": "20f9d3e1dad0155f51e33922771a25b0f004d77e",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "fd0734ecb2777cbdd10111b9be879ad5b44bbff37ff6771138db254485560ba7"
+        },
+        {
+          "seed": "3",
+          "sha256": "47bb66cee470bc10df68b88b8fe0fde3e18f50558dbf5a3b8ed1426c53d6622e"
+        },
+        {
+          "seed": "maple",
+          "sha256": "d53dd99e327aa52134d47fa3789948ae4b54e32275072290f23bad2ec64bc0a0"
+        },
+        {
+          "seed": "40",
+          "sha256": "6f7f22a94dc76543a2c732d1d88ad493b4f6c3736da62ef9a0cb3100e7141b34"
+        }
+      ]
+    },
+    {
+      "branch": "interpreter/typescript/base",
+      "number": 12,
+      "slug": "many-statements",
+      "commit": "eea225f7f75ee57abe82196e1516be807b4365bc",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "10d1f7efede82bf78208baa37536fbdff5ce0960a19977a179cb65455625f7fd"
+        },
+        {
+          "seed": "3",
+          "sha256": "e61b75685bda6e5de8cd6e11b9a4520206fc671d939635a38a070cdd2ee316c7"
+        },
+        {
+          "seed": "maple",
+          "sha256": "f004024c33f232d20b7caede4e0615dfa926485795e5a27ae3f39ce4c5c8a401"
+        },
+        {
+          "seed": "40",
+          "sha256": "992a9b331e1496bbd71182be6b7e64ef47d26ca9cd3fa4103c1a17dd7d94af26"
+        }
+      ]
+    },
+    {
+      "branch": "interpreter/typescript/base",
+      "number": 13,
+      "slug": "if-and-while",
+      "commit": "7cbded5587e49887c4b478b9bf2b68cdb7fcbcdc",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "aef2ae4e919fce5f2388b98cd6048c6ca78c077c05f7534bef830d4d6416781b"
+        },
+        {
+          "seed": "3",
+          "sha256": "a6990b32d45bf79c64aef2e0f46667bef2b0e200c8f1288e3934e61dc8105866"
+        },
+        {
+          "seed": "maple",
+          "sha256": "637e6ee12cd9fbac20e253db14aaddb29f29320ffb5dd358e6b8762e59e136f7"
+        },
+        {
+          "seed": "40",
+          "sha256": "32622ac6391fa9f9dbb38c9561378d6f5515fe8a80ceb9aa45baf38c68acaf01"
+        }
+      ]
+    },
+    {
+      "branch": "interpreter/typescript/base",
+      "number": 14,
+      "slug": "text-values",
+      "commit": "2bc540cb0431799678c019ab471f76c944485641",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "fa343baa9cbf1515a6e78057e98f4d1e3c7cd20c13ef6b0ba0a8927a0c189c5d"
+        },
+        {
+          "seed": "3",
+          "sha256": "024a0f22e69ff94aaae27057224569fd1f418ff7809f5bf7359587140eced04d"
+        },
+        {
+          "seed": "maple",
+          "sha256": "17a2524fda72002704705fa3409a570e75a658bd01eaa4f9c946d84592300b43"
+        },
+        {
+          "seed": "40",
+          "sha256": "34957ca1b4a1c76273f1f9b3040b1b2d876895126121bfc9364cea3f8488d1f6"
+        }
+      ]
+    },
+    {
+      "branch": "interpreter/typescript/base",
+      "number": 15,
+      "slug": "functions",
+      "commit": "bb18376a184c2f2c0afc73137a256d3999178ba5",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "84058d4b5582a397575c0e9e20d69863e9d967888b4193d2deae61cc83ede469"
+        },
+        {
+          "seed": "3",
+          "sha256": "632a0b5c6bf28e46c53a6be3a69b3f83e675eaacaf5019fbbebf500d6e7a6ca3"
+        },
+        {
+          "seed": "maple",
+          "sha256": "42e28d495eac7442dc29ad7f7c860c4ebe4618286adc5ac95a0e56c5a5bd3f77"
+        },
+        {
+          "seed": "40",
+          "sha256": "14898baebaca62960211d8b02a846902a68ef8f7ec0b87551897b637b590fffd"
+        }
+      ]
+    },
+    {
+      "branch": "interpreter/typescript/base",
+      "number": 16,
+      "slug": "parameters-and-scope",
+      "commit": "a2b0d434d305ccbefa83d59ef1f507e4b2b12a79",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "79cc8c012e3e9810c4eec52c1d0fcff6eca8c468e0b365ce17ccf0f664eeccad"
+        },
+        {
+          "seed": "3",
+          "sha256": "4083f6aea6c2e5408eeeb3f1a71b38bff2330d6067e0d97d5a889834335c006b"
+        },
+        {
+          "seed": "maple",
+          "sha256": "f0d9276ad0122e9ed995982428ddc2618644cbdd5d0ed2f93aaa38223ba8c6db"
+        },
+        {
+          "seed": "40",
+          "sha256": "51cee8595be1b0f1f8a549adab00b14a06a44a4a9c3c4f2675abe4e7e6be1325"
+        }
+      ]
+    },
+    {
+      "branch": "interpreter/typescript/base",
+      "number": 17,
+      "slug": "return-a-value",
+      "commit": "500436f122543d9ae22d9e4de1cf23a575e6eafe",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "67a34f1ca22eac0c4b0377eff05a765b80ab637ae5d74a78e9d89fe12f02d405"
+        },
+        {
+          "seed": "3",
+          "sha256": "94e2c6f3c8dd2af160731792da923a7e15269a1886864acdd0da2a599ed45311"
+        },
+        {
+          "seed": "maple",
+          "sha256": "39d7a5f98825e5831fd840b2460655d002aa71aa9fdaf6c08ed53690318f7c53"
+        },
+        {
+          "seed": "40",
+          "sha256": "321b6b9db1c7e0648a6b58bb57f0c600e98980be19529ff1c9b45c8a263c78ab"
+        }
+      ]
+    },
+    {
+      "branch": "interpreter/typescript/base",
+      "number": 18,
+      "slug": "limit-the-depth",
+      "commit": "6e2487d9e125252f1af8bb3f4870efed1cd5d8c2",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "e8124594b8d01cbee50bb8e982d53bd7af61c91fd1eec63af28ad158a9c2d76d"
+        },
+        {
+          "seed": "3",
+          "sha256": "c38cb061177cfdfbcd62ec801ae675b27840b2b0c512f01c8f79535bcfd66cf6"
+        },
+        {
+          "seed": "maple",
+          "sha256": "5e2a43b2df4f3885d261c0cc9cec583fc99526759e538b061556902446311e16"
+        },
+        {
+          "seed": "40",
+          "sha256": "f656da7ed8ac4f281cda221ecb3f534a3d5b4e1d558b9c52187bcfda8a6b15e4"
+        }
+      ]
+    },
+    {
+      "branch": "interpreter/typescript/base",
+      "number": 19,
+      "slug": "errors-name-the-line",
+      "commit": "c471cb8244a10f5a07e6f2e71cb1ec4263a7cd53",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "5cc18a2cef1daf49b621a0c4854276592359b77fc1aa489eefbcb1fa8166bcda"
+        },
+        {
+          "seed": "3",
+          "sha256": "cb46147e1a388709dcac5c1ef68fed43e9c4c46867e4174dbc7321adb18a76dd"
+        },
+        {
+          "seed": "maple",
+          "sha256": "be7d0f9c3ca7f8df8b889bbcb4743ee0615a57931943a558b04e6a575759c1f7"
+        },
+        {
+          "seed": "40",
+          "sha256": "2ae3987ff5937606e8b8b2c149dd17d2948b3b3d00b5187104cb449d2721a724"
+        }
+      ]
+    },
+    {
+      "branch": "interpreter/typescript/base",
+      "number": 20,
+      "slug": "run-a-file",
+      "commit": "37218725435c34ab79a19875c8191802c3cd90db",
+      "cases": [
+        {
+          "seed": "acorn",
+          "sha256": "5d0c91d1a6975ee10794c004660451a7806dd9bd75cabf34dd88f5e2ab975931"
+        },
+        {
+          "seed": "3",
+          "sha256": "a05570adc368c45227dbb1d8948dad83f2e2902418435f9b2fa19165d2a64636"
+        },
+        {
+          "seed": "maple",
+          "sha256": "3abb2e447787ee82cd0eb8213c8b14c2a8ce136d4db0c3c136eba25bfe2ac7ca"
+        },
+        {
+          "seed": "40",
+          "sha256": "64cea225d5315f6606f2c814a3256bf504e3f946cc7f601028c67c93bc2d8a31"
+        }
+      ]
+    }
+  ]
+}
