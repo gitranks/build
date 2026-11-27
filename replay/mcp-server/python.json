@@ -8,7 +8,7 @@
       "branch": "mcp-server/python/base",
       "number": 1,
       "slug": "what-you-will-build",
-      "commit": "8a9a08adff76b8055ae2c2676c6ca51140f1dc52",
+      "commit": "e6c70d5f9da5395e83ee84743e0e9c468de69cd1",
       "cases": [
         {
           "seed": "acorn",
@@ -28,7 +28,7 @@
       "branch": "mcp-server/python/base",
       "number": 2,
       "slug": "read-one-message",
-      "commit": "58b1d431df89cf9d888e379d1949a6aed356ee35",
+      "commit": "2c7ff5f0ae460d7a71135cabd92794e235999d61",
       "cases": [
         {
           "seed": "river",
@@ -48,7 +48,7 @@
       "branch": "mcp-server/python/base",
       "number": 3,
       "slug": "answer-every-request",
-      "commit": "c7abfd6fe5dec6de447d48dca67329251c24829b",
+      "commit": "ff6ea44d9beb1285060a88790f5386880a2d7871",
       "cases": [
         {
           "seed": "lantern",
@@ -68,19 +68,19 @@
       "branch": "mcp-server/python/base",
       "number": 4,
       "slug": "a-prompt-to-talk-to-it",
-      "commit": "8f1b63557a86087e50dfb4ae66e27edc2d4a99e9",
+      "commit": "9ab7db01ccec0326bad033a49f3708baf4d38873",
       "cases": [
         {
           "seed": "harbor",
-          "sha256": "3a0893ba3c6e1f869453dcd2a5b7c010b6900de5a7d730f69a9b4c913df8dbf1"
+          "sha256": "c0abd6a363eb0c301f6c50a3b19a1dfb673cc0e93d81bb19e944c8fba3ae3a07"
         },
         {
           "seed": "5",
-          "sha256": "64c0e98185e6acabd297b67cb55a945c974abeab64c12d5a5b116a02b4aaceeb"
+          "sha256": "67e41d46da54206bb72d2ef321749c05564718db269d7d9323a05e543b959fd8"
         },
         {
           "seed": "quartz",
-          "sha256": "2d0ac7d151af36aa2b1fc3668b5830f2406b781b0dfad6e5716559cba56ba2ea"
+          "sha256": "b167dca10fe574ac2a6fc2a9461eae1b7baaad4d0ec344d42b453a8459c7d374"
         }
       ]
     },
@@ -88,19 +88,19 @@
       "branch": "mcp-server/python/base",
       "number": 5,
       "slug": "answer-the-hello",
-      "commit": "ffe4385d0331507b0c8b196c7ec43319777eddba",
+      "commit": "0371b711761982a1e04735af8ea9904d81d074bc",
       "cases": [
         {
           "seed": "meadow",
-          "sha256": "280e16e738db3fe53e8db0767317ba4e0eab99c1bb54d67dbbc15373c4fb5462"
+          "sha256": "fc5eb95bcd1bc3f6d856b89190e95014491539ef7e3724b46e8390a85e933055"
         },
         {
           "seed": "31",
-          "sha256": "941fe1ddac59bf1c1e7b117bf1677a88c29fb71ee6cee54a83856cdb3048b48d"
+          "sha256": "bc9957697fc57152f1de4a6916f4e989d87b26385956c7fe873aeba2f1e52fd7"
         },
         {
           "seed": "tundra",
-          "sha256": "80ba8763dc1eff6c7619e9b000f12b6183010b4b787be574ab82f83797688361"
+          "sha256": "c32db7ccce4b3d2b821d9615ff14d1aea0ec244b4c4cca36abde16d59654e5bf"
         }
       ]
     },
@@ -108,19 +108,19 @@
       "branch": "mcp-server/python/base",
       "number": 6,
       "slug": "connect-it-to-your-agent",
-      "commit": "08c4757ff06f05c45570e18f07e2085b7e205b75",
+      "commit": "182a9839555faf3961533d481e0cab40ab7b227c",
       "cases": [
         {
           "seed": "falcon",
-          "sha256": "ad54d838f0056f0595c0c51ea56426af5862f2465dfb304f9028cad4f8f20e44"
+          "sha256": "5d0f9ca770bdcdf87889e4f9d40bbb285503b013b67aa23f89ba6eff0956f816"
         },
         {
           "seed": "64",
-          "sha256": "ee37a14fa4f0a2248244ffeccdc2f3b3fe3918de493eb7a285188f4c12e7b89d"
+          "sha256": "61bd25cc2112b898c2d9cbf1beec7cf8ea2e1cfa609424e54c1973e4c86efe2c"
         },
         {
           "seed": "willow",
-          "sha256": "8201646ee802aeb8bf146940aaf042efaa39bbba11e32ccd06996c210f85a717"
+          "sha256": "34671bf4b5a45267180b6e7ef6a150a44111b94a1d02fb5b47c4194e7fd2816d"
         }
       ]
     },
@@ -128,19 +128,19 @@
       "branch": "mcp-server/python/base",
       "number": 7,
       "slug": "list-the-tools",
-      "commit": "0242fb4c7a46731d35443bdbd8b41cb465a10c58",
+      "commit": "39ccf94d8bd4b68d2205c5f9fb29ca22734eba45",
       "cases": [
         {
           "seed": "copper",
-          "sha256": "02a4e334f183df37c7bd53e94f48e85472bbb33fae750ea8ad5ef89faba2cefe"
+          "sha256": "b5393e9e50c0d6051062952e0d6812bfcae344343698de49c16cb75c22f5bffd"
         },
         {
           "seed": "9",
-          "sha256": "00baab1c1071c7daa4edcdc5b00cc38795d916ce9d087989d2b38b229409a61c"
+          "sha256": "6c7be20983f29f03d60b350acd5aa1dece2400c3f54892c55bd90740a7115108"
         },
         {
           "seed": "glacier",
-          "sha256": "b83f282b18e02dbb1d98833dd3aa57e91c76bccf6b57812d5bca5aff9165f0ed"
+          "sha256": "e2de8c2bf27d964e8fc9d50860889ff241313f00b17bc20daa876af66a7fa350"
         }
       ]
     },
@@ -148,23 +148,23 @@
       "branch": "mcp-server/python/base",
       "number": 8,
       "slug": "roll-the-dice",
-      "commit": "e1994a66adcc91da64cb0062f2b15a766a956062",
+      "commit": "e8779ab7d2b632449620597ece07864985c6d295",
       "cases": [
         {
           "seed": "thistle",
-          "sha256": "943d628390a96b11d76e121cccfcfb70a3cc1981f3eb292bad56fc6bf7958faf"
+          "sha256": "ce563ee76f9d345807f7e043b8d69a7853dad8e62fd02d89f54ba0e85800b264"
         },
         {
           "seed": "23",
-          "sha256": "3bf34f78865a419d4112535db9f96efd218009166e06c84a2e03ac037ad6a73a"
+          "sha256": "882dff967a85415faf5113224b31a30001c06ad23902477d09ef21fc070cc9e2"
         },
         {
           "seed": "orbit",
-          "sha256": "0d28c222940cdbb5c74de3de93d1cac03e38cf1e11f14e1ef4b7d4597908b17d"
+          "sha256": "524424e8fe303e380d74ccb31a6f5afda4c09fd2edf3be99bd0b54ac40d2e01b"
         },
         {
           "seed": "1000",
-          "sha256": "4b3c3f0501751ddd976f7f1855d879778ae42ba25b5405ac538d8561a707e3b7"
+          "sha256": "ae1c27b8f696487c156585fb6e2bb565913f0104bf4397b760abca1ddbcfac74"
         }
       ]
     },
@@ -172,23 +172,23 @@
       "branch": "mcp-server/python/base",
       "number": 9,
       "slug": "check-the-input",
-      "commit": "93c34725f5cc4d897c4508105aa4df388606fe83",
+      "commit": "737e98e42485ff3bd47da3c873eefdfa847da108",
       "cases": [
         {
           "seed": "saffron",
-          "sha256": "b80d87c5986dea47e4309527759813cb2f1cc49c1e5152bd4277afca58d59607"
+          "sha256": "3e9fcddf4fe205fe6c130746348e2008ab3099386caaf546ecef13500d37a20f"
         },
         {
           "seed": "71",
-          "sha256": "9f01393e1fde4e5d9441dc3d9b0f6a8e2eeefc887ee5036d42faa3b7be95370c"
+          "sha256": "b600050d2649a5d15b2379bbd1da735a2ab20e64dbb3246bf88fce66b49da1ea"
         },
         {
           "seed": "canyon",
-          "sha256": "46dc114509046b2ff40ee3c171aebb3598d72740d5f51a17562e40612760a911"
+          "sha256": "11b49391777d4c9fbbd58cd2ff2e70de74cd8a0d943d438150cd06940b9768a2"
         },
         {
           "seed": "3",
-          "sha256": "9bc1da05623101235ef85a6bbf567f96bbf55bfb44891c6fe24e959ba3ecb336"
+          "sha256": "5dcff33f50e2cd355111aff0ae252bc6885f23ccbad062a90dead3f6827c21ea"
         }
       ]
     },
@@ -196,23 +196,23 @@
       "branch": "mcp-server/python/base",
       "number": 10,
       "slug": "roll-several-dice",
-      "commit": "292c0347c8b846863223dc699d0e5ed18f4f8dbe",
+      "commit": "734f577714984f0084702817c325d1c38976b99a",
       "cases": [
         {
           "seed": "marble",
-          "sha256": "a7779a5d1b51ac63e7de989cfc34714b812ba34d42ba2c35900b15af1b7b18f2"
+          "sha256": "2b32aa371bd68f094bc18c4ebbe10116532185e51d3604ef568abf4bf78495ca"
         },
         {
           "seed": "12",
-          "sha256": "643e26ee9b7c306b04387d0f074af43bb7d34cdc5e992694e487d2e5d403508a"
+          "sha256": "746a16ffc50e645a8a91060a75fb3afb12850610b1e74dd43ffef495dfc075ff"
         },
         {
           "seed": "juniper",
-          "sha256": "4435b8f15527cc4c9573b13aa1a8c0e1bafe941ed123b935c0280b44cc7cbc60"
+          "sha256": "62a07150f84d4cbef682246213f38a59705169a9c80a8d9c24de0447d2488503"
         },
         {
           "seed": "400",
-          "sha256": "d60fcea1069291d101ee5225f643e3c3e0173c0ba6a6055bee21aa1c686e2b7e"
+          "sha256": "bb85861f434d62e46118d557f3528dfc590f42f10bc64be7e598175c535957ce"
         }
       ]
     },
@@ -220,23 +220,23 @@
       "branch": "mcp-server/python/base",
       "number": 11,
       "slug": "a-second-tool",
-      "commit": "b8d10f426c74395f198fccaee4f42207b08af92a",
+      "commit": "c1eebe3dba738dbc12c855c653c7fea64571e8f4",
       "cases": [
         {
           "seed": "pepper",
-          "sha256": "142d6983b0db77815289393c465d959867c6478a88aceb91585e5d62dfcb5194"
+          "sha256": "c334a67d7ec12a78e0000d4fb3f65eb26b4767d25078be0d309b94ec6a12a2e5"
         },
         {
           "seed": "58",
-          "sha256": "dc2325de2ad6670cefe2668b6add7dcb2e3a04aec1cd9e8efaf36c273d1e9923"
+          "sha256": "acfa4ff1631e99c905c98b1d376ed82a691663a7d61d7683b5fd81ee5c4ec4e7"
         },
         {
           "seed": "nebula",
-          "sha256": "3774cbf0bb3ffa12166d2b413e1ab79e3331a77d793e9686ba58cc14dad30066"
+          "sha256": "dbac8ad4ebb0bb99e2ac0f6c28b690023134d0dc2cb26cc17c8de6faa0bb5018"
         },
         {
           "seed": "6",
-          "sha256": "5c04f56e72031de1672a3dc2f64568cea596d919bb97e7353688ca66e76676b8"
+          "sha256": "5bc9d6b4205ee6921fedf2c00fa2fe70445c1c07a3502cb6dc1e27259d381f38"
         }
       ]
     },
@@ -244,23 +244,23 @@
       "branch": "mcp-server/python/base",
       "number": 12,
       "slug": "answer-broken-messages",
-      "commit": "a193beda3a1e2b2b4baf7f38473272342842a2a0",
+      "commit": "c80f314ce9c4794a8d3dd4fdb0f8fe3ea0e85ff1",
       "cases": [
         {
           "seed": "violet",
-          "sha256": "ba3e3672f58b4b00678c62efa6e09f9f82000b0f64ba73eedcdef889137e2fdc"
+          "sha256": "d241e5ff3b35789336797bc14404a94ac7a594339c5b229a2f532e53aa6c5a41"
         },
         {
           "seed": "36",
-          "sha256": "1f5bdb7cab01571d09fa7b1d268ea81ca2028b2a6bb509edbfa5f823975ead1b"
+          "sha256": "e1a86b0ec7198a3cd12c7d8689c21f4d76a95dc2e4dfd9019d0a0fc9f146d70d"
         },
         {
           "seed": "basalt",
-          "sha256": "2dbeb0648e13956db7c5bac440b411e13b7ec7c5073353b5374ba522d57d1de6"
+          "sha256": "db9e0f5088b214c8acedb49591141b4300de87c020c22a48d6021f78f596abfe"
         },
         {
           "seed": "2026",
-          "sha256": "4a73c4f787a8d03f443d8d2eab09f0c1423b865d929286cc7e73f2c196334645"
+          "sha256": "440937bad69d97c4b1db50de21339a7d1ccdc61a9b357390ffa5b7b3efe01673"
         }
       ]
     },
@@ -268,19 +268,19 @@
       "branch": "mcp-server/python/base",
       "number": 13,
       "slug": "results-as-data",
-      "commit": "3632730100f61ce894d6a9d1c0202b4ac088aef2",
+      "commit": "976a5d483a5eb319063e039add6503a7b3b62128",
       "cases": [
         {
           "seed": "cedar",
-          "sha256": "0af2bd0f5159b4141c658da0731d1460076dd8e470fb106552292630a6ce877a"
+          "sha256": "4f828dda6c3f491f7f4b74f41df8e3efd26e1d1e6225185c32812f98f38fe308"
         },
         {
           "seed": "90",
-          "sha256": "d8c376117692c4f1b3d2e8c2d8605a6d8a072973c86a29aeae4e4e5e67b17a08"
+          "sha256": "33b4e2ba5a704e31b61b422e181f7abfaffa768d1d0612bcb3aa573f6a0709e9"
         },
         {
           "seed": "lagoon",
-          "sha256": "e3367cee88d880b328295e1a3574f9601f881bf3c740e70aee38a3ed7814d007"
+          "sha256": "73300f21e931a230b7606a804939b6bfa13b1d84062f317eeab57d23f991d584"
         }
       ]
     },
@@ -288,19 +288,19 @@
       "branch": "mcp-server/python/base",
       "number": 14,
       "slug": "tell-the-agent-how-to-use-it",
-      "commit": "8f1ada0f075d006a3858eb0fa10384c90bc114f4",
+      "commit": "9e350c3d05d844b9f0f2e477322002aa93134daa",
       "cases": [
         {
           "seed": "summit",
-          "sha256": "eb1f5a5f259a48962170dbca676853683d1d48e51af8725afa1f2b2ee19e9411"
+          "sha256": "2bced6f38bc36d75afa53226461c2619ba583d951849e181ce96033ed5810069"
         },
         {
           "seed": "77",
-          "sha256": "b99464c31275f1e65710925142f88e9d29950b8ff27513c5628e48a106bb5ef6"
+          "sha256": "975824df8526c5b8f1a6b3350c5846e8b45e73861c89746fbdda507eb0f56fe4"
         },
         {
           "seed": "ember",
-          "sha256": "85ad50f516dac198d203d21d4dbca1586709e656a636a8e62af4d97c6e656a9a"
+          "sha256": "05b871a8cd66903bdcc6912292ab7c3876bb068c2e4a5caf5ad4671c2ef2f994"
         }
       ]
     }
