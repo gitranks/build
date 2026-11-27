@@ -435,6 +435,146 @@
           "sha256": "3e35272a6abcdeac71484f01627de38a2e121c74d5398351cfac32c4d51974df"
         }
       ]
+    },
+    {
+      "branch": "web-server/python/a-json-api-with-tests",
+      "number": 1,
+      "slug": "answer-in-json",
+      "commit": "b25c95f7cb5f1eeab7c42a070e4f8765e4e37288",
+      "cases": [
+        {
+          "seed": "maple",
+          "sha256": "0c0aa3a4281b229eaa86a90566f9b4e593facf7d13dbc84daf2e8c7c72694f39"
+        },
+        {
+          "seed": "40",
+          "sha256": "0ed203bb28aac5c64d88f1f5cbfaeb8bcbce77e0068eeb3a572f90462d9149ab"
+        },
+        {
+          "seed": "river",
+          "sha256": "83110b7270d88405bf1ad9ca4f23ebc8a4882100dc6fd596aa0e1a7bf8f57699"
+        }
+      ]
+    },
+    {
+      "branch": "web-server/python/a-json-api-with-tests",
+      "number": 2,
+      "slug": "a-task-by-id",
+      "commit": "e22c03d01e610848ec25bd18c9b0e1540f8b1072",
+      "cases": [
+        {
+          "seed": "maple",
+          "sha256": "a7e47644aff14292ac6a35d499cacbfe309480b5467f006cbf18dfb3e00b06de"
+        },
+        {
+          "seed": "40",
+          "sha256": "e8ef8af390e8b0412e6fcdbc1f7941a3a99bceafcfa07867806f255bce355026"
+        },
+        {
+          "seed": "river",
+          "sha256": "3b263860cfff631cfeb5a2acafc2fa3b48dfed13643d51a74b47679367d62604"
+        }
+      ]
+    },
+    {
+      "branch": "web-server/python/a-json-api-with-tests",
+      "number": 3,
+      "slug": "check-the-fields",
+      "commit": "ff895895707e7c5325afcc95382b6ade0e2b4aac",
+      "cases": [
+        {
+          "seed": "maple",
+          "sha256": "80fd89ad7e15f233911962d0171f51dc0b2dcd98e5756590212d2796f76b3951"
+        },
+        {
+          "seed": "40",
+          "sha256": "a6bcdf79ebe24893e334957ce8b1879e21e8cfebd49e4ed0d9cf418f5787fb5f"
+        },
+        {
+          "seed": "river",
+          "sha256": "14b4c72b8fe5d0ce7b56ee5793dc7a349360051ef2c72672c36729a35de72c8d"
+        }
+      ]
+    },
+    {
+      "branch": "web-server/python/a-json-api-with-tests",
+      "number": 4,
+      "slug": "change-and-delete",
+      "commit": "d7eb421d636cd765ccb1bd640d800bfb7c32bc99",
+      "cases": [
+        {
+          "seed": "maple",
+          "sha256": "2f353c72d2b6645c2ebe024ec895b4b467704c85de2ca9b506903e35701b5289"
+        },
+        {
+          "seed": "40",
+          "sha256": "ed9af17b77297a7522d6d35d9093131c7da50bd991d4125661c4e9dd048812d8"
+        },
+        {
+          "seed": "river",
+          "sha256": "9eefa5f6fecc64820da7bf31266cfdcf757fd5b3869c9a9f64320200c1b32668"
+        }
+      ]
+    },
+    {
+      "branch": "web-server/python/a-json-api-with-tests",
+      "number": 5,
+      "slug": "a-first-test",
+      "commit": "eb66fcd4f2e4c241b1448461fa0f379c1497bb95",
+      "cases": [
+        {
+          "seed": "maple",
+          "sha256": "b42662384a3c24913e86bf6faa4dde8a411a08b260052e0df58ef741ae1cb2a1"
+        },
+        {
+          "seed": "40",
+          "sha256": "0548fe17fd54546875d613e7f75cee869820babec6f066be1abe74814b0feab4"
+        },
+        {
+          "seed": "river",
+          "sha256": "10c02dea6e5627d47c6bd112939969d0b43b1b280d0cd7325ab00d944faef8ef"
+        }
+      ]
+    },
+    {
+      "branch": "web-server/python/a-json-api-with-tests",
+      "number": 6,
+      "slug": "test-the-errors",
+      "commit": "be0ccea4ce17229e1e087bd9b1e05842c42a71a8",
+      "cases": [
+        {
+          "seed": "maple",
+          "sha256": "e6111e09d68a0e703f8d46c1e855251cab6edccbd31ac84d8951a22ec8955184"
+        },
+        {
+          "seed": "40",
+          "sha256": "32f7dc0c6e7779a2789c84287bc81c4b52a84153d2bc81583d035d4a152046d6"
+        },
+        {
+          "seed": "river",
+          "sha256": "9c8d8e969f42dfa63a045c20ba35427a3dcff485d0320e6be886875a14479d7b"
+        }
+      ]
+    },
+    {
+      "branch": "web-server/python/a-json-api-with-tests",
+      "number": 7,
+      "slug": "test-change-and-delete",
+      "commit": "777141a7b01ec22c0ce430554c7ea2f3ae5ef138",
+      "cases": [
+        {
+          "seed": "maple",
+          "sha256": "2087fcedde58f0ead7dca1232285ea5b4b47e4c80e5fe5bfa885b1334aa2d198"
+        },
+        {
+          "seed": "40",
+          "sha256": "27f081148f7952c4cddd0403207f3ef48a62ccfd649c465b047ca0a597a03199"
+        },
+        {
+          "seed": "river",
+          "sha256": "1f41af76ce88e1f064567dcd98f3257d3b4c2ace99b3886724a0b20f2d4c8136"
+        }
+      ]
     }
   ]
 }
