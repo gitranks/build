@@ -8,7 +8,7 @@
       "branch": "coding-agent/python/base",
       "number": 1,
       "slug": "what-you-will-build",
-      "commit": "1860e01acc4f0f75835a1762e0e799e9bca5fe53",
+      "commit": "413f4565305eae956b0705a4d19970f1671fd846",
       "cases": [
         {
           "seed": "acorn",
@@ -32,7 +32,7 @@
       "branch": "coding-agent/python/base",
       "number": 2,
       "slug": "read-messages",
-      "commit": "a0890046b6507a0dcc5653ecb672fea2ad8a5b3a",
+      "commit": "1075792d96c8809d1811ef19be8586e3275c7f01",
       "cases": [
         {
           "seed": "acorn",
@@ -56,7 +56,7 @@
       "branch": "coding-agent/python/base",
       "number": 3,
       "slug": "ask-the-model",
-      "commit": "f928c69841ed7f4db61ebd31f9784540a0e7b0ad",
+      "commit": "7f8a9022bcfb94d3207e73dd55faac8749b4f219",
       "cases": [
         {
           "seed": "acorn",
@@ -80,7 +80,7 @@
       "branch": "coding-agent/python/base",
       "number": 4,
       "slug": "when-the-model-fails",
-      "commit": "df60bd116d4b447d497d0c89ac1430d4193a3410",
+      "commit": "2224ff9e744f993ad561736d85584108f431c407",
       "cases": [
         {
           "seed": "acorn",
@@ -104,7 +104,7 @@
       "branch": "coding-agent/python/base",
       "number": 5,
       "slug": "remember-the-conversation",
-      "commit": "bc3b0290bf15e8c91274b00f1971d88eeaa9e216",
+      "commit": "0987604ab13b70f66e347630f24ea459b537687a",
       "cases": [
         {
           "seed": "acorn",
@@ -128,7 +128,7 @@
       "branch": "coding-agent/python/base",
       "number": 6,
       "slug": "a-system-prompt",
-      "commit": "7386e607e568c3a8fecc1ccaa5346fec92732b6e",
+      "commit": "9e26afa1e07adfe7f49f2249f5818ddf01c82ad3",
       "cases": [
         {
           "seed": "acorn",
@@ -152,7 +152,7 @@
       "branch": "coding-agent/python/base",
       "number": 7,
       "slug": "offer-a-tool",
-      "commit": "18b9edc97fc399f84c3b9570bbe416a3b6ce47a5",
+      "commit": "28e1d4178bd342c367990a49f5b79c5302e04448",
       "cases": [
         {
           "seed": "acorn",
@@ -176,7 +176,7 @@
       "branch": "coding-agent/python/base",
       "number": 8,
       "slug": "the-agent-loop",
-      "commit": "5ca7e8490299135ac0aa1319b5fcad6744fbc617",
+      "commit": "92b561f693950ecf7eb454e8b1b98e4be89c16fa",
       "cases": [
         {
           "seed": "acorn",
@@ -200,7 +200,7 @@
       "branch": "coding-agent/python/base",
       "number": 9,
       "slug": "read-a-file",
-      "commit": "7113e211c07b6b93ac9079a5bffdc4f38e73fdfb",
+      "commit": "a74a751b4ff3bdde6b3f09db946be941e35bda0e",
       "cases": [
         {
           "seed": "acorn",
@@ -224,7 +224,7 @@
       "branch": "coding-agent/python/base",
       "number": 10,
       "slug": "stay-in-the-folder",
-      "commit": "f292f70092be4a7e7e69d8fe812865bfd1213a3f",
+      "commit": "27469d41034e53e3df5e6985bec1e02ce0052f4b",
       "cases": [
         {
           "seed": "acorn",
@@ -248,7 +248,7 @@
       "branch": "coding-agent/python/base",
       "number": 11,
       "slug": "edit-a-file",
-      "commit": "91cc11ed095d570634ef450e7f6f78ff2065d08c",
+      "commit": "49a7299ee3a1fa7c334f4c9171a3a6237817c505",
       "cases": [
         {
           "seed": "acorn",
@@ -272,7 +272,7 @@
       "branch": "coding-agent/python/base",
       "number": 12,
       "slug": "make-a-file",
-      "commit": "6693da533fdd3552ebd5680b9ed33895710e39bf",
+      "commit": "3513720063596727d9ad41df17e1008d01a8a6d7",
       "cases": [
         {
           "seed": "acorn",
@@ -296,7 +296,7 @@
       "branch": "coding-agent/python/base",
       "number": 13,
       "slug": "run-a-command",
-      "commit": "b1d68f0388389af64b746e274ef9557bfda0220d",
+      "commit": "aa848bd3b56056e42e4326601bd62302e48dd42f",
       "cases": [
         {
           "seed": "acorn",
@@ -320,7 +320,7 @@
       "branch": "coding-agent/python/base",
       "number": 14,
       "slug": "a-time-limit",
-      "commit": "561c0a5447b9e5acbd6f147e4f6937083253137d",
+      "commit": "99ac16e92867896e0457acf80f5ce61268c40c0d",
       "cases": [
         {
           "seed": "acorn",
@@ -344,7 +344,7 @@
       "branch": "coding-agent/python/base",
       "number": 15,
       "slug": "keep-it-short",
-      "commit": "ed446e8dec5f3e19f87bb58d6ec8063fea7510ad",
+      "commit": "30e28fc5d67423b43409012b8c58f2754880cc72",
       "cases": [
         {
           "seed": "acorn",
@@ -368,7 +368,7 @@
       "branch": "coding-agent/python/base",
       "number": 16,
       "slug": "a-limit-on-rounds",
-      "commit": "95108d1b0db061ec22c70540c5d11c65086093a4",
+      "commit": "0297bc3250ced9e6655771f7187474c01b9ea554",
       "cases": [
         {
           "seed": "acorn",
@@ -392,7 +392,7 @@
       "branch": "coding-agent/python/base",
       "number": 17,
       "slug": "stop-going-in-circles",
-      "commit": "6eeb57973b0ccd9ec4d426249d0c43aa5b72056a",
+      "commit": "719a4251e4067e9c7119de2747bd107c1194f3f5",
       "cases": [
         {
           "seed": "acorn",
