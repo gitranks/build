@@ -11,11 +11,14 @@ Linux, macOS and Windows, with the oldest Node and Python a project asks for and
 - A step that needs packages, such as a part on the official SDK, has a setup script in `.gitranks` too. `run.mjs`
   runs it first: it installs the exact versions the step pins, from npm or PyPI, into the step's own folder. That
   is the only use of the network.
-- The workflow in `.github/workflows/replay.yml` runs it on every change to `main`, once a week, and by hand.
+- The workflow in `.github/workflows/replay.yml` runs it on every change to `main`, once a week, and by hand: one
+  job for each project, system and pair of runtimes, so no job grows with the number of projects.
 
 To run it yourself, from a clone with every branch:
 
     node replay/run.mjs
+
+Add a project's name, a language, or both, to run only those: `node replay/run.mjs interpreter python`.
 
 Python runs as `python`; set `REPLAY_PYTHON` to use another command, such as `python3`.
 

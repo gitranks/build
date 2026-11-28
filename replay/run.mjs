@@ -2,8 +2,10 @@
 // empty folder, runs the step's check with each seed, and compares the SHA-256 of what the check printed with the
 // one stored here. The stored files hold hashes, never the texts.
 //
-//   node replay/run.mjs                 every project, every language
-//   node replay/run.mjs typescript      only these languages
+//   node replay/run.mjs                    every project, every language
+//   node replay/run.mjs typescript         only these languages
+//   node replay/run.mjs mcp-server python  only these projects (and languages): a word that is not a language
+//                                          names a project
 //
 // Python runs as "python", or as the command in REPLAY_PYTHON. It needs git, and a clone with every branch. A step
 // that needs packages has a setup script: it runs first and installs the exact versions the step pins, from npm or
@@ -17,7 +19,6 @@ import { fileURLToPath } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = dirname(here);
-const only = process.argv.slice(2);
 const RUNS = {
   typescript: [process.execPath],
   python: (process.env.REPLAY_PYTHON || 'python').split(' ').filter(Boolean),
@@ -26,6 +27,9 @@ const CHECK_TIMEOUT_MS = 60_000;
 const SETUP_TIMEOUT_MS = 600_000;
 // Python writes UTF-8 whatever the system's code page, so a check prints the same bytes on every system.
 const env = { ...process.env, PYTHONUTF8: '1', PYTHONIOENCODING: 'utf-8' };
+const asked = process.argv.slice(2);
+const onlyLanguages = asked.filter((word) => word in RUNS);
+const onlyProjects = asked.filter((word) => !(word in RUNS));
 
 function git(args) {
   const run = spawnSync('git', args, { cwd: root, maxBuffer: 64 * 1024 * 1024, windowsHide: true });
@@ -88,10 +92,17 @@ const files = readdirSync(here, { withFileTypes: true })
   .sort();
 const replays = files
   .map((file) => JSON.parse(readFileSync(file, 'utf8')))
-  .filter((replay) => !only.length || only.includes(replay.language));
+  .filter((replay) => !onlyLanguages.length || onlyLanguages.includes(replay.language))
+  .filter((replay) => !onlyProjects.length || onlyProjects.includes(replay.project));
 if (!replays.length) {
-  console.log(`No replay file${only.length ? ` for ${only.join(', ')}` : ''}.`);
+  console.log(`No replay file${asked.length ? ` for ${asked.join(', ')}` : ''}.`);
   process.exit(1);
+}
+for (const project of onlyProjects) {
+  if (!replays.some((replay) => replay.project === project)) {
+    console.log(`No replay file for ${project}.`);
+    process.exit(1);
+  }
 }
 
 for (const language of new Set(replays.map((replay) => replay.language))) {
