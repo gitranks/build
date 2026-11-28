@@ -309,7 +309,7 @@
       "branch": "mcp-server/typescript/on-the-official-sdk",
       "number": 1,
       "slug": "bring-in-the-sdk",
-      "commit": "6b42d94ed52a8c8c14ec452607209b826597ab66",
+      "commit": "6a10cdd90f9391d2b9b9f83320de0f8818fa3b91",
       "cases": [
         {
           "seed": "summit",
@@ -329,7 +329,7 @@
       "branch": "mcp-server/typescript/on-the-official-sdk",
       "number": 2,
       "slug": "a-tool-on-the-sdk",
-      "commit": "524b0bcd6cb7b67666abd1341ceb735753b7fa78",
+      "commit": "0c01d97570dd4db3b86a8d2017e4f400842724c3",
       "cases": [
         {
           "seed": "summit",
@@ -349,7 +349,7 @@
       "branch": "mcp-server/typescript/on-the-official-sdk",
       "number": 3,
       "slug": "let-the-schema-check-it",
-      "commit": "297b03eeced07e66869b747b58ec01ed875478e1",
+      "commit": "6dc5c6bffb40110a557c9255953f1848d26946b9",
       "cases": [
         {
           "seed": "summit",
@@ -369,7 +369,7 @@
       "branch": "mcp-server/typescript/on-the-official-sdk",
       "number": 4,
       "slug": "pick-one-on-the-sdk",
-      "commit": "38e1df7041afcd97bea41fda6bb7b898b3995656",
+      "commit": "c57d3b2b10ce8cd022bafcfbf08e9dad3560e23c",
       "cases": [
         {
           "seed": "summit",
@@ -389,7 +389,7 @@
       "branch": "mcp-server/typescript/on-the-official-sdk",
       "number": 5,
       "slug": "data-on-the-sdk",
-      "commit": "d58088f1d74b55634d50b47b970760e4a6fd23a2",
+      "commit": "bd903639ac15cebf84543802680e15e46c564f9e",
       "cases": [
         {
           "seed": "summit",
@@ -409,7 +409,7 @@
       "branch": "mcp-server/typescript/on-the-official-sdk",
       "number": 6,
       "slug": "instructions-on-the-sdk",
-      "commit": "049801ee10a2fb15f3e13d6805ff9b5db2175585",
+      "commit": "92c687c4da64a389626a71c57d79a7fcf9996048",
       "cases": [
         {
           "seed": "summit",

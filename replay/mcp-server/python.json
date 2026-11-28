@@ -309,7 +309,7 @@
       "branch": "mcp-server/python/on-the-official-sdk",
       "number": 1,
       "slug": "bring-in-the-sdk",
-      "commit": "460a24d75053ed5085b6d8258608189995b7658e",
+      "commit": "72fdb277db6ca7326230e911b5b27d2c2a8edafb",
       "cases": [
         {
           "seed": "summit",
@@ -329,7 +329,7 @@
       "branch": "mcp-server/python/on-the-official-sdk",
       "number": 2,
       "slug": "a-tool-on-the-sdk",
-      "commit": "27777fe66a77016afa7c5c170aee3278d2e4be63",
+      "commit": "e75253dfa8976bdacda2188eb6e8751325761fb4",
       "cases": [
         {
           "seed": "summit",
@@ -349,7 +349,7 @@
       "branch": "mcp-server/python/on-the-official-sdk",
       "number": 3,
       "slug": "let-the-schema-check-it",
-      "commit": "f9ef692b41ef04f40f4ce092d90feb658df17ef5",
+      "commit": "cdb0cea6a4fcdfd584d20fc0b78dce59bc20b872",
       "cases": [
         {
           "seed": "summit",
@@ -369,7 +369,7 @@
       "branch": "mcp-server/python/on-the-official-sdk",
       "number": 4,
       "slug": "pick-one-on-the-sdk",
-      "commit": "a8f22c6a6d59673baf4d4f6e15a47d9771a91165",
+      "commit": "fcea74fd1bffc46d4a7b2c936c2dc9f030796c6d",
       "cases": [
         {
           "seed": "summit",
@@ -389,7 +389,7 @@
       "branch": "mcp-server/python/on-the-official-sdk",
       "number": 5,
       "slug": "data-on-the-sdk",
-      "commit": "0a6b3e90d76e7374345889bcac7f6a4b8e7d4968",
+      "commit": "349988c8776bb963b74ec3db722e55ce2e88d3d5",
       "cases": [
         {
           "seed": "summit",
@@ -409,7 +409,7 @@
       "branch": "mcp-server/python/on-the-official-sdk",
       "number": 6,
       "slug": "instructions-on-the-sdk",
-      "commit": "7f17865fde910275818bbf770f77d59cd72de42b",
+      "commit": "2594d4ddbb721d6e7a63683e4dc30476e4d46509",
       "cases": [
         {
           "seed": "summit",
